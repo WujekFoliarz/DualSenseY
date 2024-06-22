@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34526.213
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DualSenseY", "DualsenseY\DualSenseY.csproj", "{7AA6D8E2-241A-4C42-BD32-F30C7E8B796A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7AA6D8E2-241A-4C42-BD32-F30C7E8B796A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AA6D8E2-241A-4C42-BD32-F30C7E8B796A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AA6D8E2-241A-4C42-BD32-F30C7E8B796A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AA6D8E2-241A-4C42-BD32-F30C7E8B796A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {235FB679-0574-428E-811E-BF85096E388F}
+	EndGlobalSection
+EndGlobal
