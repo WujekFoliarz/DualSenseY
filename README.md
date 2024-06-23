@@ -3,6 +3,7 @@
 - Works with UDP protocol of another application with similar name, which is 100% an accident
 - Control adaptive triggers
 - Control LED
+- Test vibrations
 
   ![image](https://github.com/WujekFoliarz/DualSenseY/assets/72314465/2a8c5bfc-5e23-4c6f-a23e-34780780cc1d)
 
