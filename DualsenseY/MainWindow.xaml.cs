@@ -82,7 +82,7 @@ namespace DualSenseY
                 });
 
 
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && udp.currentPacket != null && udp.serverOn && udp.newPacket)
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && udp.currentPacket != null && udp.serverOn)
                 {
                     UDPtime.Restart();
 
@@ -536,7 +536,8 @@ namespace DualSenseY
 
                                 break;
                             case UDP.InstructionType.RGBUpdate:
-                                dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
+                                if(Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
+                                    dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
                                 break;
                             case UDP.InstructionType.PlayerLEDNewRevision:
                                 switch ((UDP.PlayerLEDNewRevision)Convert.ToInt32(instruction.parameters[1]))
@@ -566,8 +567,6 @@ namespace DualSenseY
                     }
 
                 }
-
-                Thread.Sleep(1);
             }
         }
 

@@ -50,7 +50,7 @@ namespace DualSenseY
                     client.Send(bytes2, bytes2.Length, ipendPoint);
                     string string_json = Encoding.ASCII.GetString(bytes);
                     currentPacket = JsonConvert.DeserializeObject<Packet>(string_json);
-                    Thread.Sleep(5);
+                    Thread.Sleep(1);
                 }
             }
             catch { }

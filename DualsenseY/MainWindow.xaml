@@ -120,31 +120,31 @@
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Force 1:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce1" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce1_ValueChanged"/>
-                    <TextBlock x:Name="textForce1" Grid.Row="1" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce1" Grid.Row="1" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Force 2:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce2" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce2_ValueChanged"/>
-                    <TextBlock x:Name="textForce2" Grid.Row="2" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce2" Grid.Row="2" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Force 3:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce3" Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce3_ValueChanged"/>
-                    <TextBlock x:Name="textForce3" Grid.Row="3" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce3" Grid.Row="3" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Force 4:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce4" Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce4_ValueChanged"/>
-                    <TextBlock x:Name="textForce4" Grid.Row="4" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce4" Grid.Row="4" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="Force 5:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce5" Grid.Row="5" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce5_ValueChanged"/>
-                    <TextBlock x:Name="textForce5" Grid.Row="5" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce5" Grid.Row="5" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Force 6:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce6" Grid.Row="6" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce6_ValueChanged"/>
-                    <TextBlock x:Name="textForce6" Grid.Row="6" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce6" Grid.Row="6" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="7" Grid.Column="0" Text="Force 7:" VerticalAlignment="Center" Height="16"/>
                     <Slider x:Name="sliderForce7" Grid.Row="7" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce7_ValueChanged"/>
-                    <TextBlock x:Name="textForce7" Grid.Row="7" Grid.Column="2" Text="255" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
+                    <TextBlock x:Name="textForce7" Grid.Row="7" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
                 </Grid>
             </TabItem>
         </TabControl>
