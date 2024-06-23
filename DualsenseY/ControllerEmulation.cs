@@ -139,6 +139,8 @@ namespace DualSenseY
                     dualshock4.SetButtonState(DualShock4Button.ShoulderRight, dualsense.ButtonState.R1);
                     dualshock4.SetButtonState(DualShock4SpecialButton.Ps, dualsense.ButtonState.ps);
                 }
+
+                Thread.Sleep(1);
             }
         }
 

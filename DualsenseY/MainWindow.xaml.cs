@@ -50,35 +50,38 @@ namespace DualSenseY
 
             udp = new UDP();
             UDPtime.Start();
-            new Thread(() => WatchUDPUpdates()).Start();
+            new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
         }
 
-        private void WatchUDPUpdates()
+        private async void WatchUDPUpdates()
         {
             while (udp.serverOn)
             {
-                this.Dispatcher.Invoke(() =>
+                await Task.Run(() =>
                 {
-                    if (UDPtime.ElapsedMilliseconds >= 1000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                    this.Dispatcher.Invoke(() =>
                     {
-                        controlPanel.Visibility = Visibility.Visible;
-                        udpStatus.Text = "UDP: Inactive";
-                        udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
-                    }
-                    else
-                    {
-                        controlPanel.Visibility = Visibility.Collapsed;
-                        if(dualsense[currentControllerNumber] != null)
+                        if (UDPtime.ElapsedMilliseconds >= 1000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                         {
-                            udpStatus.Text = "UDP: Active";
-                            udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
-                        }
-                        else
-                        {
+                            controlPanel.Visibility = Visibility.Visible;
                             udpStatus.Text = "UDP: Inactive";
                             udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
                         }
-                    }
+                        else
+                        {
+                            controlPanel.Visibility = Visibility.Collapsed;
+                            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                            {
+                                udpStatus.Text = "UDP: Active";
+                                udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
+                            }
+                            else
+                            {
+                                udpStatus.Text = "UDP: Inactive";
+                                udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
+                            }
+                        }
+                    });
                 });
 
 
@@ -567,6 +570,8 @@ namespace DualSenseY
                     }
 
                 }
+
+                Thread.Sleep(1);
             }
         }
 
