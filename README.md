@@ -16,4 +16,3 @@
 - Microphone and speaker volume control
 - Player LED control
 - Microphone LED control
-- Make it less janky
