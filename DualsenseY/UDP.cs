@@ -16,6 +16,9 @@ namespace DualSenseY
 
         public UDP()
         {
+            if (!Directory.Exists(@"C:\Temp\DualSenseX\"))
+                Directory.CreateDirectory(@"C:\Temp\DualSenseX\");
+
             if (!File.Exists(@"C:\Temp\DualSenseX\DualSenseX_PortNumber.txt"))
                 File.WriteAllText(@"C:\Temp\DualSenseX\DualSenseX_PortNumber.txt", "6969");
 
