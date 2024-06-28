@@ -637,6 +637,34 @@ namespace DualSenseY
                     }
 
                     UpdateConnectionStatus();
+                    dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 5, 100);
+                    switch (LEDbox.SelectedIndex)
+                    {
+                        case 0:
+                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                            break;
+                        case 1:
+                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                            break;
+                        case 2:
+                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                            break;
+                        case 3:
+                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                            break;
+                        case 4:
+                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                            break;
+                        case 5:
+                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
+                            break;
+                    }
+                    if (micLEDcheckbox.IsChecked == true)
+                        dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                    else
+                        dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+                    dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, leftTriggerForces[0], leftTriggerForces[1], leftTriggerForces[2], leftTriggerForces[3], leftTriggerForces[4], leftTriggerForces[5], leftTriggerForces[6]);
+                    dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, rightTriggerForces[0], rightTriggerForces[1], rightTriggerForces[2], rightTriggerForces[3], rightTriggerForces[4], rightTriggerForces[5], rightTriggerForces[6]);
                 }
                 catch (System.Exception)
                 {
@@ -709,6 +737,7 @@ namespace DualSenseY
         private void sliderLED_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+            LEDlabel.Text = $"LED Color: ({(byte)sliderRed.Value},{(byte)sliderGreen.Value},{(byte)sliderBlue.Value})";
         }
 
         private void sliderLeftTrigger_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -997,6 +1026,50 @@ namespace DualSenseY
                         controllerEmulation.Dispose();
                     controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
                     break;
+            }
+        }
+
+        private void LEDbox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                switch (LEDbox.SelectedIndex)
+                {
+                    case 0:
+                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                        break;
+                    case 1:
+                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                        break;
+                    case 2:
+                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                        break;
+                    case 3:
+                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                        break;
+                    case 4:
+                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                        break;
+                    case 5:
+                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
+                        break;
+                }
+            }   
+        }
+
+        private void micLEDcheckbox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+            }
+        }
+
+        private void micLEDcheckbox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
             }
         }
     }
