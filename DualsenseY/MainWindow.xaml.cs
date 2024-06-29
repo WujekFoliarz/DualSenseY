@@ -35,6 +35,7 @@ namespace DualSenseY
             UDPtime.Start();
             controlPanel.Visibility = Visibility.Collapsed;
             controllerEmulationBox.Visibility = Visibility.Hidden;
+            cmbControllerSelect.SelectedIndex = 0;
 
             leftTriggerForces[0] = 0;
             leftTriggerForces[1] = 0;
