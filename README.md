@@ -1,3 +1,5 @@
+### If you need any help, add me on discord - wujek_foliarz
+
 ## Features
 
 - Works with UDP protocol of another application with similar name, which is 100% an accident
