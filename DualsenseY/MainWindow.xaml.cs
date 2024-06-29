@@ -61,7 +61,7 @@ namespace DualSenseY
         private MMDeviceEnumerator MDE = new MMDeviceEnumerator();
         private MMDevice MD;
         private WaveInEvent waveInStream = new WaveInEvent();
-        private async void WatchMicrophoneLevel()
+        private void WatchMicrophoneLevel()
         {
             MD = MDE.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
             waveInStream.StartRecording();
@@ -71,8 +71,9 @@ namespace DualSenseY
                 {
                     var AMI = MD.AudioMeterInformation;
                     this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
-                    Thread.Sleep(50);
                 }
+
+                Thread.Sleep(100);
             }
         }
 
