@@ -14,5 +14,3 @@
 
 ## Roadmap
 - Microphone and speaker volume control
-- Player LED control
-- Microphone LED control
