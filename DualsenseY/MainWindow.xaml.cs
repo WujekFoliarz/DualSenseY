@@ -4,6 +4,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Wujek_Dualsense_API;
+using NAudio;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
+using System.Windows.Media.Media3D;
 
 namespace DualSenseY
 {
@@ -51,6 +55,25 @@ namespace DualSenseY
             udp = new UDP();
             UDPtime.Start();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchMicrophoneLevel(); }).Start();
+        }
+
+        private MMDeviceEnumerator MDE = new MMDeviceEnumerator();
+        private MMDevice MD;
+        private WaveInEvent waveInStream = new WaveInEvent();
+        private async void WatchMicrophoneLevel()
+        {
+            MD = MDE.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
+            waveInStream.StartRecording();
+            while (true)
+            {
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
+                {
+                    var AMI = MD.AudioMeterInformation;
+                    this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
+                    Thread.Sleep(50);
+                }
+            }
         }
 
         private async void WatchUDPUpdates()
@@ -697,15 +720,16 @@ namespace DualSenseY
                 controlPanel.Visibility = Visibility.Visible;
                 cmbControllerSelect.Visibility = Visibility.Hidden;
                 controllerEmulationBox.Visibility = Visibility.Visible;
-                if(controllerEmulationBox.SelectedIndex == 1 && controllerEmulation == null)
-                {
-                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
-                }
-                else if(controllerEmulationBox.SelectedIndex == 2 && controllerEmulation == null)
-                {
-                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
-                }
 
+                if(controllerEmulationBox.SelectedIndex == 1 && controllerEmulation == null)
+                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
+                else if(controllerEmulationBox.SelectedIndex == 2 && controllerEmulation == null)
+                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
+
+                if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                    micTab.IsEnabled = false;
+                else
+                    micTab.IsEnabled = true;
             }
             else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
             {
@@ -1070,6 +1094,15 @@ namespace DualSenseY
             if (this.IsInitialized)
             {
                 dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+            }
+        }
+
+        private void sliderMicVolume_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (this.IsInitialized)
+            {
+                dualsense[currentControllerNumber].SetMicrophoneVolume((int)sliderMicVolume.Value);
+                micVolumeText.Text = $"Microphone Volume: {(int)sliderMicVolume.Value}";
             }
         }
     }

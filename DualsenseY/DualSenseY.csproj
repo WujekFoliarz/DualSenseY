@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Wujek_Dualsense_API" Version="1.0.5" />
+    <PackageReference Include="Wujek_Dualsense_API" Version="1.0.7" />
   </ItemGroup>
 
 </Project>
