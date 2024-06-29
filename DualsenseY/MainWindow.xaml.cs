@@ -59,18 +59,39 @@ namespace DualSenseY
         }
 
         private MMDeviceEnumerator MDE = new MMDeviceEnumerator();
-        private MMDevice MD;
+        private MMDevice[] MD = new MMDevice[4];
         private WaveInEvent waveInStream = new WaveInEvent();
         private void WatchMicrophoneLevel()
         {
-            MD = MDE.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
             waveInStream.StartRecording();
             while (true)
             {
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
+                if (MD[currentControllerNumber] != null && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
                 {
-                    var AMI = MD.AudioMeterInformation;
-                    this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
+                        var AMI = MD[currentControllerNumber].AudioMeterInformation;
+                        this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
+                }
+                else if (MD[currentControllerNumber] == null)
+                {
+                    foreach (MMDevice mmdevice in MDE.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All))
+                    {
+                        if (currentControllerNumber > 0)
+                        {
+                            if (mmdevice.FriendlyName.Contains("Wireless Controller") && mmdevice.FriendlyName.Contains(Convert.ToString(currentControllerNumber + 1)))
+                            {
+                                MD[currentControllerNumber] = mmdevice;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if (mmdevice.FriendlyName.Contains("Wireless Controller") && !mmdevice.FriendlyName.Contains("2") && !mmdevice.FriendlyName.Contains("3") && !mmdevice.FriendlyName.Contains("4"))
+                            {
+                                MD[0] = mmdevice;
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 Thread.Sleep(100);
@@ -661,7 +682,7 @@ namespace DualSenseY
                     }
 
                     UpdateConnectionStatus();
-                    dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 5, 100);
+                    dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
                     switch (LEDbox.SelectedIndex)
                     {
                         case 0:
@@ -731,6 +752,7 @@ namespace DualSenseY
                     micTab.IsEnabled = false;
                 else
                     micTab.IsEnabled = true;
+
             }
             else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
             {
