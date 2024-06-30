@@ -13,7 +13,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="10,10,10,10">
-            <TextBlock Text="DualSense Control Panel -- Version 1.5" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBlock Text="DualSense Control Panel -- Version 1.6" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <ComboBox x:Name="cmbControllerSelect" Width="100" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="cmbControllerSelect_SelectionChanged">
                     <ComboBoxItem Content="Controller 1"/>
@@ -192,7 +192,7 @@
                         <TextBlock Text="additionaly, due to the nature of how DualSense controllers work on windows, the currently selected"/>
                         <TextBlock Text="microphone may be from another currently connected DualSense, make sure by blowing air into" />
                         <TextBlock Text="the microphone. There is currently no way to go around this, you may want to do it directly"/>
-                        <TextBlock Text="in system settings"/>
+                        <TextBlock Text="in system settings. Microphone level may not be displayed unless it is set as system default."/>
                     </StackPanel>
                 </Grid>
             </TabItem>

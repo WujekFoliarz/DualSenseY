@@ -32,7 +32,6 @@ namespace DualSenseY
         public MainWindow()
         {
             InitializeComponent();
-            UDPtime.Start();
             controlPanel.Visibility = Visibility.Collapsed;
             controllerEmulationBox.Visibility = Visibility.Hidden;
             cmbControllerSelect.SelectedIndex = 0;
@@ -54,7 +53,6 @@ namespace DualSenseY
             rightTriggerForces[6] = 0;
 
             udp = new UDP();
-            UDPtime.Start();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchMicrophoneLevel(); }).Start();
         }
@@ -64,7 +62,6 @@ namespace DualSenseY
         private WaveInEvent waveInStream = new WaveInEvent();
         private void WatchMicrophoneLevel()
         {
-            waveInStream.StartRecording();
             while (true)
             {
                 if (MD[currentControllerNumber] != null && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
@@ -74,6 +71,9 @@ namespace DualSenseY
                 }
                 else if (MD[currentControllerNumber] == null)
                 {
+                    waveInStream.Dispose();
+                    waveInStream = new WaveInEvent();
+
                     foreach (MMDevice mmdevice in MDE.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All))
                     {
                         if (currentControllerNumber > 0)
@@ -93,6 +93,8 @@ namespace DualSenseY
                             }
                         }
                     }
+
+                    waveInStream.StartRecording();
                 }
 
                 Thread.Sleep(100);
@@ -101,39 +103,33 @@ namespace DualSenseY
 
         private async void WatchUDPUpdates()
         {
+            UDPtime.Start();
             while (udp.serverOn)
             {
-                await Task.Run(() =>
-                {
+
                     this.Dispatcher.Invoke(() =>
                     {
-                        if (UDPtime.ElapsedMilliseconds >= 1000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                        if (UDPtime.ElapsedMilliseconds >= 1000 || dualsense[currentControllerNumber] == null || dualsense[currentControllerNumber].Working == false)
                         {
-                            controlPanel.Visibility = Visibility.Visible;
+                            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                                controlPanel.Visibility = Visibility.Visible;
+
                             udpStatus.Text = "UDP: Inactive";
                             udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
                         }
                         else
                         {
                             controlPanel.Visibility = Visibility.Collapsed;
-                            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
-                            {
-                                udpStatus.Text = "UDP: Active";
-                                udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
-                            }
-                            else
-                            {
-                                udpStatus.Text = "UDP: Inactive";
-                                udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
-                            }
+                            udpStatus.Text = "UDP: Active";
+                            udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
                         }
                     });
-                });
 
 
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && udp.currentPacket != null && udp.serverOn)
                 {
-                    UDPtime.Restart();
+                    if (udp.newPacket)
+                        UDPtime.Restart();
 
                     foreach (UDP.Instruction instruction in udp.currentPacket.instructions)
                     {
