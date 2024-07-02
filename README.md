@@ -7,6 +7,7 @@
 - Control adaptive triggers
 - Control LED
 - Test vibrations
+- Test the speaker and haptic feedback
 
 ![image](https://github.com/WujekFoliarz/DualSenseY/assets/72314465/cf903a9c-8f2b-439f-8fd7-43dc501a0894)
 
