@@ -8,7 +8,8 @@
 - Control LED
 - Test vibrations
 
-  ![image](https://github.com/WujekFoliarz/DualSenseY/assets/72314465/2a8c5bfc-5e23-4c6f-a23e-34780780cc1d)
+![image](https://github.com/WujekFoliarz/DualSenseY/assets/72314465/cf903a9c-8f2b-439f-8fd7-43dc501a0894)
+
 
 ## Requirements
 
