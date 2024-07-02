@@ -8,6 +8,8 @@ using NAudio;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using System.Windows.Media.Media3D;
+using System.IO;
+using System.Reflection;
 
 namespace DualSenseY
 {
@@ -680,6 +682,7 @@ namespace DualSenseY
 
                     UpdateConnectionStatus();
                     dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
+                    dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback); // enable audio
                     switch (LEDbox.SelectedIndex)
                     {
                         case 0:
@@ -746,9 +749,15 @@ namespace DualSenseY
                     controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
 
                 if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                {
                     micTab.IsEnabled = false;
+                    speakerTab.IsEnabled = false;
+                }
                 else
+                {
                     micTab.IsEnabled = true;
+                    speakerTab.IsEnabled = true;
+                }
 
             }
             else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
@@ -775,6 +784,7 @@ namespace DualSenseY
 
         private void btnTestVibration_Click(object sender, RoutedEventArgs e)
         {
+            dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
             dualsense[currentControllerNumber].SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
         }
 
@@ -1123,6 +1133,33 @@ namespace DualSenseY
             {
                 dualsense[currentControllerNumber].SetMicrophoneVolume((int)sliderMicVolume.Value);
                 micVolumeText.Text = $"Microphone Volume: {(int)sliderMicVolume.Value}";
+            }
+        }
+
+        private void testSpeakerButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", 1.0f, 0.0f, 0.0f, true);
+            }
+        }
+
+        private void testLeftActuatorButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", 0.0f, 1.0f, 0.0f, true);
+            }
+        }
+
+        private void testRightActuatorButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", 0.0f, 0.0f, 1.0f, true);
             }
         }
     }
