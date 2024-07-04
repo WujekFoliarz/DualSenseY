@@ -16,6 +16,7 @@ namespace DualSenseY
     public partial class MainWindow : Window
     {
         private UDP udp;
+        private Version version = new Version();
         public Dualsense[] dualsense = new Dualsense[4];
         private string controllerInstanceID = string.Empty;
         public int currentControllerNumber = 0;
@@ -34,7 +35,14 @@ namespace DualSenseY
         public MainWindow()
         {
             InitializeComponent();
-            controlPanel.Visibility = Visibility.Collapsed;
+
+            version.RemoveOldFiles();
+            if (version.IsOutdated())
+                updateBtn.Visibility = Visibility.Visible;
+            else
+                updateBtn.Visibility = Visibility.Hidden;
+
+            controlPanel.Visibility = Visibility.Hidden;
             controllerEmulationBox.Visibility = Visibility.Hidden;
             cmbControllerSelect.SelectedIndex = 0;
 
@@ -121,7 +129,7 @@ namespace DualSenseY
                         }
                         else
                         {
-                            controlPanel.Visibility = Visibility.Collapsed;
+                            controlPanel.Visibility = Visibility.Hidden;
                             udpStatus.Text = "UDP: Active";
                             udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
                         }
@@ -711,7 +719,7 @@ namespace DualSenseY
                     dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, leftTriggerForces[0], leftTriggerForces[1], leftTriggerForces[2], leftTriggerForces[3], leftTriggerForces[4], leftTriggerForces[5], leftTriggerForces[6]);
                     dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, rightTriggerForces[0], rightTriggerForces[1], rightTriggerForces[2], rightTriggerForces[3], rightTriggerForces[4], rightTriggerForces[5], rightTriggerForces[6]);
                 }
-                catch (System.Exception)
+                catch (Exception error)
                 {
                     MessageBox.Show($"Controller {currentControllerNumber + 1} is not plugged in");
                 }
@@ -764,7 +772,7 @@ namespace DualSenseY
             {
                 txtStatus.Text = "Status: Disconnected";
                 btnConnect.Content = "Connect Controller";
-                controlPanel.Visibility = Visibility.Collapsed;
+                controlPanel.Visibility = Visibility.Hidden;
                 cmbControllerSelect.Visibility = Visibility.Visible;
                 controllerEmulationBox.Visibility = Visibility.Hidden;
                 controllerEmulationBox.SelectedIndex = 0;
@@ -1161,6 +1169,11 @@ namespace DualSenseY
                 dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                 dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", 0.0f, 0.0f, 1.0f, true);
             }
+        }
+
+        private void updateBtn_Click(object sender, RoutedEventArgs e)
+        {
+            version.Update();
         }
     }
 }

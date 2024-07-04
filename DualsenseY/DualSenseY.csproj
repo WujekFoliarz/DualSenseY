@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <ApplicationIcon>dualsenseyicon.ico</ApplicationIcon>
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +22,7 @@
   <ItemGroup>
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Wujek_Dualsense_API" Version="1.0.8" />
+    <PackageReference Include="Wujek_Dualsense_API" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>

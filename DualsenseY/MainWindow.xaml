@@ -14,7 +14,8 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="10,10,10,10" Grid.ColumnSpan="2">
-            <TextBlock Text="DualSense Control Panel -- Version 1.7" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBlock Text="DualSense Control Panel -- Version 1.8" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+            <Button x:Name="updateBtn" Content="Install latest update" Margin="450,-40,0,0" Width="110" Height="25" Click="updateBtn_Click" Visibility="Hidden"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <ComboBox x:Name="cmbControllerSelect" Width="100" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="cmbControllerSelect_SelectionChanged">
                     <ComboBoxItem Content="Controller 1"/>
@@ -28,7 +29,7 @@
                     <ComboBoxItem Content="Xbox 360"/>
                     <ComboBoxItem Content="Dualshock 4"/>
                 </ComboBox>
-                <TextBlock x:Name="udpStatus" Text="UDP: Inactive" Margin="120,0,0,0"/>
+                <TextBlock x:Name="udpStatus" Text="UDP: Inactive" Margin="110,0,0,0"/>
                 <Ellipse x:Name="udpStatusDot"
                 Width="5"
                 Height="5"
