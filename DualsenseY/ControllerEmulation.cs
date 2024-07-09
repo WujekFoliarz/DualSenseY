@@ -46,7 +46,8 @@ namespace DualSenseY
 
         private void X360Controller_FeedbackReceived(object sender, Xbox360FeedbackReceivedEventArgs e)
         {
-            dualsense.SetStandardRumble(e.SmallMotor, e.LargeMotor);
+            dualsense.SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
+            dualsense.SetStandardRumble(e.LargeMotor, e.SmallMotor);
         }
 
         public void StartDS4Emulation()
@@ -67,7 +68,8 @@ namespace DualSenseY
 
         private void Dualshock4_FeedbackReceived(object sender, DualShock4FeedbackReceivedEventArgs e)
         {
-            dualsense.SetStandardRumble(e.SmallMotor, e.LargeMotor);
+            dualsense.SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
+            dualsense.SetStandardRumble(e.LargeMotor, e.SmallMotor);
         }
 
         private void Emulate()
