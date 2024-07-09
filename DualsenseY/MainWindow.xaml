@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="10,10,10,10" Grid.ColumnSpan="2">
-            <TextBlock Text="DualSense Control Panel -- Version 1.8" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBlock Text="DualSense Control Panel -- Version 1.9" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
             <Button x:Name="updateBtn" Content="Install latest update" Margin="450,-40,0,0" Width="110" Height="25" Click="updateBtn_Click" Visibility="Hidden"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <ComboBox x:Name="cmbControllerSelect" Width="100" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="cmbControllerSelect_SelectionChanged">
@@ -38,9 +38,11 @@
                 Canvas.Top="25" Margin="3,-2,0,0"/>
             </StackPanel>
             <TextBlock x:Name="txtStatus" Text="Status: Disconnected" Margin="0,0,0,10"/>
+            <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="-140,-40,0,0" Grid.Column="1"/>
+            <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="20,-40,0,0" Grid.Column="1"/>
         </StackPanel>
 
-        <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="2">
+        <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="2" SelectionChanged="controlPanel_SelectionChanged">
 
 
             <TabItem Header="Vibration">

@@ -10,6 +10,8 @@ using NAudio.Wave;
 using System.Windows.Media.Media3D;
 using System.IO;
 using System.Reflection;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+using System.Windows.Shapes;
 
 namespace DualSenseY
 {
@@ -29,6 +31,7 @@ namespace DualSenseY
         private int rightTriggerModeIndex = 0;
         private Stopwatch UDPtime = new Stopwatch();
         private ControllerEmulation controllerEmulation;
+        private Settings settings = new Settings();
 
         private bool firstTimeCmbSelect = true;
 
@@ -43,6 +46,8 @@ namespace DualSenseY
                 updateBtn.Visibility = Visibility.Hidden;
 
             controlPanel.Visibility = Visibility.Hidden;
+            loadConfigBtn.Visibility = Visibility.Hidden;
+            saveConfigBtn.Visibility = Visibility.Hidden;
             controllerEmulationBox.Visibility = Visibility.Hidden;
             cmbControllerSelect.SelectedIndex = 0;
 
@@ -122,7 +127,11 @@ namespace DualSenseY
                         if (UDPtime.ElapsedMilliseconds >= 1000 || dualsense[currentControllerNumber] == null || dualsense[currentControllerNumber].Working == false)
                         {
                             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                            {
                                 controlPanel.Visibility = Visibility.Visible;
+                                loadConfigBtn.Visibility = Visibility.Visible;
+                                saveConfigBtn.Visibility = Visibility.Visible;
+                            }
 
                             udpStatus.Text = "UDP: Inactive";
                             udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
@@ -130,6 +139,8 @@ namespace DualSenseY
                         else
                         {
                             controlPanel.Visibility = Visibility.Hidden;
+                            loadConfigBtn.Visibility = Visibility.Hidden;
+                            saveConfigBtn.Visibility = Visibility.Hidden;
                             udpStatus.Text = "UDP: Active";
                             udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
                         }
@@ -721,6 +732,7 @@ namespace DualSenseY
                 }
                 catch (Exception error)
                 {
+                    MessageBox.Show(error.ToString());
                     MessageBox.Show($"Controller {currentControllerNumber + 1} is not plugged in");
                 }
             }
@@ -750,6 +762,8 @@ namespace DualSenseY
                 controlPanel.Visibility = Visibility.Visible;
                 cmbControllerSelect.Visibility = Visibility.Hidden;
                 controllerEmulationBox.Visibility = Visibility.Visible;
+                loadConfigBtn.Visibility = Visibility.Visible;
+                saveConfigBtn.Visibility = Visibility.Visible;
 
                 if(controllerEmulationBox.SelectedIndex == 1 && controllerEmulation == null)
                     controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
@@ -775,6 +789,8 @@ namespace DualSenseY
                 controlPanel.Visibility = Visibility.Hidden;
                 cmbControllerSelect.Visibility = Visibility.Visible;
                 controllerEmulationBox.Visibility = Visibility.Hidden;
+                loadConfigBtn.Visibility = Visibility.Hidden;
+                saveConfigBtn.Visibility = Visibility.Hidden;
                 controllerEmulationBox.SelectedIndex = 0;
             }
 
@@ -1174,6 +1190,240 @@ namespace DualSenseY
         private void updateBtn_Click(object sender, RoutedEventArgs e)
         {
             version.Update();
+        }
+
+        private void saveConfigBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                Settings.Profile profile = new Settings.Profile();
+                profile.R = (int)sliderRed.Value;
+                profile.G = (int)sliderGreen.Value;
+                profile.B = (int)sliderBlue.Value;
+                if((bool)micLEDcheckbox.IsChecked)
+                    profile.microphoneLED = LED.MicrophoneLED.ON;
+                else
+                    profile.microphoneLED = LED.MicrophoneLED.OFF;
+                switch (LEDbox.SelectedIndex)
+                {
+                    case 0:
+                        profile.playerLED = LED.PlayerLED.OFF;
+                        break;
+                    case 1:
+                        profile.playerLED = LED.PlayerLED.PLAYER_1;
+                        break;
+                    case 2:
+                        profile.playerLED = LED.PlayerLED.PLAYER_2;
+                        break;
+                    case 3:
+                        profile.playerLED = LED.PlayerLED.PLAYER_3;
+                        break;
+                    case 4:
+                        profile.playerLED = LED.PlayerLED.PLAYER_4;
+                        break;
+                    case 5:
+                        profile.playerLED = LED.PlayerLED.ALL;
+                        break;
+                }
+                profile.leftTriggerMode = currentLeftTrigger;
+                profile.rightTriggerMode = currentRightTrigger;
+                profile.leftTriggerForces = leftTriggerForces;
+                profile.rightTriggerForces = rightTriggerForces;
+
+
+                var dialog = new DialogBox();
+                if (dialog.ShowDialog() == true)
+                {
+                    try
+                    {
+                        settings.SaveProfileToFile(dialog.ResponseText, profile);
+                        MessageBox.Show("Your config was created successfuly!", "Config creation", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                    catch
+                    {
+                        MessageBox.Show("File couldn't be saved, contact the developer", "File write error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Failed!");
+                }
+            }
+        }
+
+        private void configBtn_Click(object sender, RoutedEventArgs e)
+        {
+            Button control = (Button)sender;
+            string path = Settings.Path + "\\" + control.Content + ".dyp";
+
+        }
+
+        private void controlPanel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if(controlPanel.SelectedIndex == 2)
+            {
+
+            }
+        }
+
+        private void loadConfigBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+
+            if (!Directory.Exists(Settings.Path))
+                Directory.CreateDirectory(Settings.Path);
+
+            dialog.InitialDirectory = Settings.Path;
+            dialog.FileName = "DualSense Profile"; // Default file name
+            dialog.DefaultExt = ".dyp"; // Default file extension
+            dialog.Filter = "DualSenseY Profile (.dyp)|*.dyp"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            {
+                // Open document
+                string path = dialog.FileName;
+
+                if (File.Exists(path))
+                {
+                    Settings.Profile profile = settings.ReadProfileFromFile(path);
+
+                    if (profile != null)
+                    {
+                        dualsense[currentControllerNumber].SetLightbarTransition(profile.R, profile.G, profile.B, 10, 10);
+                        dualsense[currentControllerNumber].SetLeftTrigger(profile.leftTriggerMode, profile.leftTriggerForces[0], profile.leftTriggerForces[1], profile.leftTriggerForces[2], profile.leftTriggerForces[3], profile.leftTriggerForces[4], profile.leftTriggerForces[5], profile.leftTriggerForces[6]);
+                        dualsense[currentControllerNumber].SetRightTrigger(profile.rightTriggerMode, profile.rightTriggerForces[0], profile.rightTriggerForces[1], profile.rightTriggerForces[2], profile.rightTriggerForces[3], profile.rightTriggerForces[4], profile.rightTriggerForces[5], profile.rightTriggerForces[6]);
+                        dualsense[currentControllerNumber].SetMicrophoneLED(profile.microphoneLED);
+                        dualsense[currentControllerNumber].SetPlayerLED(profile.playerLED);
+
+                        controlPanel.SelectedIndex = 0;
+                        triggerLeftOrRightBox.SelectedIndex = 0;
+                        sliderRed.Value = profile.R;
+                        sliderGreen.Value = profile.G;
+                        sliderBlue.Value = profile.B;
+                        currentLeftTrigger = profile.leftTriggerMode;
+                        currentRightTrigger = profile.rightTriggerMode;
+
+                        switch (profile.playerLED)
+                        {
+                            case LED.PlayerLED.OFF:
+                                LEDbox.SelectedIndex = 0;
+                                break;
+                            case LED.PlayerLED.PLAYER_1:
+                                LEDbox.SelectedIndex = 1;
+                                break;
+                            case LED.PlayerLED.PLAYER_2:
+                                LEDbox.SelectedIndex = 2;
+                                break;
+                            case LED.PlayerLED.PLAYER_3:
+                                LEDbox.SelectedIndex = 3;
+                                break;
+                            case LED.PlayerLED.PLAYER_4:
+                                LEDbox.SelectedIndex = 4;
+                                break;
+                            case LED.PlayerLED.ALL:
+                                LEDbox.SelectedIndex = 5;
+                                break;
+                        }
+
+                        if (profile.microphoneLED == LED.MicrophoneLED.ON)
+                            micLEDcheckbox.IsChecked = true;
+                        else
+                            micLEDcheckbox.IsChecked = false;
+
+                        switch (currentLeftTrigger)
+                        {
+                            case TriggerType.TriggerModes.Off:
+                                leftTriggerModeIndex = 0;
+                                break;
+                            case TriggerType.TriggerModes.Rigid:
+                                leftTriggerModeIndex = 1;
+                                break;
+                            case TriggerType.TriggerModes.Pulse:
+                                leftTriggerModeIndex = 2;
+                                break;
+                            case TriggerType.TriggerModes.Rigid_A:
+                                leftTriggerModeIndex = 3;
+                                break;
+                            case TriggerType.TriggerModes.Rigid_B:
+                                leftTriggerModeIndex = 4;
+                                break;
+                            case TriggerType.TriggerModes.Rigid_AB:
+                                leftTriggerModeIndex = 5;
+                                break;
+                            case TriggerType.TriggerModes.Pulse_A:
+                                leftTriggerModeIndex = 6;
+                                break;
+                            case TriggerType.TriggerModes.Pulse_B:
+                                leftTriggerModeIndex = 7;
+                                break;
+                            case TriggerType.TriggerModes.Pulse_AB:
+                                leftTriggerModeIndex = 8;
+                                break;
+                            case TriggerType.TriggerModes.Calibration:
+                                leftTriggerModeIndex = 9;
+                                break;
+                        }
+
+                        switch (currentRightTrigger)
+                        {
+                            case TriggerType.TriggerModes.Off:
+                                rightTriggerModeIndex = 0;
+                                break;
+                            case TriggerType.TriggerModes.Rigid:
+                                rightTriggerModeIndex = 1;
+                                break;
+                            case TriggerType.TriggerModes.Pulse:
+                                rightTriggerModeIndex = 2;
+                                break;
+                            case TriggerType.TriggerModes.Rigid_A:
+                                rightTriggerModeIndex = 3;
+                                break;
+                            case TriggerType.TriggerModes.Rigid_B:
+                                rightTriggerModeIndex = 4;
+                                break;
+                            case TriggerType.TriggerModes.Rigid_AB:
+                                rightTriggerModeIndex = 5;
+                                break;
+                            case TriggerType.TriggerModes.Pulse_A:
+                                rightTriggerModeIndex = 6;
+                                break;
+                            case TriggerType.TriggerModes.Pulse_B:
+                                rightTriggerModeIndex = 7;
+                                break;
+                            case TriggerType.TriggerModes.Pulse_AB:
+                                rightTriggerModeIndex = 8;
+                                break;
+                            case TriggerType.TriggerModes.Calibration:
+                                rightTriggerModeIndex = 9;
+                                break;
+                        }
+                       
+                        leftTriggerForces = profile.leftTriggerForces;
+                        triggerModeCmb.SelectedIndex = leftTriggerModeIndex;
+                        sliderForce1.Value = leftTriggerForces[0];
+                        sliderForce2.Value = leftTriggerForces[1];
+                        sliderForce3.Value = leftTriggerForces[2];
+                        sliderForce4.Value = leftTriggerForces[3];
+                        sliderForce5.Value = leftTriggerForces[4];
+                        sliderForce6.Value = leftTriggerForces[5];
+                        sliderForce7.Value = leftTriggerForces[6];
+                        rightTriggerForces = profile.rightTriggerForces;
+
+                    }
+                    else
+                    {
+                        MessageBox.Show("File is corrupted", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("File doesn't exist", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 }
