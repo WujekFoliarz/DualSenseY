@@ -1,17 +1,12 @@
-﻿using System.Diagnostics;
-using System.Drawing;
+﻿using NAudio;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Wujek_Dualsense_API;
-using NAudio;
-using NAudio.CoreAudioApi;
-using NAudio.Wave;
-using System.Windows.Media.Media3D;
-using System.IO;
-using System.Reflection;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
-using System.Windows.Shapes;
 
 namespace DualSenseY
 {
@@ -79,51 +74,49 @@ namespace DualSenseY
         {
             while (true)
             {
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                if (MD[currentControllerNumber] != null && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
                 {
-                    if (MD[currentControllerNumber] != null && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
-                    {
-                        var AMI = MD[currentControllerNumber].AudioMeterInformation;
-                        this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
-                    }
-                    else if (MD[currentControllerNumber] == null)
-                    {
-                        waveInStream.Dispose();
-                        waveInStream = new WaveInEvent();
-
-                        foreach (MMDevice mmdevice in MDE.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
-                        {
-                            if (currentControllerNumber > 0)
-                            {
-                                if (mmdevice.FriendlyName.Contains("Wireless Controller") && mmdevice.FriendlyName.Contains(Convert.ToString(currentControllerNumber + 1)))
-                                {
-                                    MD[currentControllerNumber] = mmdevice;
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                if (mmdevice.FriendlyName.Contains("Wireless Controller") && !mmdevice.FriendlyName.Contains("2") && !mmdevice.FriendlyName.Contains("3") && !mmdevice.FriendlyName.Contains("4"))
-                                {
-                                    MD[0] = mmdevice;
-                                    break;
-                                }
-                            }
-                        }
-
-                        try
-                        {
-                            waveInStream.StartRecording();
-                        }
-                        catch (MmException e)
-                        {
-                            MessageBox.Show("Intializing audio capture failed, microphone status will be unreadable", "Audio error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            break;
-                        }
-                    }
-
+                    var AMI = MD[currentControllerNumber].AudioMeterInformation;
+                    this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
                     Thread.Sleep(100);
                 }
+                else if (MD[currentControllerNumber] == null)
+                {
+                    waveInStream.Dispose();
+                    waveInStream = new WaveInEvent();
+
+                    foreach (MMDevice mmdevice in MDE.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All))
+                    {
+                        if (currentControllerNumber > 0)
+                        {
+                            if (mmdevice.FriendlyName.Contains("Wireless Controller") && mmdevice.FriendlyName.Contains(Convert.ToString(currentControllerNumber + 1)))
+                            {
+                                MD[currentControllerNumber] = mmdevice;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            if (mmdevice.FriendlyName.Contains("Wireless Controller") && !mmdevice.FriendlyName.Contains("2") && !mmdevice.FriendlyName.Contains("3") && !mmdevice.FriendlyName.Contains("4"))
+                            {
+                                MD[0] = mmdevice;
+                                break;
+                            }
+                        }
+                    }
+
+                    try
+                    {
+                        waveInStream.StartRecording();
+                    }
+                    catch (MmException e)
+                    {
+                        if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                            MessageBox.Show("Intializing audio capture failed, microphone status will be unreadable", "Audio error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+
+                Thread.Sleep(100);
             }
         }
 
@@ -133,29 +126,29 @@ namespace DualSenseY
             while (udp.serverOn)
             {
 
-                    this.Dispatcher.Invoke(() =>
+                this.Dispatcher.Invoke(() =>
+                {
+                    if (UDPtime.ElapsedMilliseconds >= 1000 || dualsense[currentControllerNumber] == null || dualsense[currentControllerNumber].Working == false)
                     {
-                        if (UDPtime.ElapsedMilliseconds >= 1000 || dualsense[currentControllerNumber] == null || dualsense[currentControllerNumber].Working == false)
+                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                         {
-                            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
-                            {
-                                controlPanel.Visibility = Visibility.Visible;
-                                loadConfigBtn.Visibility = Visibility.Visible;
-                                saveConfigBtn.Visibility = Visibility.Visible;
-                            }
+                            controlPanel.Visibility = Visibility.Visible;
+                            loadConfigBtn.Visibility = Visibility.Visible;
+                            saveConfigBtn.Visibility = Visibility.Visible;
+                        }
 
-                            udpStatus.Text = "UDP: Inactive";
-                            udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
-                        }
-                        else
-                        {
-                            controlPanel.Visibility = Visibility.Hidden;
-                            loadConfigBtn.Visibility = Visibility.Hidden;
-                            saveConfigBtn.Visibility = Visibility.Hidden;
-                            udpStatus.Text = "UDP: Active";
-                            udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
-                        }
-                    });
+                        udpStatus.Text = "UDP: Inactive";
+                        udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
+                    }
+                    else
+                    {
+                        controlPanel.Visibility = Visibility.Hidden;
+                        loadConfigBtn.Visibility = Visibility.Hidden;
+                        saveConfigBtn.Visibility = Visibility.Hidden;
+                        udpStatus.Text = "UDP: Active";
+                        udpStatusDot.Fill = new SolidColorBrush(Colors.Green);
+                    }
+                });
 
 
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && udp.currentPacket != null && udp.serverOn)
@@ -613,7 +606,7 @@ namespace DualSenseY
 
                                 break;
                             case UDP.InstructionType.RGBUpdate:
-                                if(Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
+                                if (Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
                                     dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
                                 break;
                             case UDP.InstructionType.PlayerLEDNewRevision:
@@ -754,7 +747,7 @@ namespace DualSenseY
 
         private void Connection_ControllerDisconnected(object? sender, ConnectionStatus.Controller e)
         {
-            MessageBox.Show($"Controller number {e.ControllerNumber+1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show($"Controller number {e.ControllerNumber + 1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
             dualsense[e.ControllerNumber].Dispose();
             UpdateConnectionStatus();
         }
@@ -775,7 +768,8 @@ namespace DualSenseY
 
         private void UpdateConnectionStatus()
         {
-            this.Dispatcher.Invoke(() => {
+            this.Dispatcher.Invoke(() =>
+            {
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                 {
                     txtStatus.Text = "Status: Connected";
@@ -1153,7 +1147,7 @@ namespace DualSenseY
                         dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
                         break;
                 }
-            }   
+            }
         }
 
         private void micLEDcheckbox_Checked(object sender, RoutedEventArgs e)
@@ -1221,7 +1215,7 @@ namespace DualSenseY
                 profile.R = (int)sliderRed.Value;
                 profile.G = (int)sliderGreen.Value;
                 profile.B = (int)sliderBlue.Value;
-                if((bool)micLEDcheckbox.IsChecked)
+                if ((bool)micLEDcheckbox.IsChecked)
                     profile.microphoneLED = LED.MicrophoneLED.ON;
                 else
                     profile.microphoneLED = LED.MicrophoneLED.OFF;
@@ -1281,7 +1275,7 @@ namespace DualSenseY
 
         private void controlPanel_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if(controlPanel.SelectedIndex == 2)
+            if (controlPanel.SelectedIndex == 2)
             {
 
             }
@@ -1422,7 +1416,7 @@ namespace DualSenseY
                                 rightTriggerModeIndex = 9;
                                 break;
                         }
-                       
+
                         leftTriggerForces = profile.leftTriggerForces;
                         triggerModeCmb.SelectedIndex = leftTriggerModeIndex;
                         sliderForce1.Value = leftTriggerForces[0];

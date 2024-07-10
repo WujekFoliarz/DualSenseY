@@ -1,8 +1,8 @@
-﻿using Nefarius.ViGEm.Client.Targets;
-using Nefarius.ViGEm.Client;
+﻿using Nefarius.ViGEm.Client;
+using Nefarius.ViGEm.Client.Targets;
+using Nefarius.ViGEm.Client.Targets.DualShock4;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
 using Wujek_Dualsense_API;
-using Nefarius.ViGEm.Client.Targets.DualShock4;
 
 namespace DualSenseY
 {
@@ -30,7 +30,7 @@ namespace DualSenseY
         public void StartX360Emulation()
         {
             Emulating = false;
-            if(dualshock4 != null)
+            if (dualshock4 != null)
                 dualshock4.Disconnect();
 
             if (x360Controller == null)
@@ -160,11 +160,11 @@ namespace DualSenseY
         public void Dispose()
         {
             Emulating = false;
-            if(dualshock4 != null)
+            if (dualshock4 != null)
             {
                 dualshock4.Disconnect();
             }
-            if(x360Controller != null)
+            if (x360Controller != null)
                 x360Controller.Disconnect();
         }
     }
