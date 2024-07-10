@@ -1,3 +1,7 @@
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/WujekFoliarz/DualSenseY/total)
+
+
+
 ### If you need any help, add me on discord - wujek_foliarz
 
 ## Features
