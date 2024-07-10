@@ -79,40 +79,51 @@ namespace DualSenseY
         {
             while (true)
             {
-                if (MD[currentControllerNumber] != null && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
                 {
+                    if (MD[currentControllerNumber] != null && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB && dualsense[currentControllerNumber].Working)
+                    {
                         var AMI = MD[currentControllerNumber].AudioMeterInformation;
                         this.Dispatcher.Invoke(new Action(() => { micProgressBar.Value = AMI.PeakValues[0] * 100; }));
-                }
-                else if (MD[currentControllerNumber] == null)
-                {
-                    waveInStream.Dispose();
-                    waveInStream = new WaveInEvent();
-
-                    foreach (MMDevice mmdevice in MDE.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.All))
+                    }
+                    else if (MD[currentControllerNumber] == null)
                     {
-                        if (currentControllerNumber > 0)
+                        waveInStream.Dispose();
+                        waveInStream = new WaveInEvent();
+
+                        foreach (MMDevice mmdevice in MDE.EnumerateAudioEndPoints(DataFlow.Capture, DeviceState.Active))
                         {
-                            if (mmdevice.FriendlyName.Contains("Wireless Controller") && mmdevice.FriendlyName.Contains(Convert.ToString(currentControllerNumber + 1)))
+                            if (currentControllerNumber > 0)
                             {
-                                MD[currentControllerNumber] = mmdevice;
-                                break;
+                                if (mmdevice.FriendlyName.Contains("Wireless Controller") && mmdevice.FriendlyName.Contains(Convert.ToString(currentControllerNumber + 1)))
+                                {
+                                    MD[currentControllerNumber] = mmdevice;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                if (mmdevice.FriendlyName.Contains("Wireless Controller") && !mmdevice.FriendlyName.Contains("2") && !mmdevice.FriendlyName.Contains("3") && !mmdevice.FriendlyName.Contains("4"))
+                                {
+                                    MD[0] = mmdevice;
+                                    break;
+                                }
                             }
                         }
-                        else
+
+                        try
                         {
-                            if (mmdevice.FriendlyName.Contains("Wireless Controller") && !mmdevice.FriendlyName.Contains("2") && !mmdevice.FriendlyName.Contains("3") && !mmdevice.FriendlyName.Contains("4"))
-                            {
-                                MD[0] = mmdevice;
-                                break;
-                            }
+                            waveInStream.StartRecording();
+                        }
+                        catch (MmException e)
+                        {
+                            MessageBox.Show("Intializing audio capture failed, microphone status will be unreadable", "Audio error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            break;
                         }
                     }
 
-                    waveInStream.StartRecording();
+                    Thread.Sleep(100);
                 }
-
-                Thread.Sleep(100);
             }
         }
 
@@ -670,6 +681,7 @@ namespace DualSenseY
                             {
                                 dualsense[0] = new Dualsense(0);
                                 dualsense[0].Start();
+                                dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 0;
                             }
                             break;
@@ -678,6 +690,7 @@ namespace DualSenseY
                             {
                                 dualsense[1] = new Dualsense(1);
                                 dualsense[1].Start();
+                                dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 1;
                             }
                             break;
@@ -686,6 +699,7 @@ namespace DualSenseY
                             {
                                 dualsense[2] = new Dualsense(2);
                                 dualsense[2].Start();
+                                dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 2;
                             }
                             break;
@@ -694,6 +708,7 @@ namespace DualSenseY
                             {
                                 dualsense[3] = new Dualsense(3);
                                 dualsense[3].Start();
+                                dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 3;
                             }
                             break;
@@ -732,10 +747,16 @@ namespace DualSenseY
                 }
                 catch (Exception error)
                 {
-                    MessageBox.Show(error.ToString());
                     MessageBox.Show($"Controller {currentControllerNumber + 1} is not plugged in");
                 }
             }
+        }
+
+        private void Connection_ControllerDisconnected(object? sender, ConnectionStatus.Controller e)
+        {
+            MessageBox.Show($"Controller number {e.ControllerNumber+1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
+            dualsense[e.ControllerNumber].Dispose();
+            UpdateConnectionStatus();
         }
 
         private void cmbControllerSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -754,46 +775,46 @@ namespace DualSenseY
 
         private void UpdateConnectionStatus()
         {
-
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
-            {
-                txtStatus.Text = "Status: Connected";
-                btnConnect.Content = "Disconnect Controller";
-                controlPanel.Visibility = Visibility.Visible;
-                cmbControllerSelect.Visibility = Visibility.Hidden;
-                controllerEmulationBox.Visibility = Visibility.Visible;
-                loadConfigBtn.Visibility = Visibility.Visible;
-                saveConfigBtn.Visibility = Visibility.Visible;
-
-                if(controllerEmulationBox.SelectedIndex == 1 && controllerEmulation == null)
-                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
-                else if(controllerEmulationBox.SelectedIndex == 2 && controllerEmulation == null)
-                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
-
-                if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+            this.Dispatcher.Invoke(() => {
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                 {
-                    micTab.IsEnabled = false;
-                    speakerTab.IsEnabled = false;
+                    txtStatus.Text = "Status: Connected";
+                    btnConnect.Content = "Disconnect Controller";
+                    controlPanel.Visibility = Visibility.Visible;
+                    cmbControllerSelect.Visibility = Visibility.Hidden;
+                    controllerEmulationBox.Visibility = Visibility.Visible;
+                    loadConfigBtn.Visibility = Visibility.Visible;
+                    saveConfigBtn.Visibility = Visibility.Visible;
+
+                    if (controllerEmulationBox.SelectedIndex == 1 && controllerEmulation == null)
+                        controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
+                    else if (controllerEmulationBox.SelectedIndex == 2 && controllerEmulation == null)
+                        controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
+
+                    if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                    {
+                        micTab.IsEnabled = false;
+                        speakerTab.IsEnabled = false;
+                    }
+                    else
+                    {
+                        micTab.IsEnabled = true;
+                        speakerTab.IsEnabled = true;
+                    }
+
                 }
-                else
+                else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
                 {
-                    micTab.IsEnabled = true;
-                    speakerTab.IsEnabled = true;
+                    txtStatus.Text = "Status: Disconnected";
+                    btnConnect.Content = "Connect Controller";
+                    controlPanel.Visibility = Visibility.Hidden;
+                    cmbControllerSelect.Visibility = Visibility.Visible;
+                    controllerEmulationBox.Visibility = Visibility.Hidden;
+                    loadConfigBtn.Visibility = Visibility.Hidden;
+                    saveConfigBtn.Visibility = Visibility.Hidden;
+                    controllerEmulationBox.SelectedIndex = 0;
                 }
-
-            }
-            else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
-            {
-                txtStatus.Text = "Status: Disconnected";
-                btnConnect.Content = "Connect Controller";
-                controlPanel.Visibility = Visibility.Hidden;
-                cmbControllerSelect.Visibility = Visibility.Visible;
-                controllerEmulationBox.Visibility = Visibility.Hidden;
-                loadConfigBtn.Visibility = Visibility.Hidden;
-                saveConfigBtn.Visibility = Visibility.Hidden;
-                controllerEmulationBox.SelectedIndex = 0;
-            }
-
+            });
         }
 
         private void sliderLeftMotor_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
