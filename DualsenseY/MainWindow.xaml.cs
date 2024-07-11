@@ -27,13 +27,14 @@ namespace DualSenseY
         private Stopwatch UDPtime = new Stopwatch();
         private ControllerEmulation controllerEmulation;
         private Settings settings = new Settings();
+        private bool useTouchpadAsMouse = false;
 
         private bool firstTimeCmbSelect = true;
 
         public MainWindow()
         {
             InitializeComponent();
-
+            controlPanelText.Text = $"DualSense Control Panel -- Version {version.CurrentVersion}";
             version.RemoveOldFiles();
             if (version.IsOutdated())
                 updateBtn.Visibility = Visibility.Visible;
@@ -65,6 +66,7 @@ namespace DualSenseY
             udp = new UDP();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchMicrophoneLevel(); }).Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
         }
 
         private MMDeviceEnumerator MDE = new MMDeviceEnumerator();
@@ -118,6 +120,148 @@ namespace DualSenseY
 
                 Thread.Sleep(100);
             }
+        }
+
+        private const int maxX = 1919;
+        private const int maxY = 1079;
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        static extern void mouse_event(int dwFlags, int dx, int dy,
+                      int dwData, int dwExtraInfo);
+
+        [Flags]
+        public enum MouseEventFlags
+        {
+            LEFTDOWN = 0x00000002,
+            LEFTUP = 0x00000004,
+            MIDDLEDOWN = 0x00000020,
+            MIDDLEUP = 0x00000040,
+            MOVE = 0x00000001,
+            ABSOLUTE = 0x00008000,
+            RIGHTDOWN = 0x00000008,
+            RIGHTUP = 0x00000010
+        }
+
+        private POINT lastTouchPad = new POINT();
+        private POINT lastCursorPos = new POINT();
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetCursorPos(int X, int Y);
+
+        public struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        private void ReadTouchpad()
+        {
+            GetCursorPos(out POINT posfirst);
+            lastCursorPos = posfirst;
+            double accelerationFactor = 0.01; // This can be adjusted
+            bool wasHeld = false;
+            bool wasClicked = false;
+            int swipeX = 0;
+            int swipeY = 0;
+
+            while (true)
+            {
+                GetCursorPos(out POINT pos);
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                {              
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        if(!dualsense[currentControllerNumber].ButtonState.touchBtn && wasClicked && useTouchpadAsMouse)
+                        {
+                            mouse_event((int)(MouseEventFlags.LEFTUP), 0, 0, 0, 0);
+                        }
+
+                        if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.IsActive)
+                        {
+
+                            if (wasHeld && useTouchpadAsMouse)
+                            {
+                                swipeX = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X - lastTouchPad.X;
+                                swipeY = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y - lastTouchPad.Y;
+                                SetCursorPos(pos.X + swipeX, pos.Y + swipeY);
+                            }
+                            else
+                            {
+                                swipeX = 0;
+                                swipeY = 0;
+                            }
+
+                            touchLeftDot.Visibility = Visibility.Visible;
+                            touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}";
+                            
+                            touchLeftDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y, maxY, 135), 0, 0);
+
+                            if (dualsense[currentControllerNumber].ButtonState.touchBtn)
+                            {
+                                if (useTouchpadAsMouse)
+                                {
+                                    if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X > 1100) 
+                                    {
+                                        if (!wasClicked)
+                                        {
+                                            mouse_event((int)(MouseEventFlags.LEFTDOWN), 0, 0, 0, 0);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        mouse_event((int)(MouseEventFlags.RIGHTDOWN), 0, 0, 0, 0);
+                                        mouse_event((int)(MouseEventFlags.RIGHTUP), 0, 0, 0, 0);
+                                    }
+                                }
+
+                                wasClicked = true;
+                                touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Red);
+                            }
+                            else
+                            {
+                                wasClicked = false;
+                                touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Black);
+                            }
+
+                            if (dualsense[currentControllerNumber].ButtonState.trackPadTouch1.IsActive)
+                            {
+                                touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}\nTrack Touch 2: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y}";
+                                touchRightDot.Visibility = Visibility.Visible;
+                                touchRightDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y, maxY, 135), 0, 0);
+                            }
+                            else
+                                touchRightDot.Visibility = Visibility.Hidden;
+
+                            wasHeld = true;
+                        }
+                        else
+                        {
+                            wasHeld = false;
+                            swipeX = 0;
+                            swipeY = 0;
+                            touchPadText.Text = string.Empty;
+                            touchLeftDot.Visibility = Visibility.Hidden;
+                            touchRightDot.Visibility = Visibility.Hidden;
+                        }
+                    });
+
+                    lastTouchPad.X = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X;
+                    lastTouchPad.Y = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y;
+                }
+
+                lastCursorPos = pos;
+                Thread.Sleep(10);
+            }
+        }
+
+        private static double ScaleToMax(double value, double maxOriginal, double maxTarget)
+        {
+            // Calculate the scaling factor
+            double scaleFactor = maxTarget / maxOriginal;
+            // Scale the value
+            return value * scaleFactor;
         }
 
         private async void WatchUDPUpdates()
@@ -1439,6 +1583,16 @@ namespace DualSenseY
                     MessageBox.Show("File doesn't exist", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        private void useAsMouseBox_Checked(object sender, RoutedEventArgs e)
+        {
+            useTouchpadAsMouse = true;
+        }
+
+        private void useAsMouseBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            useTouchpadAsMouse = false;
         }
     }
 }

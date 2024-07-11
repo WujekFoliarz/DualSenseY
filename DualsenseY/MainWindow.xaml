@@ -14,7 +14,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="10,10,10,10" Grid.ColumnSpan="2">
-            <TextBlock Text="DualSense Control Panel -- Version 2.1" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBlock x:Name="controlPanelText" Text="DualSense Control Panel -- Version X.X" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
             <Button x:Name="updateBtn" Content="Install latest update" Margin="450,-40,0,0" Width="110" Height="25" Click="updateBtn_Click" Visibility="Hidden"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                 <ComboBox x:Name="cmbControllerSelect" Width="100" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="cmbControllerSelect_SelectionChanged">
@@ -223,7 +223,31 @@
                     <Button Grid.Row="2"  Height="40" Width="90" x:Name="testRightActuatorButton" Content="Test haptics" FontSize="15" Margin="1,22,100,5" Click="testRightActuatorButton_Click"/>
                 </Grid>
             </TabItem>
-        </TabControl>
 
+            <TabItem Header="Touchpad" x:Name="touchpadTab" IsEnabled="True">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Row="0" x:Name="touchPadBorder" Height="150" Width="300" BorderBrush="Black" BorderThickness="2,2,2,2" Background="{x:Null}" Margin="130,0,0,0"/>
+                    <Grid Grid.Row="0" Margin="130,0,0,0">
+                        <Ellipse x:Name="touchLeftDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                            <Ellipse x:Name="touchRightDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        </Grid>
+
+                    <StackPanel Grid.Row="1">
+                        <TextBlock Text="Use as mouse: " FontSize="14"/>
+                        <CheckBox x:Name="useAsMouseBox" Margin="92,-16,0,0" Checked="useAsMouseBox_Checked" Unchecked="useAsMouseBox_Unchecked"/>
+                        <TextBlock  x:Name="touchPadText" Text="" FontSize="12"></TextBlock>
+                    </StackPanel>
+
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
