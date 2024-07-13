@@ -967,8 +967,16 @@ namespace DualSenseY
 
         private void btnTestVibration_Click(object sender, RoutedEventArgs e)
         {
-            dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
-            dualsense[currentControllerNumber].SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
+            if((byte)sliderLeftMotor.Value == 0 && (byte)sliderRightMotor.Value == 0)
+            {
+                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                dualsense[currentControllerNumber].SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
+            }
+            else
+            {
+                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
+                dualsense[currentControllerNumber].SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
+            }
         }
 
         private void sliderLED_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
