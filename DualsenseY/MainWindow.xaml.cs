@@ -113,7 +113,7 @@ namespace DualSenseY
                     }
                     catch (MmException e)
                     {
-                        if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
                             MessageBox.Show("Intializing audio capture failed, microphone status will be unreadable", "Audio error", MessageBoxButton.OK, MessageBoxImage.Warning);
                     }
                 }

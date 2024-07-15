@@ -190,8 +190,8 @@
                     </StackPanel>
 
                     <StackPanel Grid.Row="1" Margin="0,20,0,0" Grid.ColumnSpan="2" Grid.RowSpan="2">
-                        <TextBlock x:Name="micVolumeText" Text="Microphone Volume: 100" Grid.Row="2" FontSize="15"/>
-                        <Slider x:Name="sliderMicVolume" Minimum="0" Maximum="100" Value="100" ValueChanged="sliderMicVolume_ValueChanged"/>
+                        <TextBlock x:Name="micVolumeText" Text="Microphone Volume: 35" Grid.Row="2" FontSize="15"/>
+                        <Slider x:Name="sliderMicVolume" Minimum="0" Maximum="100" Value="35" ValueChanged="sliderMicVolume_ValueChanged"/>
                         <TextBlock Text="Note: The microphone volume will reset after you close the app or disconnect from your controller,"/>
                         <TextBlock Text="additionaly, due to the nature of how DualSense controllers work on windows, the currently selected"/>
                         <TextBlock Text="microphone may be from another currently connected DualSense, make sure by blowing air into" />
