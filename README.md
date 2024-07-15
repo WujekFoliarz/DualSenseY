@@ -2,6 +2,7 @@
 
 ## Notes
 - Bluetooth connection is recommended only for controller emulation and UDP protocol, use USB if possible.
+- Please report bugs
 
 ### If you need any help, add me on discord - wujek_foliarz
 
