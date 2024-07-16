@@ -76,6 +76,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <TextBlock x:Name="LEDlabel" Text="LED Color: (0,0,0)" Margin="0,0,0,5"/>
@@ -102,6 +103,11 @@
                     <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,10,0,0">
                         <TextBlock Text="Microphone LED: "/>
                         <CheckBox x:Name="micLEDcheckbox" Checked="micLEDcheckbox_Checked" Unchecked="micLEDcheckbox_Unchecked"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="Sound to LED: "/>
+                        <CheckBox x:Name="soundLEDcheckbox" Checked="soundLEDcheckbox_Checked" Unchecked="soundLEDcheckbox_Unchecked"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -184,19 +190,10 @@
                         <RowDefinition Height="Auto"></RowDefinition>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,64" Grid.RowSpan="2">
-                        <TextBlock FontSize="15" Text="Current microphone level:"/>
-                        <ProgressBar x:Name="micProgressBar" Minimum="0" Maximum="100" Height="20"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="1" Margin="0,20,0,0" Grid.ColumnSpan="2" Grid.RowSpan="2">
+                    <StackPanel Grid.Row="0" Margin="0,10,0,0" Grid.ColumnSpan="2" Grid.RowSpan="2">
                         <TextBlock x:Name="micVolumeText" Text="Microphone Volume: 35" Grid.Row="2" FontSize="15"/>
                         <Slider x:Name="sliderMicVolume" Minimum="0" Maximum="100" Value="35" ValueChanged="sliderMicVolume_ValueChanged"/>
-                        <TextBlock Text="Note: The microphone volume will reset after you close the app or disconnect from your controller,"/>
-                        <TextBlock Text="additionaly, due to the nature of how DualSense controllers work on windows, the currently selected"/>
-                        <TextBlock Text="microphone may be from another currently connected DualSense, make sure by blowing air into" />
-                        <TextBlock Text="the microphone. There is currently no way to go around this, you may want to do it directly"/>
-                        <TextBlock Text="in system settings. Microphone level may not be displayed unless it is set as system default."/>
+                        <TextBlock Text="Note: This changes the volume on hardware level, default is 35."/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -205,22 +202,25 @@
                 <Grid Margin="5">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="Auto"></RowDefinition>
-                        <RowDefinition Height="Auto"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
-                        <ColumnDefinition Width="Auto"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Click here to play a sound" FontSize="15"></TextBlock>
-                    <Button Grid.Row="0" Height="40" Width="90" x:Name="testSpeakerButton" Content="Test speaker" FontSize="15" Margin="0,22,100,5" Click="testSpeakerButton_Click"/>
 
-                    <TextBlock Grid.Row="1" Text="Click here to test left actuator" FontSize="15"></TextBlock>
-                    <Button Grid.Row="1"  Height="40" Width="90" x:Name="testLeftActuatorButton" Content="Test haptics" FontSize="15" Margin="1,22,100,5" Click="testLeftActuatorButton_Click"/>
+                    <StackPanel Margin="10,24,-554,-106" >
+                        <CheckBox x:Name="audioToHapticsBtn" Content=": Audio to haptics" Checked="audioToHapticsBtn_Checked" Unchecked="audioToHapticsBtn_Unchecked"/>
+                        <TextBlock Text="Speaker"/>
+                        <Slider x:Name="speakerSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
+                        <TextBlock Text="Left actuator"/>
+                        <Slider x:Name="leftActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
+                        <TextBlock Text="Right actuator"/>
+                        <Slider x:Name="rightActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
 
-                    <TextBlock Grid.Row="2" Text="Click here to test right actuator" FontSize="15"></TextBlock>
-                    <Button Grid.Row="2"  Height="40" Width="90" x:Name="testRightActuatorButton" Content="Test haptics" FontSize="15" Margin="1,22,100,5" Click="testRightActuatorButton_Click"/>
+                        <TextBlock Grid.Row="0" Text="Click here to play a sound" FontSize="15" HorizontalAlignment="Center"/>
+                        <Button Height="40" Width="90" x:Name="testSpeakerButton" Content="Test speaker" FontSize="15" Click="testSpeakerButton_Click"/>
+                    </StackPanel>
+
                 </Grid>
             </TabItem>
 
@@ -237,8 +237,8 @@
                     <Border Grid.Row="0" x:Name="touchPadBorder" Height="150" Width="300" BorderBrush="Black" BorderThickness="2,2,2,2" Background="{x:Null}" Margin="130,0,0,0"/>
                     <Grid Grid.Row="0" Margin="130,0,0,0">
                         <Ellipse x:Name="touchLeftDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                            <Ellipse x:Name="touchRightDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        </Grid>
+                        <Ellipse x:Name="touchRightDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    </Grid>
 
                     <StackPanel Grid.Row="1">
                         <TextBlock Text="Use as mouse: " FontSize="14"/>

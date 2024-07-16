@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Windows;
@@ -7,7 +8,7 @@ namespace DualSenseY
 {
     public class Version
     {
-        public double CurrentVersion = 2.5;
+        public double CurrentVersion = 2.6;
 
         public void Update()
         {
@@ -39,7 +40,7 @@ namespace DualSenseY
             {
                 try
                 {
-                    double RemoteVersion = Convert.ToDouble(client.DownloadString("https://raw.githubusercontent.com/WujekFoliarz/DualSenseY/master/version"));
+                    double RemoteVersion = Convert.ToDouble(client.DownloadString("https://raw.githubusercontent.com/WujekFoliarz/DualSenseY/master/version"), CultureInfo.InvariantCulture);
                     if (RemoteVersion > CurrentVersion)
                         return true;
                     else
