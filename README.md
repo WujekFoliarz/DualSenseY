@@ -14,6 +14,8 @@
 - Control LED
 - Test vibrations
 - Test the speaker and haptic feedback
+- Test touchpad
+- Use touchpad as mouse
 - Use system audio as haptic feedback
 - Audio volume display on your controller (LED)
 
