@@ -14,8 +14,18 @@
 - Control LED
 - Test vibrations
 - Test the speaker and haptic feedback
+- Test touchpad
+- Use touchpad as mouse
+- Use system audio as haptic feedback
+- Audio volume display on your controller (LED)
 
-![image](https://github.com/WujekFoliarz/DualSenseY/assets/72314465/cf903a9c-8f2b-439f-8fd7-43dc501a0894)
+![image](https://github.com/user-attachments/assets/c0f085c8-4e91-4593-a72b-9ffbd3ed150d)
+
+![image](https://github.com/user-attachments/assets/3433b12c-efee-4590-8f96-88b0d19f7263)
+
+![image](https://github.com/user-attachments/assets/ebddc98a-daab-4288-a399-e2f37409ea5e)
+
+![image](https://github.com/user-attachments/assets/249418a1-0e04-4910-8575-a87d5fc79401)
 
 
 ## Requirements
