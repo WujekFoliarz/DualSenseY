@@ -45,7 +45,7 @@
         <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="2" SelectionChanged="controlPanel_SelectionChanged">
 
 
-            <TabItem Header="Vibration">
+            <TabItem Header="Vibration" x:Name="vibrationTab">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -67,7 +67,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="LED">
+            <TabItem Header="LED" x:Name="ledTab">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -112,7 +112,7 @@
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Adaptive Triggers">
+            <TabItem Header="Adaptive Triggers" x:Name="triggersTab">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>

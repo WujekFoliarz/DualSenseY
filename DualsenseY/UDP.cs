@@ -13,6 +13,7 @@ namespace DualSenseY
         public bool serverOn = false;
         public bool newPacket = false;
         public Packet currentPacket;
+        public Events Events = new Events();
 
         public UDP()
         {
@@ -53,6 +54,7 @@ namespace DualSenseY
                     client.Send(bytes2, bytes2.Length, ipendPoint);
                     string string_json = Encoding.ASCII.GetString(bytes);
                     currentPacket = JsonConvert.DeserializeObject<Packet>(string_json);
+                    Events.OnNewPacket(currentPacket);
                     Thread.Sleep(1);
                 }
             }
@@ -147,6 +149,15 @@ namespace DualSenseY
             Right
         }
 
+        public class HapticParameters
+        {
+            public string WAVfileLocation; // location of a 48KHz IEEE float PCM on user's PC
+            public float SpeakerVolume; // value from 0.0f to 1.0f
+            public float LeftActuatorVolume; // value from 0.0f to 1.0f
+            public float RightActuatorVolume; // value from 0.0f to 1.0f
+            public bool ClearBuffer; // Setting this to true will cancel all sounds that were being currently played 
+        }
+
         public enum InstructionType
         {
             Invalid,
@@ -156,7 +167,8 @@ namespace DualSenseY
             TriggerThreshold,
             MicLED,
             PlayerLEDNewRevision,
-            ResetToUserSettings
+            ResetToUserSettings,
+            HapticFeedback
         }
 
         public struct Instruction
