@@ -8,7 +8,7 @@
 
 ## Features
 
-- Works with UDP protocol of another application with similar name, which is 100% an accident
+- Works with UDP protocol of another application with similar name
 - Emulate Dualshock 4 or Xbox 360 controller via ViGEMBus Driver
 - Control adaptive triggers
 - Control LED
