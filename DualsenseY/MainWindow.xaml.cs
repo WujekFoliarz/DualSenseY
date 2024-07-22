@@ -953,6 +953,7 @@ namespace DualSenseY
                         speakerTab.IsEnabled = false;
                         soundLEDcheckbox.IsEnabled = false;
                         audioToHapticsBtn.IsEnabled = false;
+                        touchpadTab.IsEnabled = false;
                     }
                     else
                     {
@@ -969,6 +970,7 @@ namespace DualSenseY
                         speakerTab.IsEnabled = true;
                         soundLEDcheckbox.IsEnabled = true;
                         audioToHapticsBtn.IsEnabled = true;
+                        touchpadTab.IsEnabled = true;
                     }
 
                 }
@@ -992,8 +994,7 @@ namespace DualSenseY
             {
                 this.Dispatcher.Invoke(() => {
                     dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
-                    dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
-                    dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback); // enable audio
+                    dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);                    
                     switch (LEDbox.SelectedIndex)
                     {
                         case 0:
@@ -1312,16 +1313,23 @@ namespace DualSenseY
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            udp.Dispose();
-
-            foreach (Dualsense ds in dualsense)
+            try
             {
-                if (ds != null)
-                    ds.Dispose();
-            }
+                udp.Dispose();
 
-            if (controllerEmulation != null)
-                controllerEmulation.Dispose();
+                foreach (Dualsense ds in dualsense)
+                {
+                    if (ds != null)
+                        ds.Dispose();
+                }
+
+                if (controllerEmulation != null)
+                    controllerEmulation.Dispose();
+            }
+            catch
+            {
+                Environment.Exit(0);
+            }
         }
 
         private void controllerEmulationBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
