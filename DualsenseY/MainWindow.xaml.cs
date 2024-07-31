@@ -1,7 +1,11 @@
 ﻿using NAudio.CoreAudioApi;
 using NAudio.Wave;
+using Nefarius.Drivers.HidHide;
+using Nefarius.Utilities.DeviceManagement.Extensions;
+using Nefarius.Utilities.DeviceManagement.PnP;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -34,6 +38,7 @@ namespace DualSenseY
         private int audioB = 0;
 
         private bool firstTimeCmbSelect = true;
+        private HidHideControlService hidHide = new HidHideControlService();
 
         public MainWindow()
         {
@@ -48,7 +53,6 @@ namespace DualSenseY
             controlPanel.Visibility = Visibility.Hidden;
             loadConfigBtn.Visibility = Visibility.Hidden;
             saveConfigBtn.Visibility = Visibility.Hidden;
-            controllerEmulationBox.Visibility = Visibility.Hidden;
             cmbControllerSelect.SelectedIndex = 0;
 
             leftTriggerForces[0] = 0;
@@ -673,6 +677,7 @@ namespace DualSenseY
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
+        int sensitivity = 3;
         private void ReadTouchpad()
         {
             GetCursorPos(out POINT posfirst);
@@ -688,84 +693,91 @@ namespace DualSenseY
                 GetCursorPos(out POINT pos);
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                 {
-                    this.Dispatcher.Invoke(() =>
-                    {
-                        if (!dualsense[currentControllerNumber].ButtonState.touchBtn && wasClicked && useTouchpadAsMouse)
+                    try {
+                        this.Dispatcher.Invoke(() =>
                         {
-                            mouse_event((int)(MouseEventFlags.LEFTUP), 0, 0, 0, 0);
-                        }
-
-                        if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.IsActive)
-                        {
-
-                            if (wasHeld && useTouchpadAsMouse)
+                            if (!dualsense[currentControllerNumber].ButtonState.touchBtn && wasClicked && useTouchpadAsMouse)
                             {
-                                swipeX = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X - lastTouchPad.X;
-                                swipeY = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y - lastTouchPad.Y;
-                                SetCursorPos(pos.X + swipeX, pos.Y + swipeY);
-                            }
-                            else
-                            {
-                                swipeX = 0;
-                                swipeY = 0;
+                                mouse_event((int)(MouseEventFlags.LEFTUP), 0, 0, 0, 0);
                             }
 
-                            touchLeftDot.Visibility = Visibility.Visible;
-                            touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}";
-
-                            touchLeftDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y, maxY, 135), 0, 0);
-
-                            if (dualsense[currentControllerNumber].ButtonState.touchBtn)
+                            if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.IsActive)
                             {
-                                if (useTouchpadAsMouse)
+
+                                if (wasHeld && useTouchpadAsMouse)
                                 {
-                                    if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X > 1100)
-                                    {
-                                        if (!wasClicked)
-                                        {
-                                            mouse_event((int)(MouseEventFlags.LEFTDOWN), 0, 0, 0, 0);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        mouse_event((int)(MouseEventFlags.RIGHTDOWN), 0, 0, 0, 0);
-                                        mouse_event((int)(MouseEventFlags.RIGHTUP), 0, 0, 0, 0);
-                                    }
+                                    swipeX = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X - lastTouchPad.X;
+                                    swipeY = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y - lastTouchPad.Y;
+                                    SetCursorPos(pos.X + swipeX / 5 * sensitivity, pos.Y + swipeY / 5 * sensitivity);
+                                }
+                                else
+                                {
+                                    swipeX = 0;
+                                    swipeY = 0;
                                 }
 
-                                wasClicked = true;
-                                touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Red);
-                            }
-                            else
-                            {
-                                wasClicked = false;
-                                touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Black);
-                            }
+                                touchLeftDot.Visibility = Visibility.Visible;
+                                touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}";
 
-                            if (dualsense[currentControllerNumber].ButtonState.trackPadTouch1.IsActive)
-                            {
-                                touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}\nTrack Touch 2: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y}";
-                                touchRightDot.Visibility = Visibility.Visible;
-                                touchRightDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y, maxY, 135), 0, 0);
+                                touchLeftDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y, maxY, 135), 0, 0);
+
+                                if (dualsense[currentControllerNumber].ButtonState.touchBtn)
+                                {
+                                    if (useTouchpadAsMouse)
+                                    {
+                                        if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X > 1100)
+                                        {
+                                            if (!wasClicked)
+                                            {
+                                                mouse_event((int)(MouseEventFlags.LEFTDOWN), 0, 0, 0, 0);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            mouse_event((int)(MouseEventFlags.RIGHTDOWN), 0, 0, 0, 0);
+                                            mouse_event((int)(MouseEventFlags.RIGHTUP), 0, 0, 0, 0);
+                                        }
+                                    }
+
+                                    wasClicked = true;
+                                    touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Red);
+                                }
+                                else
+                                {
+                                    wasClicked = false;
+                                    touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Black);
+                                }
+
+                                if (dualsense[currentControllerNumber].ButtonState.trackPadTouch1.IsActive)
+                                {
+                                    touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}\nTrack Touch 2: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y}";
+                                    touchRightDot.Visibility = Visibility.Visible;
+                                    touchRightDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y, maxY, 135), 0, 0);
+                                }
+                                else
+                                    touchRightDot.Visibility = Visibility.Hidden;
+
+                                wasHeld = true;
                             }
                             else
+                            {
+                                wasHeld = false;
+                                swipeX = 0;
+                                swipeY = 0;
+                                touchPadText.Text = string.Empty;
+                                touchLeftDot.Visibility = Visibility.Hidden;
                                 touchRightDot.Visibility = Visibility.Hidden;
+                            }
+                        });
 
-                            wasHeld = true;
-                        }
-                        else
-                        {
-                            wasHeld = false;
-                            swipeX = 0;
-                            swipeY = 0;
-                            touchPadText.Text = string.Empty;
-                            touchLeftDot.Visibility = Visibility.Hidden;
-                            touchRightDot.Visibility = Visibility.Hidden;
-                        }
-                    });
-
-                    lastTouchPad.X = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X;
-                    lastTouchPad.Y = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y;
+                        lastTouchPad.X = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X;
+                        lastTouchPad.Y = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y;
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+                   
                 }
 
                 lastCursorPos = pos;
@@ -836,10 +848,10 @@ namespace DualSenseY
 
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Implement actual connection logic
-
             if (btnConnect.Content == "Disconnect Controller")
             {
+                RestoreController();
+                isHiding = false;
                 dualsense[currentControllerNumber].Dispose();
                 UpdateConnectionStatus();
             }
@@ -856,6 +868,8 @@ namespace DualSenseY
                                 dualsense[0].Start();
                                 dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 0;
+                                controllerEmulation = new ControllerEmulation();
+                                controllerEmulation.dualsense = dualsense[0];
                             }
                             break;
                         case 1:
@@ -865,6 +879,8 @@ namespace DualSenseY
                                 dualsense[1].Start();
                                 dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 1;
+                                controllerEmulation = new ControllerEmulation();
+                                controllerEmulation.dualsense = dualsense[1];
                             }
                             break;
                         case 2:
@@ -874,6 +890,8 @@ namespace DualSenseY
                                 dualsense[2].Start();
                                 dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 2;
+                                controllerEmulation = new ControllerEmulation();
+                                controllerEmulation.dualsense = dualsense[2];
                             }
                             break;
                         case 3:
@@ -883,6 +901,8 @@ namespace DualSenseY
                                 dualsense[3].Start();
                                 dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
                                 currentControllerNumber = 3;
+                                controllerEmulation = new ControllerEmulation();
+                                controllerEmulation.dualsense = dualsense[3];
                             }
                             break;
                     }
@@ -907,9 +927,64 @@ namespace DualSenseY
 
         private void Connection_ControllerDisconnected(object? sender, ConnectionStatus.Controller e)
         {
-            MessageBox.Show($"Controller number {e.ControllerNumber + 1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
-            dualsense[e.ControllerNumber].Dispose();
-            UpdateConnectionStatus();
+            if (isHiding)
+            {
+                dualsense[e.ControllerNumber].Dispose();
+                this.Dispatcher.Invoke(() => {
+                    switch (cmbControllerSelect.SelectedIndex)
+                    {
+                        case 0:
+                            if (dualsense[0] == null || !dualsense[0].Working)
+                            {
+                                dualsense[0] = new Dualsense(0);
+                                dualsense[0].Start();
+                                dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                                currentControllerNumber = 0;
+                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
+                            }
+                            break;
+                        case 1:
+                            if (dualsense[1] == null || !dualsense[1].Working)
+                            {
+                                dualsense[1] = new Dualsense(1);
+                                dualsense[1].Start();
+                                dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                                currentControllerNumber = 1;
+                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
+                            }
+                            break;
+                        case 2:
+                            if (dualsense[2] == null || !dualsense[2].Working)
+                            {
+                                dualsense[2] = new Dualsense(2);
+                                dualsense[2].Start();
+                                dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                                currentControllerNumber = 2;
+                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
+                            }
+                            break;
+                        case 3:
+                            if (dualsense[3] == null || !dualsense[3].Working)
+                            {
+                                dualsense[3] = new Dualsense(3);
+                                dualsense[3].Start();
+                                dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                                currentControllerNumber = 3;
+                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
+                            }
+                            break;
+                    }
+                });
+
+                isHiding = false;
+            }
+            else
+            {
+                MessageBox.Show($"Controller number {e.ControllerNumber + 1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
+                dualsense[e.ControllerNumber].Dispose();
+                controllerEmulation.Dispose();
+                UpdateConnectionStatus();
+            }
         }
 
         private void cmbControllerSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -936,16 +1011,47 @@ namespace DualSenseY
                     btnConnect.Content = "Disconnect Controller";
                     controlPanel.Visibility = Visibility.Visible;
                     cmbControllerSelect.Visibility = Visibility.Hidden;
-                    controllerEmulationBox.Visibility = Visibility.Visible;
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
 
                     ReadCurrentValues();
 
-                    if (controllerEmulationBox.SelectedIndex == 1 && controllerEmulation == null)
-                        controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
-                    else if (controllerEmulationBox.SelectedIndex == 2 && controllerEmulation == null)
-                        controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
+                    if (controllerEmulation.isViGEMBusInstalled)
+                    {
+                        ViGEMBusStatusText.Text = "ViGEMBus Status: Detected";
+                        ViGEMBusDownloadBtn.Visibility = Visibility.Hidden;
+                    }
+                    else
+                    {
+                        ViGEMBusStatusText.Text = "ViGEMBus Status: Not found";
+                        ViGEMBusDownloadBtn.Visibility = Visibility.Visible;
+                        x360EmuButton.IsEnabled = false;
+                        ds4EmuButton.IsEnabled = false;
+                        textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
+                    }
+
+                    if (hidHide.IsInstalled)
+                    {
+                        hidhideVersionText.Text = "HidHide version: " + hidHide.LocalDriverVersion;
+                        HidHideDownloadBtn.Visibility = Visibility.Hidden;
+                    }
+                    else
+                    {
+                        hidhideVersionText.Text = "HidHide: Not found";
+                        HidHideDownloadBtn.Visibility = Visibility.Visible;
+                        x360EmuButton.IsEnabled = false;
+                        ds4EmuButton.IsEnabled = false;
+                        textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
+                    }
+
+                    if(controllerEmulation.isViGEMBusInstalled && hidHide.IsInstalled)
+                    {
+                        ds4EmuButton.IsEnabled = true;
+                        x360EmuButton.IsEnabled = true;
+                        stopEmuBtn.Visibility = Visibility.Hidden;
+                        textUnderControllerEmuButtons.Visibility = Visibility.Visible;
+                        crnEmulatingText.Text = string.Empty;
+                    }
 
                     if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
                     {
@@ -980,10 +1086,8 @@ namespace DualSenseY
                     btnConnect.Content = "Connect Controller";
                     controlPanel.Visibility = Visibility.Hidden;
                     cmbControllerSelect.Visibility = Visibility.Visible;
-                    controllerEmulationBox.Visibility = Visibility.Hidden;
                     loadConfigBtn.Visibility = Visibility.Hidden;
                     saveConfigBtn.Visibility = Visibility.Hidden;
-                    controllerEmulationBox.SelectedIndex = 0;
                 }
             });
         }
@@ -994,7 +1098,8 @@ namespace DualSenseY
             {
                 this.Dispatcher.Invoke(() => {
                     dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
-                    dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);                    
+                    if(!audioToLED)
+                        dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);                    
                     switch (LEDbox.SelectedIndex)
                     {
                         case 0:
@@ -1313,8 +1418,14 @@ namespace DualSenseY
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            RestoreController();
+
             try
             {
+                audioToLED = false;
+                if (controllerEmulation != null)
+                    controllerEmulation.Dispose();
+
                 udp.Dispose();
 
                 foreach (Dualsense ds in dualsense)
@@ -1322,34 +1433,10 @@ namespace DualSenseY
                     if (ds != null)
                         ds.Dispose();
                 }
-
-                if (controllerEmulation != null)
-                    controllerEmulation.Dispose();
             }
             catch
             {
                 Environment.Exit(0);
-            }
-        }
-
-        private void controllerEmulationBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            switch (controllerEmulationBox.SelectedIndex)
-            {
-                case 0:
-                    if (controllerEmulation != null)
-                        controllerEmulation.Dispose();
-                    break;
-                case 1:
-                    if (controllerEmulation != null)
-                        controllerEmulation.Dispose();
-                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], true);
-                    break;
-                case 2:
-                    if (controllerEmulation != null)
-                        controllerEmulation.Dispose();
-                    controllerEmulation = new ControllerEmulation(dualsense[currentControllerNumber], false);
-                    break;
             }
         }
 
@@ -1739,6 +1826,112 @@ namespace DualSenseY
             {
                 dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
             }
+        }
+
+        private void ViGEMBusDownloadBtn_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("explorer", "https://github.com/nefarius/ViGEmBus/releases/tag/v1.22.0");
+        }
+
+        private void HidHideDownloadBtn_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("explorer", "https://github.com/nefarius/HidHide/releases");
+        }
+
+        private void x360EmuButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                controllerEmulation.StopEmulation();
+                HideController();
+                x360EmuButton.IsEnabled = false;
+                ds4EmuButton.IsEnabled = true;
+                stopEmuBtn.Visibility = Visibility.Visible;
+                controllerEmulation.StartX360Emulation();
+
+                if (controllerEmulation.Emulating && controllerEmulation.isEmulating360)
+                {
+                    textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
+                    crnEmulatingText.Text = "Currently emulating: Xbox 360 controller";
+                }
+                else
+                {
+                    crnEmulatingText.Text = string.Empty;
+                }
+            }
+        }
+
+        private void ds4EmuButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                controllerEmulation.StopEmulation();
+                HideController();
+                ds4EmuButton.IsEnabled = false;
+                x360EmuButton.IsEnabled = true;
+                stopEmuBtn.Visibility = Visibility.Visible;
+                controllerEmulation.StartDS4Emulation();
+
+                if (controllerEmulation.Emulating && !controllerEmulation.isEmulating360)
+                {
+                    textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
+                    crnEmulatingText.Text = "Currently emulating: DualShock 4";
+                }
+                else
+                {
+                    crnEmulatingText.Text = string.Empty;
+                }
+            }
+        }
+
+        private void stopEmuBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                stopEmuBtn.Visibility = Visibility.Hidden;
+                controllerEmulation.StopEmulation();
+                ds4EmuButton.IsEnabled = true;
+                x360EmuButton.IsEnabled = true;
+                textUnderControllerEmuButtons.Visibility = Visibility.Visible;
+                crnEmulatingText.Text = "";
+                RestoreController();
+            }
+        }
+
+        bool isHiding = false;
+        bool isRestoring = false;
+        private void HideController()
+        {
+            string dirFullName = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string instanceID = PnPDevice.GetInstanceIdFromInterfaceId(dualsense[currentControllerNumber].DeviceID).ToString();
+            hidHide.AddApplicationPath(dirFullName.Replace(".dll", ".exe"));
+            hidHide.AddBlockedInstanceId(instanceID);
+            hidHide.IsAppListInverted = false;
+            hidHide.IsActive = true;
+            isHiding = true;
+            PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense[currentControllerNumber].DeviceID);
+            tempDevice.Disable();
+            tempDevice.Enable();
+        }
+
+        private void RestoreController()
+        {
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                hidHide.ClearBlockedInstancesList();
+                hidHide.ClearApplicationsList();
+                hidHide.IsActive = false;
+                PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense[currentControllerNumber].DeviceID);
+                isHiding = true;
+                tempDevice.Disable();
+                tempDevice.Enable();
+            }
+        }
+
+        private void sensitivitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            sensitivityText.Text = "Sensitivity: " + (int)sensitivitySlider.Value;
+            sensitivity = (int)sensitivitySlider.Value;
         }
     }
 }

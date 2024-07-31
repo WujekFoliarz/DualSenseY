@@ -24,12 +24,7 @@
                     <ComboBoxItem Content="Controller 4"/>
                 </ComboBox>
                 <Button x:Name="btnConnect" Content="Connect Controller" Click="btnConnect_Click" Width="142"/>
-                <ComboBox x:Name="controllerEmulationBox" Width="100" Margin="10,0,0,0" SelectedIndex="0" SelectionChanged="controllerEmulationBox_SelectionChanged">
-                    <ComboBoxItem Content="Off"/>
-                    <ComboBoxItem Content="Xbox 360"/>
-                    <ComboBoxItem Content="Dualshock 4"/>
-                </ComboBox>
-                <TextBlock x:Name="udpStatus" Text="UDP: Inactive" Margin="110,0,0,0"/>
+                <TextBlock x:Name="udpStatus" Text="UDP: Inactive" Margin="220,0,0,0"/>
                 <Ellipse x:Name="udpStatusDot"
                 Width="5"
                 Height="5"
@@ -38,8 +33,8 @@
                 Canvas.Top="25" Margin="3,-2,0,0"/>
             </StackPanel>
             <TextBlock x:Name="txtStatus" Text="Status: Disconnected" Margin="0,0,0,10"/>
-            <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="-140,-40,0,0" Grid.Column="1"/>
-            <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="20,-40,0,0" Grid.Column="1"/>
+            <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-95,0,0" Grid.Column="1"/>
+            <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-95,0,0" Grid.Column="1"/>
         </StackPanel>
 
         <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="2" SelectionChanged="controlPanel_SelectionChanged">
@@ -241,11 +236,43 @@
                     </Grid>
 
                     <StackPanel Grid.Row="1">
+                        <TextBlock x:Name="touchPadText" Text="" FontSize="12"></TextBlock>
                         <TextBlock Text="Use as mouse: " FontSize="14"/>
-                        <CheckBox x:Name="useAsMouseBox" Margin="92,-16,0,0" Checked="useAsMouseBox_Checked" Unchecked="useAsMouseBox_Unchecked"/>
-                        <TextBlock  x:Name="touchPadText" Text="" FontSize="12"></TextBlock>
+                        <CheckBox x:Name="useAsMouseBox" Margin="-230,-16,0,0" Width="17" Checked="useAsMouseBox_Checked" Unchecked="useAsMouseBox_Unchecked"/>
+                        <TextBlock x:Name="sensitivityText" Text="Sensitivity: 3" FontSize="14"/>
+                        <Slider x:Name="sensitivitySlider" Margin="80,-18,0,0" Minimum="1" Maximum="20" Value="1" ValueChanged="sensitivitySlider_ValueChanged"/>
                     </StackPanel>
 
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Emulation" x:Name="emuTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock x:Name="hidhideVersionText" Text="HidHide version: xx.xx.xx"/>
+                        <TextBlock x:Name="ViGEMBusStatusText" Text="ViGEMBus status:"/>
+                        <TextBlock x:Name="crnEmulatingText" Text=""/>
+                        <Button x:Name="ViGEMBusDownloadBtn" Content="ViGEMBus Download" Width="120" Height="25" Margin="150,-40,0,0" Click="ViGEMBusDownloadBtn_Click"/>
+                        <Button x:Name="HidHideDownloadBtn" Content="HidHide Download" Width="120" Height="25" Margin="400,-40,0,0" Click="HidHideDownloadBtn_Click"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="60" x:Name="controllerSelectionPanel">
+
+                        <Button x:Name="x360EmuButton" Height="100" Width="100" Margin="-200,0,0,0" Click="x360EmuButton_Click">
+                            <Image Source="Resources\x360.png"/>
+                        </Button>
+                        <Button x:Name="ds4EmuButton" Height="100" Width="100" Margin="200,-100,0,0" Click="ds4EmuButton_Click">
+                            <Image Source="Resources\ds4.png"/>
+                        </Button>
+                        <TextBlock x:Name="textUnderControllerEmuButtons" Text="Choose the controller you want to emulate" HorizontalAlignment="Center"/>
+                        <Button x:Name="stopEmuBtn" Content="Stop" Width="40" Visibility="Hidden" Click="stopEmuBtn_Click"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>

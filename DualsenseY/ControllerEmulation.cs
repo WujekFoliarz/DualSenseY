@@ -1,47 +1,65 @@
 ﻿using Nefarius.ViGEm.Client;
+using Nefarius.ViGEm.Client.Exceptions;
 using Nefarius.ViGEm.Client.Targets;
 using Nefarius.ViGEm.Client.Targets.DualShock4;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
+using System.Runtime.InteropServices;
+using System.Windows;
 using Wujek_Dualsense_API;
 
 namespace DualSenseY
 {
     public class ControllerEmulation : IDisposable
     {
-        private ViGEmClient client = new ViGEmClient();
-        private bool isEmulating360 = false;
-        private bool Emulating = false;
+        private ViGEmClient client;
+        public bool isEmulating360 = false;
+        public bool Emulating = false;
         public IDualShock4Controller dualshock4;
         public IXbox360Controller x360Controller;
-        private Dualsense dualsense;
+        public Dualsense dualsense;
         public int triggerThreshold = 0;
         public bool ForceStopRumble = true;
+        public bool isViGEMBusInstalled = false;
 
-        public ControllerEmulation(Dualsense dualsense, bool isEmulating360controller)
+        public ControllerEmulation()
         {
-            this.dualsense = dualsense;
-            isEmulating360 = isEmulating360controller;
-            if (isEmulating360)
-                StartX360Emulation();
-            else
-                StartDS4Emulation();
+            try
+            {
+                client = new ViGEmClient();
+                isViGEMBusInstalled = true;
+            }
+            catch (VigemBusNotFoundException)
+            {
+                isViGEMBusInstalled = false;
+            }
         }
 
         public void StartX360Emulation()
         {
-            Emulating = false;
-            if (dualshock4 != null)
-                dualshock4.Disconnect();
+            if (isViGEMBusInstalled)
+            {
+                Emulating = false;
 
-            if (x360Controller == null)
-                x360Controller = client.CreateXbox360Controller();
+                if (x360Controller != null)
+                {
+                    x360Controller.Disconnect();
+                }
 
-            x360Controller.Connect();
-            x360Controller.FeedbackReceived += X360Controller_FeedbackReceived;
-            isEmulating360 = true;
-            Emulating = true;
+                if (dualshock4 != null)
+                {
+                    dualshock4.Disconnect();
+                }
 
-            new Thread(() => Emulate()).Start();
+                if (x360Controller == null)
+                    x360Controller = client.CreateXbox360Controller();
+
+                x360Controller.Connect();
+                x360Controller.FeedbackReceived += X360Controller_FeedbackReceived;
+                isEmulating360 = true;
+                Emulating = true;
+
+                new Thread(() => Emulate()).Start();
+            }
         }
 
         private void X360Controller_FeedbackReceived(object sender, Xbox360FeedbackReceivedEventArgs e)
@@ -55,18 +73,46 @@ namespace DualSenseY
 
         public void StartDS4Emulation()
         {
+            if (isViGEMBusInstalled)
+            {
+                Emulating = false;
+
+                if (x360Controller != null)
+                {
+                    x360Controller.Disconnect();
+                }
+
+                if (dualshock4 != null)
+                {
+                    dualshock4.Disconnect();
+                }
+
+                if (dualshock4 == null)
+                    dualshock4 = client.CreateDualShock4Controller();
+
+                dualshock4.Connect();
+                dualshock4.FeedbackReceived += Dualshock4_FeedbackReceived;
+                isEmulating360 = false;
+                Emulating = true;
+                new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+                    Emulate();
+                }).Start();
+            }
+        }
+
+        public void StopEmulation()
+        {
             Emulating = false;
-            if (x360Controller != null)
+
+            if(x360Controller != null)
+            {
+                x360Controller.Disconnect();
+            }
+
+            if(dualshock4 != null)
+            {
                 dualshock4.Disconnect();
-
-            if (dualshock4 == null)
-                dualshock4 = client.CreateDualShock4Controller();
-
-            dualshock4.Connect();
-            dualshock4.FeedbackReceived += Dualshock4_FeedbackReceived;
-            isEmulating360 = false;
-            Emulating = true;
-            new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; Emulate(); }).Start();
+            }
         }
 
         private void Dualshock4_FeedbackReceived(object sender, DualShock4FeedbackReceivedEventArgs e)
@@ -169,9 +215,15 @@ namespace DualSenseY
             if (dualshock4 != null)
             {
                 dualshock4.Disconnect();
+                dualshock4.Dispose();
             }
             if (x360Controller != null)
+            {
                 x360Controller.Disconnect();
+            }
         }
+
+
     }
 }
+
