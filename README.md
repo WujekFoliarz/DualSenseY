@@ -19,6 +19,8 @@
 - Use system audio as haptic feedback
 - Audio volume display on your controller (LED)
 
+![image](https://github.com/user-attachments/assets/0a2ada28-1923-4de7-bd8b-f8f2634f2019)
+
 ![image](https://github.com/user-attachments/assets/c0f085c8-4e91-4593-a72b-9ffbd3ed150d)
 
 ![image](https://github.com/user-attachments/assets/3433b12c-efee-4590-8f96-88b0d19f7263)
