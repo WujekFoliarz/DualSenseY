@@ -3,6 +3,7 @@
 ## Notes
 - Bluetooth connection is recommended only for controller emulation and UDP protocol, use USB if possible.
 - Please report bugs
+- If your DualSense controller is invisible after unexpected shutdown, launch the application, connect to controller and close the app.
 
 ### If you need any help, add me on discord - wujek_foliarz
 
