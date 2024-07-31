@@ -850,7 +850,7 @@ namespace DualSenseY
         {
             if (btnConnect.Content == "Disconnect Controller")
             {
-                RestoreController();
+                RestoreController(true);
                 isHiding = false;
                 dualsense[currentControllerNumber].Dispose();
                 UpdateConnectionStatus();
@@ -980,10 +980,11 @@ namespace DualSenseY
             }
             else
             {
-                MessageBox.Show($"Controller number {e.ControllerNumber + 1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
+                RestoreController(false);
+                UpdateConnectionStatus();
                 dualsense[e.ControllerNumber].Dispose();
                 controllerEmulation.Dispose();
-                UpdateConnectionStatus();
+                MessageBox.Show($"Controller number {e.ControllerNumber + 1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
@@ -1016,6 +1017,12 @@ namespace DualSenseY
 
                     ReadCurrentValues();
 
+                    ds4EmuButton.IsEnabled = true;
+                    x360EmuButton.IsEnabled = true;
+                    stopEmuBtn.Visibility = Visibility.Hidden;
+                    textUnderControllerEmuButtons.Visibility = Visibility.Visible;
+                    crnEmulatingText.Text = string.Empty;
+
                     if (controllerEmulation.isViGEMBusInstalled)
                     {
                         ViGEMBusStatusText.Text = "ViGEMBus Status: Detected";
@@ -1030,27 +1037,29 @@ namespace DualSenseY
                         textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
                     }
 
-                    if (hidHide.IsInstalled)
+                    try
                     {
-                        hidhideVersionText.Text = "HidHide version: " + hidHide.LocalDriverVersion;
-                        HidHideDownloadBtn.Visibility = Visibility.Hidden;
+                        if (hidHide.IsInstalled)
+                        {
+                            hidhideVersionText.Text = "HidHide version: " + hidHide.LocalDriverVersion;
+                            HidHideDownloadBtn.Visibility = Visibility.Hidden;
+                        }
+                        else
+                        {
+                            hidhideVersionText.Text = "HidHide: Not found";
+                            HidHideDownloadBtn.Visibility = Visibility.Visible;
+                            x360EmuButton.IsEnabled = false;
+                            ds4EmuButton.IsEnabled = false;
+                            textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
+                        }
                     }
-                    else
+                    catch (Nefarius.Drivers.HidHide.Exceptions.HidHideDriverNotFoundException)
                     {
                         hidhideVersionText.Text = "HidHide: Not found";
                         HidHideDownloadBtn.Visibility = Visibility.Visible;
                         x360EmuButton.IsEnabled = false;
                         ds4EmuButton.IsEnabled = false;
                         textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
-                    }
-
-                    if(controllerEmulation.isViGEMBusInstalled && hidHide.IsInstalled)
-                    {
-                        ds4EmuButton.IsEnabled = true;
-                        x360EmuButton.IsEnabled = true;
-                        stopEmuBtn.Visibility = Visibility.Hidden;
-                        textUnderControllerEmuButtons.Visibility = Visibility.Visible;
-                        crnEmulatingText.Text = string.Empty;
                     }
 
                     if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
@@ -1418,7 +1427,7 @@ namespace DualSenseY
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            RestoreController();
+            RestoreController(true);
 
             try
             {
@@ -1784,6 +1793,7 @@ namespace DualSenseY
             sliderRed.IsEnabled = false;
             sliderGreen.IsEnabled = false;
             sliderBlue.IsEnabled = false;
+            LEDbox.IsEnabled = false;
         }
 
         private void soundLEDcheckbox_Unchecked(object sender, RoutedEventArgs e)
@@ -1792,6 +1802,7 @@ namespace DualSenseY
             sliderRed.IsEnabled = true;
             sliderGreen.IsEnabled = true;
             sliderBlue.IsEnabled = true;
+            LEDbox.IsEnabled = true;
 
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
@@ -1894,12 +1905,11 @@ namespace DualSenseY
                 x360EmuButton.IsEnabled = true;
                 textUnderControllerEmuButtons.Visibility = Visibility.Visible;
                 crnEmulatingText.Text = "";
-                RestoreController();
+                RestoreController(true);
             }
         }
 
         bool isHiding = false;
-        bool isRestoring = false;
         private void HideController()
         {
             string dirFullName = System.Reflection.Assembly.GetExecutingAssembly().Location;
@@ -1914,16 +1924,26 @@ namespace DualSenseY
             tempDevice.Enable();
         }
 
-        private void RestoreController()
+        private void RestoreController(bool restart)
         {
+            hidHide.ClearBlockedInstancesList();
+            hidHide.ClearApplicationsList();
+            hidHide.IsActive = false;
+
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
-                hidHide.ClearBlockedInstancesList();
-                hidHide.ClearApplicationsList();
-                hidHide.IsActive = false;
                 PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense[currentControllerNumber].DeviceID);
-                isHiding = true;
-                tempDevice.Disable();
+
+                if (restart)
+                {
+                    isHiding = true;
+                    tempDevice.Disable();
+                }
+                else
+                {
+                    isHiding = false;
+                }
+
                 tempDevice.Enable();
             }
         }
