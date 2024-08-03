@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Wujek_Dualsense_API;
+using static Wujek_Dualsense_API.ConnectionStatus;
 
 namespace DualSenseY
 {
@@ -83,14 +84,19 @@ namespace DualSenseY
                 Thread.CurrentThread.Priority = ThreadPriority.Lowest;
                 while (true)
                 {
-                    this.Dispatcher.Invoke(() =>
+                    try
                     {
-                        if (audioToHapticsBtn.IsChecked == false && AudioTestCooldown.ElapsedMilliseconds >= 3500)
+                        this.Dispatcher.Invoke(() =>
                         {
-                            audioToHapticsBtn.IsEnabled = true;
-                            testSpeakerButton.IsEnabled = true;
-                        }
-                    });
+                            if (audioToHapticsBtn.IsChecked == false && AudioTestCooldown.ElapsedMilliseconds >= 3500)
+                            {
+                                audioToHapticsBtn.IsEnabled = true;
+                                testSpeakerButton.IsEnabled = true;
+                            }
+                        });
+                    }
+                    catch (TaskCanceledException) { Environment.Exit(0); } // fix this shit later
+
                     Thread.Sleep(500);
                 }
             }).Start();
@@ -99,497 +105,500 @@ namespace DualSenseY
         private void Events_NewPacket(object? sender, Events.PacketEvent e)
         {
             UDPtime.Restart();
-            foreach (UDP.Instruction instruction in e.packet.instructions)
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
-                switch (instruction.type)
+                foreach (UDP.Instruction instruction in e.packet.instructions)
                 {
-                    case UDP.InstructionType.MicLED:
-                        switch ((UDP.MicLEDMode)Convert.ToInt32(instruction.parameters[1]))
-                        {
-                            case UDP.MicLEDMode.Pulse:
-                                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
-                                break;
-                            case UDP.MicLEDMode.On:
-                                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
-                                break;
-                            case UDP.MicLEDMode.Off:
-                                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
-                                break;
-                        }
-                        break;
-                    case UDP.InstructionType.TriggerUpdate:
+                    switch (instruction.type)
+                    {
+                        case UDP.InstructionType.MicLED:
+                            switch ((UDP.MicLEDMode)Convert.ToInt32(instruction.parameters[1]))
+                            {
+                                case UDP.MicLEDMode.Pulse:
+                                    dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                                    break;
+                                case UDP.MicLEDMode.On:
+                                    dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                                    break;
+                                case UDP.MicLEDMode.Off:
+                                    dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+                                    break;
+                            }
+                            break;
+                        case UDP.InstructionType.TriggerUpdate:
 
-                        int[] triggerForces = { 0, 0, 0, 0, 0, 0, 0 };
-                        TriggerType.TriggerModes triggerType = TriggerType.TriggerModes.Off;
+                            int[] triggerForces = { 0, 0, 0, 0, 0, 0, 0 };
+                            TriggerType.TriggerModes triggerType = TriggerType.TriggerModes.Off;
 
-                        switch ((UDP.TriggerMode)Convert.ToInt32(instruction.parameters[2]))
-                        {
-                            case UDP.TriggerMode.Normal:
-                                triggerType = TriggerType.TriggerModes.Rigid_B;
-                                triggerForces[0] = 0;
-                                triggerForces[1] = 0;
-                                triggerForces[2] = 0;
-                                triggerForces[3] = 0;
-                                triggerForces[4] = 0;
-                                triggerForces[5] = 0;
-                                triggerForces[6] = 0;
-                                break;
-                            case UDP.TriggerMode.GameCube:
-                                triggerType = TriggerType.TriggerModes.Pulse;
-                                triggerForces[0] = 144;
-                                triggerForces[1] = 160;
-                                triggerForces[2] = byte.MaxValue;
-                                triggerForces[3] = 0;
-                                triggerForces[4] = 0;
-                                triggerForces[5] = 0;
-                                triggerForces[6] = 0;
-                                break;
-                            case UDP.TriggerMode.VerySoft:
-                                long VerySoftTrigger = -6258686;
-                                triggerType = TriggerType.TriggerModes.Rigid_A;
-                                triggerForces[0] = BitConverter.GetBytes(VerySoftTrigger)[1];
-                                triggerForces[1] = BitConverter.GetBytes(VerySoftTrigger)[2];
-                                triggerForces[2] = BitConverter.GetBytes(VerySoftTrigger)[3];
-                                triggerForces[3] = BitConverter.GetBytes(VerySoftTrigger)[4];
-                                triggerForces[4] = BitConverter.GetBytes(VerySoftTrigger)[5];
-                                triggerForces[5] = BitConverter.GetBytes(VerySoftTrigger)[6];
-                                triggerForces[6] = BitConverter.GetBytes(VerySoftTrigger)[7];
-                                break;
-                            case UDP.TriggerMode.Soft:
-                                long SoftTrigger = -6273790;
-                                triggerType = TriggerType.TriggerModes.Rigid_A;
-                                triggerForces[0] = BitConverter.GetBytes(SoftTrigger)[1];
-                                triggerForces[1] = BitConverter.GetBytes(SoftTrigger)[2];
-                                triggerForces[2] = BitConverter.GetBytes(SoftTrigger)[3];
-                                triggerForces[3] = BitConverter.GetBytes(SoftTrigger)[4];
-                                triggerForces[4] = BitConverter.GetBytes(SoftTrigger)[5];
-                                triggerForces[5] = BitConverter.GetBytes(SoftTrigger)[6];
-                                triggerForces[6] = BitConverter.GetBytes(SoftTrigger)[7];
-                                break;
-                            case UDP.TriggerMode.Hard:
-                                long HardTrigger = -6283262;
-                                triggerType = TriggerType.TriggerModes.Rigid_A;
-                                triggerForces[0] = BitConverter.GetBytes(HardTrigger)[1];
-                                triggerForces[1] = BitConverter.GetBytes(HardTrigger)[2];
-                                triggerForces[2] = BitConverter.GetBytes(HardTrigger)[3];
-                                triggerForces[3] = BitConverter.GetBytes(HardTrigger)[4];
-                                triggerForces[4] = BitConverter.GetBytes(HardTrigger)[5];
-                                triggerForces[5] = BitConverter.GetBytes(HardTrigger)[6];
-                                triggerForces[6] = BitConverter.GetBytes(HardTrigger)[7];
-                                break;
-                            case UDP.TriggerMode.VeryHard:
-                                long VeryHardTrigger = -6287358;
-                                triggerType = TriggerType.TriggerModes.Rigid_A;
-                                triggerForces[0] = BitConverter.GetBytes(VeryHardTrigger)[1];
-                                triggerForces[1] = BitConverter.GetBytes(VeryHardTrigger)[2];
-                                triggerForces[2] = BitConverter.GetBytes(VeryHardTrigger)[3];
-                                triggerForces[3] = BitConverter.GetBytes(VeryHardTrigger)[4];
-                                triggerForces[4] = BitConverter.GetBytes(VeryHardTrigger)[5];
-                                triggerForces[5] = BitConverter.GetBytes(VeryHardTrigger)[6];
-                                triggerForces[6] = BitConverter.GetBytes(VeryHardTrigger)[7];
-                                break;
-                            case UDP.TriggerMode.Hardest:
-                                long HardestTrigger = -65534;
-                                triggerType = TriggerType.TriggerModes.Rigid_A;
-                                triggerForces[0] = BitConverter.GetBytes(HardestTrigger)[1];
-                                triggerForces[1] = BitConverter.GetBytes(HardestTrigger)[2];
-                                triggerForces[2] = BitConverter.GetBytes(HardestTrigger)[3];
-                                triggerForces[3] = BitConverter.GetBytes(HardestTrigger)[4];
-                                triggerForces[4] = BitConverter.GetBytes(HardestTrigger)[5];
-                                triggerForces[5] = BitConverter.GetBytes(HardestTrigger)[6];
-                                triggerForces[6] = BitConverter.GetBytes(HardestTrigger)[7];
-                                break;
-                            case UDP.TriggerMode.Rigid:
-                                long RigidTrigger = 16711682L;
-                                triggerType = TriggerType.TriggerModes.Rigid;
-                                triggerForces[0] = BitConverter.GetBytes(RigidTrigger)[1];
-                                triggerForces[1] = BitConverter.GetBytes(RigidTrigger)[2];
-                                triggerForces[2] = BitConverter.GetBytes(RigidTrigger)[3];
-                                triggerForces[3] = BitConverter.GetBytes(RigidTrigger)[4];
-                                triggerForces[4] = BitConverter.GetBytes(RigidTrigger)[5];
-                                triggerForces[5] = BitConverter.GetBytes(RigidTrigger)[6];
-                                triggerForces[6] = BitConverter.GetBytes(RigidTrigger)[7];
-                                break;
-                            case UDP.TriggerMode.VibrateTrigger:
-                                triggerType = TriggerType.TriggerModes.Pulse_AB;
-                                triggerForces[0] = 37;
-                                triggerForces[1] = 35;
-                                triggerForces[2] = 6;
-                                triggerForces[3] = 39;
-                                triggerForces[4] = 33;
-                                triggerForces[5] = 35;
-                                triggerForces[6] = 34;
-                                break;
-                            case UDP.TriggerMode.Choppy:
-                                triggerType = TriggerType.TriggerModes.Rigid_A;
-                                triggerForces[0] = 2;
-                                triggerForces[1] = 39;
-                                triggerForces[2] = 33;
-                                triggerForces[3] = 39;
-                                triggerForces[4] = 38;
-                                triggerForces[5] = 2;
-                                triggerForces[6] = 0;
-                                break;
-                            case UDP.TriggerMode.Medium:
-                                triggerType = TriggerType.TriggerModes.Pulse_A;
-                                triggerForces[0] = 2;
-                                triggerForces[1] = 35;
-                                triggerForces[2] = 1;
-                                triggerForces[3] = 6;
-                                triggerForces[4] = 6;
-                                triggerForces[5] = 1;
-                                triggerForces[6] = 33;
-                                break;
-                            case UDP.TriggerMode.VibrateTriggerPulse:
-                                triggerType = TriggerType.TriggerModes.Pulse_AB;
-                                triggerForces[0] = 37;
-                                triggerForces[1] = 35;
-                                triggerForces[2] = 6;
-                                triggerForces[3] = 39;
-                                triggerForces[4] = 33;
-                                triggerForces[5] = 35;
-                                triggerForces[6] = 34;
-                                break;
-                            case UDP.TriggerMode.CustomTriggerValue:
-                                switch ((UDP.CustomTriggerValueMode)Convert.ToInt32(instruction.parameters[3]))
-                                {
-                                    case UDP.CustomTriggerValueMode.OFF:
-                                        triggerType = TriggerType.TriggerModes.Off;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.Pulse:
-                                        triggerType = TriggerType.TriggerModes.Pulse;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.PulseA:
-                                        triggerType = TriggerType.TriggerModes.Pulse_A;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.PulseB:
-                                        triggerType = TriggerType.TriggerModes.Pulse_B;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.PulseAB:
-                                        triggerType = TriggerType.TriggerModes.Pulse_AB;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.Rigid:
-                                        triggerType = TriggerType.TriggerModes.Rigid;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.RigidA:
-                                        triggerType = TriggerType.TriggerModes.Rigid_A;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.RigidB:
-                                        triggerType = TriggerType.TriggerModes.Rigid_B;
-                                        break;
-                                    case UDP.CustomTriggerValueMode.RigidAB:
-                                        triggerType = TriggerType.TriggerModes.Rigid_AB;
-                                        break;
-                                }
-
-                                if (instruction.parameters.Length >= 5)
-                                {
-                                    int j = 0;
-                                    for (int i = 4; i < instruction.parameters.Length; i++)
-                                    {
-                                        triggerForces[j] = Convert.ToByte(Convert.ToInt32(instruction.parameters[i]));
-                                        j++;
-                                    }
-                                }
-                                break;
-                            case UDP.TriggerMode.Resistance:
-                                byte start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                byte force = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-
-                                if (start > 9)
-                                {
-                                    break;
-                                }
-                                if (force > 8)
-                                {
-                                    break;
-                                }
-
-                                if (force > 0)
-                                {
-                                    byte b = (byte)(force - 1 & 7);
-                                    uint num = 0U;
-                                    ushort num2 = 0;
-                                    for (int i = (int)start; i < 10; i++)
-                                    {
-                                        num |= (uint)((uint)b << 3 * i);
-                                        num2 |= (ushort)(1 << i);
-                                    }
-
-                                    triggerType = TriggerType.TriggerModes.Rigid_A;
-                                    triggerForces[0] = (byte)(num2 & 255);
-                                    triggerForces[1] = (byte)(num2 >> 8 & 255);
-                                    triggerForces[2] = (byte)(num & 255U);
-                                    triggerForces[3] = (byte)(num >> 8 & 255U);
-                                    triggerForces[4] = (byte)(num >> 16 & 255U);
-                                    triggerForces[5] = (byte)(num >> 24 & 255U);
-                                    triggerForces[6] = 0;
-                                }
-                                break;
-                            case UDP.TriggerMode.Bow:
-                                start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                byte end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                force = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-                                byte snapForce = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
-
-                                if (start > 8)
-                                {
-                                    break;
-                                }
-                                if (end > 8)
-                                {
-                                    break;
-                                }
-                                if (start >= end)
-                                {
-                                    break;
-                                }
-                                if (force > 8)
-                                {
-                                    break;
-                                }
-                                if (snapForce > 8)
-                                {
-                                    break;
-                                }
-                                if (end > 0 && force > 0 && snapForce > 0)
-                                {
-                                    ushort num = (ushort)(1 << (int)start | 1 << (int)end);
-                                    uint num2 = (uint)((int)(force - 1 & 7) | (int)(snapForce - 1 & 7) << 3);
-
-                                    triggerType = TriggerType.TriggerModes.Pulse_A;
-                                    triggerForces[0] = (byte)(num & 255);
-                                    triggerForces[1] = (byte)(num >> 8 & 255);
-                                    triggerForces[2] = (byte)(num2 & 255U);
-                                    triggerForces[3] = (byte)(num2 >> 8 & 255U);
-                                    triggerForces[4] = 0;
-                                    triggerForces[5] = 0;
-                                    triggerForces[6] = 0;
-                                }
-                                break;
-                            case UDP.TriggerMode.Galloping:
-                                start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                byte firstFoot = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-                                byte secondFoot = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
-                                byte frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[7]));
-
-                                if (start > 8)
-                                {
-                                    break;
-                                }
-                                if (end > 9)
-                                {
-                                    break;
-                                }
-                                if (start >= end)
-                                {
-                                    break;
-                                }
-                                if (secondFoot > 7)
-                                {
-                                    break;
-                                }
-                                if (firstFoot > 6)
-                                {
-                                    break;
-                                }
-                                if (firstFoot >= secondFoot)
-                                {
-                                    break;
-                                }
-                                if (frequency > 0)
-                                {
-                                    ushort num = (ushort)(1 << (int)start | 1 << (int)end);
-                                    uint num2 = (uint)((int)(secondFoot & 7) | (int)(firstFoot & 7) << 3);
-                                    triggerType = TriggerType.TriggerModes.Pulse_B;
-                                    triggerForces[0] = frequency;
-                                    triggerForces[1] = (byte)(num & 255);
-                                    triggerForces[2] = (byte)(num >> 8 & 255);
-                                    triggerForces[3] = (byte)(num2 & 255U);
-                                    triggerForces[4] = 0;
-                                    triggerForces[5] = 0;
-                                    triggerForces[6] = 0;
-                                }
-                                break;
-                            case UDP.TriggerMode.SemiAutomaticGun:
-                                start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                force = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-
-                                if (start > 7 || start < 2)
-                                {
-                                    break;
-                                }
-                                if (end > 8)
-                                {
-                                    break;
-                                }
-                                if (end <= start)
-                                {
-                                    break;
-                                }
-                                if (force > 8)
-                                {
-                                    break;
-                                }
-                                if (force > 0)
-                                {
-                                    ushort num = (ushort)(1 << (int)start | 1 << (int)end);
-                                    triggerType = TriggerType.TriggerModes.Rigid_AB;
-
-                                    triggerForces[0] = (byte)(num & 255);
-                                    triggerForces[1] = (byte)(num >> 8 & 255);
-                                    triggerForces[2] = force - 1;
+                            switch ((UDP.TriggerMode)Convert.ToInt32(instruction.parameters[2]))
+                            {
+                                case UDP.TriggerMode.Normal:
+                                    triggerType = TriggerType.TriggerModes.Rigid_B;
+                                    triggerForces[0] = 0;
+                                    triggerForces[1] = 0;
+                                    triggerForces[2] = 0;
                                     triggerForces[3] = 0;
                                     triggerForces[4] = 0;
                                     triggerForces[5] = 0;
                                     triggerForces[6] = 0;
-                                }
-                                break;
-                            case UDP.TriggerMode.AutomaticGun:
-                                start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                byte strength = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-
-                                if (start > 9)
-                                {
                                     break;
-                                }
-                                if (strength > 8)
-                                {
-                                    break;
-                                }
-                                if (strength > 0 && frequency > 0)
-                                {
-                                    byte b = (byte)(strength - 1 & 7);
-                                    uint num = 0U;
-                                    ushort num2 = 0;
-                                    for (int i = (int)start; i < 10; i++)
-                                    {
-                                        num |= (uint)((uint)b << 3 * i);
-                                        num2 |= (ushort)(1 << i);
-                                    }
-
-                                    triggerType = TriggerType.TriggerModes.Pulse_B;
-                                    triggerForces[0] = frequency;
-                                    triggerForces[1] = (byte)(num2 & 255);
-                                    triggerForces[2] = (byte)(num2 >> 8 & 255);
-                                    triggerForces[3] = (byte)(num & 255U);
-                                    triggerForces[4] = (byte)(num >> 8 & 255U);
-                                    triggerForces[5] = (byte)(num >> 16 & 255U);
-                                    triggerForces[6] = (byte)(num >> 24 & 255U);
-                                }
-                                break;
-                            case UDP.TriggerMode.Machine:
-                                start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                byte strengthA = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-                                byte strengthB = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
-                                frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[7]));
-                                byte period = Convert.ToByte(Convert.ToInt32(instruction.parameters[8]));
-
-                                if (start > 8)
-                                {
-                                    break;
-                                }
-                                if (end > 9)
-                                {
-                                    break;
-                                }
-                                if (end <= start)
-                                {
-                                    break;
-                                }
-                                if (strengthA > 7)
-                                {
-                                    break;
-                                }
-                                if (strengthB > 7)
-                                {
-                                    break;
-                                }
-                                if (frequency > 0)
-                                {
-                                    ushort num = (ushort)(1 << (int)start | 1 << (int)end);
-                                    uint num2 = (uint)((int)(strengthA & 7) | (int)(strengthB & 7) << 3);
-                                    triggerType = TriggerType.TriggerModes.Pulse_B;
-                                    triggerForces[0] = frequency;
-                                    triggerForces[2] = period;
-                                    triggerForces[1] = (byte)(num & 255);
-                                    triggerForces[3] = (byte)(num >> 8 & 255);
-                                    triggerForces[4] = (byte)(num2 & 255U);
+                                case UDP.TriggerMode.GameCube:
+                                    triggerType = TriggerType.TriggerModes.Pulse;
+                                    triggerForces[0] = 144;
+                                    triggerForces[1] = 160;
+                                    triggerForces[2] = byte.MaxValue;
+                                    triggerForces[3] = 0;
+                                    triggerForces[4] = 0;
                                     triggerForces[5] = 0;
                                     triggerForces[6] = 0;
+                                    break;
+                                case UDP.TriggerMode.VerySoft:
+                                    long VerySoftTrigger = -6258686;
+                                    triggerType = TriggerType.TriggerModes.Rigid_A;
+                                    triggerForces[0] = BitConverter.GetBytes(VerySoftTrigger)[1];
+                                    triggerForces[1] = BitConverter.GetBytes(VerySoftTrigger)[2];
+                                    triggerForces[2] = BitConverter.GetBytes(VerySoftTrigger)[3];
+                                    triggerForces[3] = BitConverter.GetBytes(VerySoftTrigger)[4];
+                                    triggerForces[4] = BitConverter.GetBytes(VerySoftTrigger)[5];
+                                    triggerForces[5] = BitConverter.GetBytes(VerySoftTrigger)[6];
+                                    triggerForces[6] = BitConverter.GetBytes(VerySoftTrigger)[7];
+                                    break;
+                                case UDP.TriggerMode.Soft:
+                                    long SoftTrigger = -6273790;
+                                    triggerType = TriggerType.TriggerModes.Rigid_A;
+                                    triggerForces[0] = BitConverter.GetBytes(SoftTrigger)[1];
+                                    triggerForces[1] = BitConverter.GetBytes(SoftTrigger)[2];
+                                    triggerForces[2] = BitConverter.GetBytes(SoftTrigger)[3];
+                                    triggerForces[3] = BitConverter.GetBytes(SoftTrigger)[4];
+                                    triggerForces[4] = BitConverter.GetBytes(SoftTrigger)[5];
+                                    triggerForces[5] = BitConverter.GetBytes(SoftTrigger)[6];
+                                    triggerForces[6] = BitConverter.GetBytes(SoftTrigger)[7];
+                                    break;
+                                case UDP.TriggerMode.Hard:
+                                    long HardTrigger = -6283262;
+                                    triggerType = TriggerType.TriggerModes.Rigid_A;
+                                    triggerForces[0] = BitConverter.GetBytes(HardTrigger)[1];
+                                    triggerForces[1] = BitConverter.GetBytes(HardTrigger)[2];
+                                    triggerForces[2] = BitConverter.GetBytes(HardTrigger)[3];
+                                    triggerForces[3] = BitConverter.GetBytes(HardTrigger)[4];
+                                    triggerForces[4] = BitConverter.GetBytes(HardTrigger)[5];
+                                    triggerForces[5] = BitConverter.GetBytes(HardTrigger)[6];
+                                    triggerForces[6] = BitConverter.GetBytes(HardTrigger)[7];
+                                    break;
+                                case UDP.TriggerMode.VeryHard:
+                                    long VeryHardTrigger = -6287358;
+                                    triggerType = TriggerType.TriggerModes.Rigid_A;
+                                    triggerForces[0] = BitConverter.GetBytes(VeryHardTrigger)[1];
+                                    triggerForces[1] = BitConverter.GetBytes(VeryHardTrigger)[2];
+                                    triggerForces[2] = BitConverter.GetBytes(VeryHardTrigger)[3];
+                                    triggerForces[3] = BitConverter.GetBytes(VeryHardTrigger)[4];
+                                    triggerForces[4] = BitConverter.GetBytes(VeryHardTrigger)[5];
+                                    triggerForces[5] = BitConverter.GetBytes(VeryHardTrigger)[6];
+                                    triggerForces[6] = BitConverter.GetBytes(VeryHardTrigger)[7];
+                                    break;
+                                case UDP.TriggerMode.Hardest:
+                                    long HardestTrigger = -65534;
+                                    triggerType = TriggerType.TriggerModes.Rigid_A;
+                                    triggerForces[0] = BitConverter.GetBytes(HardestTrigger)[1];
+                                    triggerForces[1] = BitConverter.GetBytes(HardestTrigger)[2];
+                                    triggerForces[2] = BitConverter.GetBytes(HardestTrigger)[3];
+                                    triggerForces[3] = BitConverter.GetBytes(HardestTrigger)[4];
+                                    triggerForces[4] = BitConverter.GetBytes(HardestTrigger)[5];
+                                    triggerForces[5] = BitConverter.GetBytes(HardestTrigger)[6];
+                                    triggerForces[6] = BitConverter.GetBytes(HardestTrigger)[7];
+                                    break;
+                                case UDP.TriggerMode.Rigid:
+                                    long RigidTrigger = 16711682L;
+                                    triggerType = TriggerType.TriggerModes.Rigid;
+                                    triggerForces[0] = BitConverter.GetBytes(RigidTrigger)[1];
+                                    triggerForces[1] = BitConverter.GetBytes(RigidTrigger)[2];
+                                    triggerForces[2] = BitConverter.GetBytes(RigidTrigger)[3];
+                                    triggerForces[3] = BitConverter.GetBytes(RigidTrigger)[4];
+                                    triggerForces[4] = BitConverter.GetBytes(RigidTrigger)[5];
+                                    triggerForces[5] = BitConverter.GetBytes(RigidTrigger)[6];
+                                    triggerForces[6] = BitConverter.GetBytes(RigidTrigger)[7];
+                                    break;
+                                case UDP.TriggerMode.VibrateTrigger:
+                                    triggerType = TriggerType.TriggerModes.Pulse_AB;
+                                    triggerForces[0] = 37;
+                                    triggerForces[1] = 35;
+                                    triggerForces[2] = 6;
+                                    triggerForces[3] = 39;
+                                    triggerForces[4] = 33;
+                                    triggerForces[5] = 35;
+                                    triggerForces[6] = 34;
+                                    break;
+                                case UDP.TriggerMode.Choppy:
+                                    triggerType = TriggerType.TriggerModes.Rigid_A;
+                                    triggerForces[0] = 2;
+                                    triggerForces[1] = 39;
+                                    triggerForces[2] = 33;
+                                    triggerForces[3] = 39;
+                                    triggerForces[4] = 38;
+                                    triggerForces[5] = 2;
+                                    triggerForces[6] = 0;
+                                    break;
+                                case UDP.TriggerMode.Medium:
+                                    triggerType = TriggerType.TriggerModes.Pulse_A;
+                                    triggerForces[0] = 2;
+                                    triggerForces[1] = 35;
+                                    triggerForces[2] = 1;
+                                    triggerForces[3] = 6;
+                                    triggerForces[4] = 6;
+                                    triggerForces[5] = 1;
+                                    triggerForces[6] = 33;
+                                    break;
+                                case UDP.TriggerMode.VibrateTriggerPulse:
+                                    triggerType = TriggerType.TriggerModes.Pulse_AB;
+                                    triggerForces[0] = 37;
+                                    triggerForces[1] = 35;
+                                    triggerForces[2] = 6;
+                                    triggerForces[3] = 39;
+                                    triggerForces[4] = 33;
+                                    triggerForces[5] = 35;
+                                    triggerForces[6] = 34;
+                                    break;
+                                case UDP.TriggerMode.CustomTriggerValue:
+                                    switch ((UDP.CustomTriggerValueMode)Convert.ToInt32(instruction.parameters[3]))
+                                    {
+                                        case UDP.CustomTriggerValueMode.OFF:
+                                            triggerType = TriggerType.TriggerModes.Off;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.Pulse:
+                                            triggerType = TriggerType.TriggerModes.Pulse;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.PulseA:
+                                            triggerType = TriggerType.TriggerModes.Pulse_A;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.PulseB:
+                                            triggerType = TriggerType.TriggerModes.Pulse_B;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.PulseAB:
+                                            triggerType = TriggerType.TriggerModes.Pulse_AB;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.Rigid:
+                                            triggerType = TriggerType.TriggerModes.Rigid;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.RigidA:
+                                            triggerType = TriggerType.TriggerModes.Rigid_A;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.RigidB:
+                                            triggerType = TriggerType.TriggerModes.Rigid_B;
+                                            break;
+                                        case UDP.CustomTriggerValueMode.RigidAB:
+                                            triggerType = TriggerType.TriggerModes.Rigid_AB;
+                                            break;
+                                    }
 
-                                }
-                                break;
-                            default:
-                                triggerForces[0] = 0;
-                                triggerForces[1] = 0;
-                                triggerForces[2] = 0;
-                                triggerForces[3] = 0;
-                                triggerForces[4] = 0;
-                                triggerForces[5] = 0;
-                                triggerForces[6] = 0;
-                                triggerType = TriggerType.TriggerModes.Off;
-                                break;
-                        }
+                                    if (instruction.parameters.Length >= 5)
+                                    {
+                                        int j = 0;
+                                        for (int i = 4; i < instruction.parameters.Length; i++)
+                                        {
+                                            triggerForces[j] = Convert.ToByte(Convert.ToInt32(instruction.parameters[i]));
+                                            j++;
+                                        }
+                                    }
+                                    break;
+                                case UDP.TriggerMode.Resistance:
+                                    byte start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
+                                    byte force = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
 
-                        switch ((UDP.Trigger)Convert.ToInt32(instruction.parameters[1]))
-                        {
-                            case UDP.Trigger.Left:
-                                dualsense[currentControllerNumber].SetLeftTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
-                                break;
-                            case UDP.Trigger.Right:
-                                dualsense[currentControllerNumber].SetRightTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
-                                break;
+                                    if (start > 9)
+                                    {
+                                        break;
+                                    }
+                                    if (force > 8)
+                                    {
+                                        break;
+                                    }
 
-                        }
+                                    if (force > 0)
+                                    {
+                                        byte b = (byte)(force - 1 & 7);
+                                        uint num = 0U;
+                                        ushort num2 = 0;
+                                        for (int i = (int)start; i < 10; i++)
+                                        {
+                                            num |= (uint)((uint)b << 3 * i);
+                                            num2 |= (ushort)(1 << i);
+                                        }
 
-                        break;
-                    case UDP.InstructionType.RGBUpdate:
-                        if (Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
-                            dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
-                        break;
-                    case UDP.InstructionType.PlayerLEDNewRevision:
-                        switch ((UDP.PlayerLEDNewRevision)Convert.ToInt32(instruction.parameters[1]))
-                        {
-                            case UDP.PlayerLEDNewRevision.AllOff:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
-                                break;
-                            case UDP.PlayerLEDNewRevision.One:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
-                                break;
-                            case UDP.PlayerLEDNewRevision.Two:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
-                                break;
-                            case UDP.PlayerLEDNewRevision.Three:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
-                                break;
-                            case UDP.PlayerLEDNewRevision.Four:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
-                                break;
-                            case UDP.PlayerLEDNewRevision.Five:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
-                                break;
-                        }
-                        break;
-                    case UDP.InstructionType.HapticFeedback:
-                        try
-                        {
-                            this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
-                            dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)instruction.parameters[5]);
-                        }
-                        catch
-                        {
-                            // if something goes wrong just ignore
-                            continue;
-                        }
-                        break;
+                                        triggerType = TriggerType.TriggerModes.Rigid_A;
+                                        triggerForces[0] = (byte)(num2 & 255);
+                                        triggerForces[1] = (byte)(num2 >> 8 & 255);
+                                        triggerForces[2] = (byte)(num & 255U);
+                                        triggerForces[3] = (byte)(num >> 8 & 255U);
+                                        triggerForces[4] = (byte)(num >> 16 & 255U);
+                                        triggerForces[5] = (byte)(num >> 24 & 255U);
+                                        triggerForces[6] = 0;
+                                    }
+                                    break;
+                                case UDP.TriggerMode.Bow:
+                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
+                                    byte end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    force = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
+                                    byte snapForce = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
 
+                                    if (start > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (end > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (start >= end)
+                                    {
+                                        break;
+                                    }
+                                    if (force > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (snapForce > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (end > 0 && force > 0 && snapForce > 0)
+                                    {
+                                        ushort num = (ushort)(1 << (int)start | 1 << (int)end);
+                                        uint num2 = (uint)((int)(force - 1 & 7) | (int)(snapForce - 1 & 7) << 3);
+
+                                        triggerType = TriggerType.TriggerModes.Pulse_A;
+                                        triggerForces[0] = (byte)(num & 255);
+                                        triggerForces[1] = (byte)(num >> 8 & 255);
+                                        triggerForces[2] = (byte)(num2 & 255U);
+                                        triggerForces[3] = (byte)(num2 >> 8 & 255U);
+                                        triggerForces[4] = 0;
+                                        triggerForces[5] = 0;
+                                        triggerForces[6] = 0;
+                                    }
+                                    break;
+                                case UDP.TriggerMode.Galloping:
+                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
+                                    end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    byte firstFoot = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
+                                    byte secondFoot = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
+                                    byte frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[7]));
+
+                                    if (start > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (end > 9)
+                                    {
+                                        break;
+                                    }
+                                    if (start >= end)
+                                    {
+                                        break;
+                                    }
+                                    if (secondFoot > 7)
+                                    {
+                                        break;
+                                    }
+                                    if (firstFoot > 6)
+                                    {
+                                        break;
+                                    }
+                                    if (firstFoot >= secondFoot)
+                                    {
+                                        break;
+                                    }
+                                    if (frequency > 0)
+                                    {
+                                        ushort num = (ushort)(1 << (int)start | 1 << (int)end);
+                                        uint num2 = (uint)((int)(secondFoot & 7) | (int)(firstFoot & 7) << 3);
+                                        triggerType = TriggerType.TriggerModes.Pulse_B;
+                                        triggerForces[0] = frequency;
+                                        triggerForces[1] = (byte)(num & 255);
+                                        triggerForces[2] = (byte)(num >> 8 & 255);
+                                        triggerForces[3] = (byte)(num2 & 255U);
+                                        triggerForces[4] = 0;
+                                        triggerForces[5] = 0;
+                                        triggerForces[6] = 0;
+                                    }
+                                    break;
+                                case UDP.TriggerMode.SemiAutomaticGun:
+                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
+                                    end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    force = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
+
+                                    if (start > 7 || start < 2)
+                                    {
+                                        break;
+                                    }
+                                    if (end > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (end <= start)
+                                    {
+                                        break;
+                                    }
+                                    if (force > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (force > 0)
+                                    {
+                                        ushort num = (ushort)(1 << (int)start | 1 << (int)end);
+                                        triggerType = TriggerType.TriggerModes.Rigid_AB;
+
+                                        triggerForces[0] = (byte)(num & 255);
+                                        triggerForces[1] = (byte)(num >> 8 & 255);
+                                        triggerForces[2] = force - 1;
+                                        triggerForces[3] = 0;
+                                        triggerForces[4] = 0;
+                                        triggerForces[5] = 0;
+                                        triggerForces[6] = 0;
+                                    }
+                                    break;
+                                case UDP.TriggerMode.AutomaticGun:
+                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
+                                    byte strength = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+
+                                    if (start > 9)
+                                    {
+                                        break;
+                                    }
+                                    if (strength > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (strength > 0 && frequency > 0)
+                                    {
+                                        byte b = (byte)(strength - 1 & 7);
+                                        uint num = 0U;
+                                        ushort num2 = 0;
+                                        for (int i = (int)start; i < 10; i++)
+                                        {
+                                            num |= (uint)((uint)b << 3 * i);
+                                            num2 |= (ushort)(1 << i);
+                                        }
+
+                                        triggerType = TriggerType.TriggerModes.Pulse_B;
+                                        triggerForces[0] = frequency;
+                                        triggerForces[1] = (byte)(num2 & 255);
+                                        triggerForces[2] = (byte)(num2 >> 8 & 255);
+                                        triggerForces[3] = (byte)(num & 255U);
+                                        triggerForces[4] = (byte)(num >> 8 & 255U);
+                                        triggerForces[5] = (byte)(num >> 16 & 255U);
+                                        triggerForces[6] = (byte)(num >> 24 & 255U);
+                                    }
+                                    break;
+                                case UDP.TriggerMode.Machine:
+                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
+                                    end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    byte strengthA = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
+                                    byte strengthB = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
+                                    frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[7]));
+                                    byte period = Convert.ToByte(Convert.ToInt32(instruction.parameters[8]));
+
+                                    if (start > 8)
+                                    {
+                                        break;
+                                    }
+                                    if (end > 9)
+                                    {
+                                        break;
+                                    }
+                                    if (end <= start)
+                                    {
+                                        break;
+                                    }
+                                    if (strengthA > 7)
+                                    {
+                                        break;
+                                    }
+                                    if (strengthB > 7)
+                                    {
+                                        break;
+                                    }
+                                    if (frequency > 0)
+                                    {
+                                        ushort num = (ushort)(1 << (int)start | 1 << (int)end);
+                                        uint num2 = (uint)((int)(strengthA & 7) | (int)(strengthB & 7) << 3);
+                                        triggerType = TriggerType.TriggerModes.Pulse_B;
+                                        triggerForces[0] = frequency;
+                                        triggerForces[2] = period;
+                                        triggerForces[1] = (byte)(num & 255);
+                                        triggerForces[3] = (byte)(num >> 8 & 255);
+                                        triggerForces[4] = (byte)(num2 & 255U);
+                                        triggerForces[5] = 0;
+                                        triggerForces[6] = 0;
+
+                                    }
+                                    break;
+                                default:
+                                    triggerForces[0] = 0;
+                                    triggerForces[1] = 0;
+                                    triggerForces[2] = 0;
+                                    triggerForces[3] = 0;
+                                    triggerForces[4] = 0;
+                                    triggerForces[5] = 0;
+                                    triggerForces[6] = 0;
+                                    triggerType = TriggerType.TriggerModes.Off;
+                                    break;
+                            }
+
+                            switch ((UDP.Trigger)Convert.ToInt32(instruction.parameters[1]))
+                            {
+                                case UDP.Trigger.Left:
+                                    dualsense[currentControllerNumber].SetLeftTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
+                                    break;
+                                case UDP.Trigger.Right:
+                                    dualsense[currentControllerNumber].SetRightTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
+                                    break;
+
+                            }
+
+                            break;
+                        case UDP.InstructionType.RGBUpdate:
+                            if (Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
+                                dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
+                            break;
+                        case UDP.InstructionType.PlayerLEDNewRevision:
+                            switch ((UDP.PlayerLEDNewRevision)Convert.ToInt32(instruction.parameters[1]))
+                            {
+                                case UDP.PlayerLEDNewRevision.AllOff:
+                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                                    break;
+                                case UDP.PlayerLEDNewRevision.One:
+                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                                    break;
+                                case UDP.PlayerLEDNewRevision.Two:
+                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                                    break;
+                                case UDP.PlayerLEDNewRevision.Three:
+                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                                    break;
+                                case UDP.PlayerLEDNewRevision.Four:
+                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                                    break;
+                                case UDP.PlayerLEDNewRevision.Five:
+                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                                    break;
+                            }
+                            break;
+                        case UDP.InstructionType.HapticFeedback:
+                            try
+                            {
+                                this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
+                                dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)instruction.parameters[5]);
+                            }
+                            catch
+                            {
+                                // if something goes wrong just ignore
+                                continue;
+                            }
+                            break;
+                    }
                 }
             }
+            
 
         }
 
@@ -793,22 +802,24 @@ namespace DualSenseY
             return value * scaleFactor;
         }
 
+        bool connectedToController = false;
         private async void WatchUDPUpdates()
         {
+            Thread.Sleep(1500); // wait a sec before starting
+
             while (udp.serverOn)
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    if (UDPtime.ElapsedMilliseconds >= 1000 || dualsense[currentControllerNumber] == null || dualsense[currentControllerNumber].Working == false)
+                    if (UDPtime.ElapsedMilliseconds >= 1000)
                     {
-                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && connectedToController)
                         {
                             controlPanel.Visibility = Visibility.Visible;
                             ledTab.IsEnabled = true;
                             triggersTab.IsEnabled = true;
                             loadConfigBtn.Visibility = Visibility.Visible;
                             saveConfigBtn.Visibility = Visibility.Visible;
-                            ReadCurrentValues();
                         }
 
                         udpStatus.Text = "UDP: Inactive";
@@ -816,7 +827,8 @@ namespace DualSenseY
                     }
                     else
                     {
-                        controlPanel.Visibility = Visibility.Visible;
+                        if(btnConnect.Content != "Disconnect Controller")
+                            controlPanel.Visibility = Visibility.Hidden;
                         ledTab.IsEnabled = false;
                         triggersTab.IsEnabled = false;
                         loadConfigBtn.Visibility = Visibility.Hidden;
@@ -974,6 +986,8 @@ namespace DualSenseY
                             }
                             break;
                     }
+
+                    ReadCurrentValues();
                 });
 
                 isHiding = false;
@@ -1008,6 +1022,7 @@ namespace DualSenseY
             {
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                 {
+                    connectedToController = true;
                     txtStatus.Text = "Status: Connected";
                     btnConnect.Content = "Disconnect Controller";
                     controlPanel.Visibility = Visibility.Visible;
@@ -1091,6 +1106,7 @@ namespace DualSenseY
                 }
                 else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
                 {
+                    connectedToController = false;
                     txtStatus.Text = "Status: Disconnected";
                     btnConnect.Content = "Connect Controller";
                     controlPanel.Visibility = Visibility.Hidden;
@@ -1872,7 +1888,7 @@ namespace DualSenseY
             }
         }
 
-        private void ds4EmuButton_Click(object sender, RoutedEventArgs e)
+        private void ds4Emu()
         {
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
@@ -1892,7 +1908,14 @@ namespace DualSenseY
                 {
                     crnEmulatingText.Text = string.Empty;
                 }
+
+                ReadCurrentValues();
             }
+        }
+
+        private void ds4EmuButton_Click(object sender, RoutedEventArgs e)
+        {
+            ds4Emu();
         }
 
         private void stopEmuBtn_Click(object sender, RoutedEventArgs e)
@@ -1920,7 +1943,11 @@ namespace DualSenseY
             hidHide.IsActive = true;
             isHiding = true;
             PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense[currentControllerNumber].DeviceID);
-            tempDevice.Disable();
+            try
+            {
+                tempDevice.Disable();
+            }
+            catch{ } // Do nothing, it's over.
             tempDevice.Enable();
         }
 
@@ -1937,7 +1964,11 @@ namespace DualSenseY
                 if (restart)
                 {
                     isHiding = true;
-                    tempDevice.Disable();
+                    try
+                    {
+                        tempDevice.Disable();
+                    }
+                    catch { }
                 }
                 else
                 {

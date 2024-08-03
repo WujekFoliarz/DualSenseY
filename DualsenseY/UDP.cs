@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Windows;
 
 namespace DualSenseY
 {
@@ -55,7 +56,6 @@ namespace DualSenseY
                     string string_json = Encoding.ASCII.GetString(bytes);
                     currentPacket = JsonConvert.DeserializeObject<Packet>(string_json);
                     Events.OnNewPacket(currentPacket);
-                    Thread.Sleep(1);
                 }
             }
             catch { }
@@ -149,15 +149,6 @@ namespace DualSenseY
             Right
         }
 
-        public class HapticParameters
-        {
-            public string WAVfileLocation; // location of a 48KHz IEEE float PCM on user's PC
-            public float SpeakerVolume; // value from 0.0f to 1.0f
-            public float LeftActuatorVolume; // value from 0.0f to 1.0f
-            public float RightActuatorVolume; // value from 0.0f to 1.0f
-            public bool ClearBuffer; // Setting this to true will cancel all sounds that were being currently played 
-        }
-
         public enum InstructionType
         {
             Invalid,
@@ -168,7 +159,8 @@ namespace DualSenseY
             MicLED,
             PlayerLEDNewRevision,
             ResetToUserSettings,
-            HapticFeedback
+            HapticFeedback,
+            RGBTransitionUpdate,
         }
 
         public struct Instruction
@@ -180,14 +172,6 @@ namespace DualSenseY
         public class Packet
         {
             public Instruction[] instructions;
-        }
-
-        public class ServerResponse
-        {
-            public string Status;
-            public string TimeReceived;
-            public bool isControllerConnected;
-            public int BatteryLevel;
         }
     }
 }
