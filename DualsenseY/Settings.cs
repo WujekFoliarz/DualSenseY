@@ -36,6 +36,14 @@ namespace DualSenseY
             public int R { get; set; }
             public int G { get; set; }
             public int B { get; set; }
+            public bool IgnoreDS4Lightbar { get; set; }
+            public int ControllerEmulation { get; set; } // 0 = off, 1 = x360, 2 = ds4
+            public bool UseTouchpadAsMouse { get; set; }
+            public int TouchpadSensitivity { get; set; }
+            public int MicrophoneVolume { get; set; }
+            public float SpeakerVolume { get; set; }
+            public float LeftActuatorVolume { get; set; }
+            public float RightActuatorVolume { get; set; }
             public LED.PlayerLED playerLED { get; set; }
             public LED.MicrophoneLED microphoneLED { get; set; }
             public TriggerType.TriggerModes leftTriggerMode { get; set; }

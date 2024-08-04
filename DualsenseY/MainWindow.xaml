@@ -82,6 +82,8 @@
                         <Slider x:Name="sliderGreen" Width="100" Minimum="0" Maximum="255" ValueChanged="sliderLED_ValueChanged"/>
                         <TextBlock Text="B:" VerticalAlignment="Center" Margin="10,0,5,0"/>
                         <Slider x:Name="sliderBlue" Width="100" Minimum="0" Maximum="255" ValueChanged="sliderLED_ValueChanged"/>
+                        <CheckBox x:Name="ds4LightbarIgnoreBox" Margin="15,0,0,0" Checked="ds4LightbarIgnoreBox_Checked" Unchecked="ds4LightbarIgnoreBox_Unchecked"/>
+                        <TextBlock Text=" Ignore DS4 lightbar"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,10,0,0">

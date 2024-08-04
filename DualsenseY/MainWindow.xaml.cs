@@ -1573,6 +1573,18 @@ namespace DualSenseY
                 profile.leftTriggerForces = leftTriggerForces;
                 profile.rightTriggerForces = rightTriggerForces;
 
+                if(controllerEmulation != null)
+                {
+                    profile.IgnoreDS4Lightbar = (bool)ds4LightbarIgnoreBox.IsChecked;
+                }
+
+                profile.UseTouchpadAsMouse = (bool)useAsMouseBox.IsChecked;
+                profile.TouchpadSensitivity = (int)sensitivitySlider.Value;
+                profile.ControllerEmulation = emuStatusForConfig;
+                profile.SpeakerVolume = (float)speakerSlider.Value;
+                profile.MicrophoneVolume = (int)sliderMicVolume.Value;
+                profile.LeftActuatorVolume = (float)leftActuatorSlider.Value;
+                profile.RightActuatorVolume = (float)rightActuatorSlider.Value;
 
                 var dialog = new DialogBox();
                 if (dialog.ShowDialog() == true)
@@ -1649,6 +1661,34 @@ namespace DualSenseY
                         sliderBlue.Value = profile.B;
                         currentLeftTrigger = profile.leftTriggerMode;
                         currentRightTrigger = profile.rightTriggerMode;
+                        ds4LightbarIgnoreBox.IsChecked = profile.IgnoreDS4Lightbar;
+                        useAsMouseBox.IsChecked = profile.UseTouchpadAsMouse;
+                        sensitivitySlider.Value = profile.TouchpadSensitivity;
+                        speakerSlider.Value = profile.SpeakerVolume;
+                        leftActuatorSlider.Value = profile.LeftActuatorVolume;
+                        rightActuatorSlider.Value = profile.RightActuatorVolume;
+                        sliderMicVolume.Value = profile.MicrophoneVolume;
+
+                        try
+                        {
+                            if (controllerEmulation != null && controllerEmulation.isViGEMBusInstalled && hidHide.IsInstalled)
+                            {
+                                switch (profile.ControllerEmulation)
+                                {
+                                    case 0:
+                                        stopEmu();
+                                        break;
+                                    case 1:
+                                        x360Emu();
+                                        break;
+                                    case 2:
+                                        ds4Emu();
+                                        break;
+                                }
+                            }
+                        }
+                        catch { }
+
 
                         switch (profile.playerLED)
                         {
@@ -1865,31 +1905,10 @@ namespace DualSenseY
             Process.Start("explorer", "https://github.com/nefarius/HidHide/releases");
         }
 
-        private void x360EmuButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
-            {
-                controllerEmulation.StopEmulation();
-                HideController();
-                x360EmuButton.IsEnabled = false;
-                ds4EmuButton.IsEnabled = true;
-                stopEmuBtn.Visibility = Visibility.Visible;
-                controllerEmulation.StartX360Emulation();
-
-                if (controllerEmulation.Emulating && controllerEmulation.isEmulating360)
-                {
-                    textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
-                    crnEmulatingText.Text = "Currently emulating: Xbox 360 controller";
-                }
-                else
-                {
-                    crnEmulatingText.Text = string.Empty;
-                }
-            }
-        }
-
+        private int emuStatusForConfig = 0;
         private void ds4Emu()
         {
+            emuStatusForConfig = 2;
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
                 controllerEmulation.StopEmulation();
@@ -1913,13 +1932,33 @@ namespace DualSenseY
             }
         }
 
-        private void ds4EmuButton_Click(object sender, RoutedEventArgs e)
+        private void x360Emu()
         {
-            ds4Emu();
+            emuStatusForConfig = 1;
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                controllerEmulation.StopEmulation();
+                HideController();
+                x360EmuButton.IsEnabled = false;
+                ds4EmuButton.IsEnabled = true;
+                stopEmuBtn.Visibility = Visibility.Visible;
+                controllerEmulation.StartX360Emulation();
+
+                if (controllerEmulation.Emulating && controllerEmulation.isEmulating360)
+                {
+                    textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
+                    crnEmulatingText.Text = "Currently emulating: Xbox 360 controller";
+                }
+                else
+                {
+                    crnEmulatingText.Text = string.Empty;
+                }
+            }
         }
 
-        private void stopEmuBtn_Click(object sender, RoutedEventArgs e)
+        private void stopEmu()
         {
+            emuStatusForConfig = 0;
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
                 stopEmuBtn.Visibility = Visibility.Hidden;
@@ -1930,6 +1969,21 @@ namespace DualSenseY
                 crnEmulatingText.Text = "";
                 RestoreController(true);
             }
+        }
+
+        private void x360EmuButton_Click(object sender, RoutedEventArgs e)
+        {
+            x360Emu();
+        }
+
+        private void ds4EmuButton_Click(object sender, RoutedEventArgs e)
+        {
+            ds4Emu();
+        }
+
+        private void stopEmuBtn_Click(object sender, RoutedEventArgs e)
+        {
+            stopEmu();
         }
 
         bool isHiding = false;
@@ -1983,6 +2037,32 @@ namespace DualSenseY
         {
             sensitivityText.Text = "Sensitivity: " + (int)sensitivitySlider.Value;
             sensitivity = (int)sensitivitySlider.Value;
+        }
+
+        private void ds4LightbarIgnoreBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if(controllerEmulation != null)
+            {
+                controllerEmulation.IgnoreDS4Lightbar = true;
+            }
+
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+            }
+        }
+
+        private void ds4LightbarIgnoreBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (controllerEmulation != null)
+            {
+                controllerEmulation.IgnoreDS4Lightbar = false;
+            }
+
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+            }
         }
     }
 }

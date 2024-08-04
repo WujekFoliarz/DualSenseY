@@ -20,6 +20,7 @@ namespace DualSenseY
         public int triggerThreshold = 0;
         public bool ForceStopRumble = true;
         public bool isViGEMBusInstalled = false;
+        public bool IgnoreDS4Lightbar = false;
 
         public ControllerEmulation()
         {
@@ -121,6 +122,14 @@ namespace DualSenseY
             {
                 dualsense.SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
                 dualsense.SetStandardRumble(e.LargeMotor, e.SmallMotor);
+            }
+
+            if (!IgnoreDS4Lightbar)
+            {
+                if (e.LightbarColor.Red != 0 || e.LightbarColor.Green != 0 || e.LightbarColor.Blue != 0)
+                {
+                    dualsense.SetLightbar(e.LightbarColor.Red, e.LightbarColor.Green, e.LightbarColor.Blue);
+                }
             }
         }
 
