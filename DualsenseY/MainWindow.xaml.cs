@@ -560,6 +560,13 @@ namespace DualSenseY
                             if (Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
                                 dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
                             break;
+                        case UDP.InstructionType.TriggerThreshold:
+                            if(controllerEmulation != null)
+                            {
+                                controllerEmulation.leftTriggerThreshold = Convert.ToInt32(instruction.parameters[1]);
+                                controllerEmulation.rightTriggerThreshold = Convert.ToInt32(instruction.parameters[2]);
+                            }
+                            break;
                         case UDP.InstructionType.PlayerLEDNewRevision:
                             switch ((UDP.PlayerLEDNewRevision)Convert.ToInt32(instruction.parameters[1]))
                             {
@@ -803,6 +810,7 @@ namespace DualSenseY
         }
 
         bool connectedToController = false;
+        bool wereSettingsReset = false;
         private async void WatchUDPUpdates()
         {
             Thread.Sleep(1500); // wait a sec before starting
@@ -815,6 +823,12 @@ namespace DualSenseY
                     {
                         if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && connectedToController)
                         {
+                            if (!wereSettingsReset)
+                            {
+                                ReadCurrentValues();
+                                wereSettingsReset = true;
+                            }
+
                             controlPanel.Visibility = Visibility.Visible;
                             ledTab.IsEnabled = true;
                             triggersTab.IsEnabled = true;
@@ -833,6 +847,7 @@ namespace DualSenseY
                         triggersTab.IsEnabled = false;
                         loadConfigBtn.Visibility = Visibility.Hidden;
                         saveConfigBtn.Visibility = Visibility.Hidden;
+                        wereSettingsReset = false;
 
                         if (ledTab.IsSelected || triggersTab.IsSelected)
                             controlPanel.SelectedIndex = 0;
@@ -1084,6 +1099,10 @@ namespace DualSenseY
                         soundLEDcheckbox.IsEnabled = false;
                         audioToHapticsBtn.IsEnabled = false;
                         touchpadTab.IsEnabled = false;
+                        if(controllerEmulation != null)
+                        {
+                            controllerEmulation.ForceStopRumble = false;
+                        }
                     }
                     else
                     {

@@ -17,7 +17,8 @@ namespace DualSenseY
         public IDualShock4Controller dualshock4;
         public IXbox360Controller x360Controller;
         public Dualsense dualsense;
-        public int triggerThreshold = 0;
+        public int leftTriggerThreshold = 0;
+        public int rightTriggerThreshold = 0;
         public bool ForceStopRumble = true;
         public bool isViGEMBusInstalled = false;
         public bool IgnoreDS4Lightbar = false;
@@ -156,8 +157,17 @@ namespace DualSenseY
                     x360Controller.SetAxisValue(Xbox360Axis.RightThumbY, (short)ConvertRange(dualsense.ButtonState.RY, 255, 0, -32767, 32766));
                     x360Controller.SetButtonState(Xbox360Button.LeftThumb, dualsense.ButtonState.L3);
                     x360Controller.SetButtonState(Xbox360Button.RightThumb, dualsense.ButtonState.R3);
-                    x360Controller.LeftTrigger = (byte)dualsense.ButtonState.L2;
-                    x360Controller.RightTrigger = (byte)dualsense.ButtonState.R2;
+
+                    if ((byte)dualsense.ButtonState.L2 >= leftTriggerThreshold)
+                        x360Controller.LeftTrigger = (byte)dualsense.ButtonState.L2;
+                    else
+                        x360Controller.LeftTrigger = (byte)0;
+
+                    if ((byte)dualsense.ButtonState.R2 >= rightTriggerThreshold)
+                        x360Controller.RightTrigger = (byte)dualsense.ButtonState.R2;
+                    else
+                        x360Controller.RightTrigger = (byte)0;
+
                     x360Controller.SetButtonState(Xbox360Button.Start, dualsense.ButtonState.options);
                     x360Controller.SetButtonState(Xbox360Button.Back, dualsense.ButtonState.share);
                     x360Controller.SetButtonState(Xbox360Button.LeftShoulder, dualsense.ButtonState.L1);
@@ -185,12 +195,12 @@ namespace DualSenseY
                     dualshock4.SetButtonState(DualShock4Button.ThumbLeft, dualsense.ButtonState.L3);
                     dualshock4.SetButtonState(DualShock4Button.ThumbRight, dualsense.ButtonState.R3);
 
-                    if ((byte)dualsense.ButtonState.L2 >= triggerThreshold)
+                    if ((byte)dualsense.ButtonState.L2 >= leftTriggerThreshold)
                         dualshock4.LeftTrigger = (byte)dualsense.ButtonState.L2;
                     else
                         dualshock4.LeftTrigger = (byte)0;
 
-                    if ((byte)dualsense.ButtonState.R2 >= triggerThreshold)
+                    if ((byte)dualsense.ButtonState.R2 >= rightTriggerThreshold)
                         dualshock4.RightTrigger = (byte)dualsense.ButtonState.R2;
                     else
                         dualshock4.RightTrigger = (byte)0;
