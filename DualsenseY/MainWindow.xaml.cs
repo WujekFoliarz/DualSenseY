@@ -588,6 +588,7 @@ namespace DualSenseY
                             }
                             break;
                         case UDP.InstructionType.HapticFeedback:
+                            dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                             this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
                             dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));                         
                             break;
