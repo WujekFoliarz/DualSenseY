@@ -3,8 +3,6 @@ using Nefarius.ViGEm.Client.Exceptions;
 using Nefarius.ViGEm.Client.Targets;
 using Nefarius.ViGEm.Client.Targets.DualShock4;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
-using System.Runtime.InteropServices;
-using System.Windows;
 using Wujek_Dualsense_API;
 
 namespace DualSenseY
@@ -96,7 +94,9 @@ namespace DualSenseY
                 dualshock4.FeedbackReceived += Dualshock4_FeedbackReceived;
                 isEmulating360 = false;
                 Emulating = true;
-                new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+                new Thread(() =>
+                {
+                    Thread.CurrentThread.Priority = ThreadPriority.Lowest;
                     Emulate();
                 }).Start();
             }
@@ -106,12 +106,12 @@ namespace DualSenseY
         {
             Emulating = false;
 
-            if(x360Controller != null)
+            if (x360Controller != null)
             {
                 x360Controller.Disconnect();
             }
 
-            if(dualshock4 != null)
+            if (dualshock4 != null)
             {
                 dualshock4.Disconnect();
             }

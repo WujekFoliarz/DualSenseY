@@ -1,16 +1,13 @@
 ﻿using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using Nefarius.Drivers.HidHide;
-using Nefarius.Utilities.DeviceManagement.Extensions;
 using Nefarius.Utilities.DeviceManagement.PnP;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Wujek_Dualsense_API;
-using static Wujek_Dualsense_API.ConnectionStatus;
 
 namespace DualSenseY
 {
@@ -561,7 +558,7 @@ namespace DualSenseY
                                 dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
                             break;
                         case UDP.InstructionType.TriggerThreshold:
-                            if(controllerEmulation != null)
+                            if (controllerEmulation != null)
                             {
                                 controllerEmulation.leftTriggerThreshold = Convert.ToInt32(instruction.parameters[1]);
                                 controllerEmulation.rightTriggerThreshold = Convert.ToInt32(instruction.parameters[2]);
@@ -591,21 +588,16 @@ namespace DualSenseY
                             }
                             break;
                         case UDP.InstructionType.HapticFeedback:
-                            try
-                            {
-                                this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
-                                dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)instruction.parameters[5]);
-                            }
-                            catch
-                            {
-                                // if something goes wrong just ignore
-                                continue;
-                            }
+                            this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
+                            dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));                         
+                            break;
+                        case UDP.InstructionType.RGBTransitionUpdate:
+                            dualsense[currentControllerNumber].SetLightbarTransition(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]), Convert.ToInt32(instruction.parameters[4]), Convert.ToInt32(instruction.parameters[5]));
                             break;
                     }
                 }
             }
-            
+
 
         }
 
@@ -709,7 +701,8 @@ namespace DualSenseY
                 GetCursorPos(out POINT pos);
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                 {
-                    try {
+                    try
+                    {
                         this.Dispatcher.Invoke(() =>
                         {
                             if (!dualsense[currentControllerNumber].ButtonState.touchBtn && wasClicked && useTouchpadAsMouse)
@@ -793,7 +786,7 @@ namespace DualSenseY
                     {
                         continue;
                     }
-                   
+
                 }
 
                 lastCursorPos = pos;
@@ -841,7 +834,7 @@ namespace DualSenseY
                     }
                     else
                     {
-                        if(btnConnect.Content != "Disconnect Controller")
+                        if (btnConnect.Content != "Disconnect Controller")
                             controlPanel.Visibility = Visibility.Hidden;
                         ledTab.IsEnabled = false;
                         triggersTab.IsEnabled = false;
@@ -877,7 +870,8 @@ namespace DualSenseY
         {
             if (btnConnect.Content == "Disconnect Controller")
             {
-                RestoreController(true);
+                stopEmu();
+                RestoreController(true, dualsense[currentControllerNumber], true);
                 isHiding = false;
                 dualsense[currentControllerNumber].Dispose();
                 UpdateConnectionStatus();
@@ -934,6 +928,7 @@ namespace DualSenseY
                             break;
                     }
 
+                    ReadCurrentValues();
                     UpdateConnectionStatus();
                     audioToHapticsBtn.IsChecked = false;
 
@@ -953,11 +948,12 @@ namespace DualSenseY
         }
 
         private void Connection_ControllerDisconnected(object? sender, ConnectionStatus.Controller e)
-        {
+        {           
             if (isHiding)
             {
                 dualsense[e.ControllerNumber].Dispose();
-                this.Dispatcher.Invoke(() => {
+                this.Dispatcher.Invoke(() =>
+                {
                     switch (cmbControllerSelect.SelectedIndex)
                     {
                         case 0:
@@ -1009,7 +1005,7 @@ namespace DualSenseY
             }
             else
             {
-                RestoreController(false);
+                RestoreController(false, dualsense[e.ControllerNumber], false);
                 UpdateConnectionStatus();
                 dualsense[e.ControllerNumber].Dispose();
                 controllerEmulation.Dispose();
@@ -1044,8 +1040,6 @@ namespace DualSenseY
                     cmbControllerSelect.Visibility = Visibility.Hidden;
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
-
-                    ReadCurrentValues();
 
                     ds4EmuButton.IsEnabled = true;
                     x360EmuButton.IsEnabled = true;
@@ -1099,7 +1093,7 @@ namespace DualSenseY
                         soundLEDcheckbox.IsEnabled = false;
                         audioToHapticsBtn.IsEnabled = false;
                         touchpadTab.IsEnabled = false;
-                        if(controllerEmulation != null)
+                        if (controllerEmulation != null)
                         {
                             controllerEmulation.ForceStopRumble = false;
                         }
@@ -1138,12 +1132,13 @@ namespace DualSenseY
 
         private void ReadCurrentValues()
         {
-            if(this.IsInitialized && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (this.IsInitialized && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
-                this.Dispatcher.Invoke(() => {
+                this.Dispatcher.Invoke(() =>
+                {
                     dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
-                    if(!audioToLED)
-                        dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);                    
+                    if (!audioToLED)
+                        dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
                     switch (LEDbox.SelectedIndex)
                     {
                         case 0:
@@ -1462,26 +1457,20 @@ namespace DualSenseY
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            RestoreController(true);
+            audioToLED = false;
+            if (controllerEmulation != null)
+                controllerEmulation.Dispose();
 
-            try
+            udp.Dispose();
+
+            foreach (Dualsense ds in dualsense)
             {
-                audioToLED = false;
-                if (controllerEmulation != null)
-                    controllerEmulation.Dispose();
-
-                udp.Dispose();
-
-                foreach (Dualsense ds in dualsense)
+                if(ds != null)
                 {
-                    if (ds != null)
-                        ds.Dispose();
+                    RestoreController(true, ds, true);
                 }
             }
-            catch
-            {
-                Environment.Exit(0);
-            }
+
         }
 
         private void LEDbox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1592,7 +1581,7 @@ namespace DualSenseY
                 profile.leftTriggerForces = leftTriggerForces;
                 profile.rightTriggerForces = rightTriggerForces;
 
-                if(controllerEmulation != null)
+                if (controllerEmulation != null)
                 {
                     profile.IgnoreDS4Lightbar = (bool)ds4LightbarIgnoreBox.IsChecked;
                 }
@@ -1841,7 +1830,7 @@ namespace DualSenseY
         private void audioToHapticsBtn_Checked(object sender, RoutedEventArgs e)
         {
             testSpeakerButton.IsEnabled = false;
-            if(controllerEmulation != null)
+            if (controllerEmulation != null)
                 controllerEmulation.ForceStopRumble = true;
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
@@ -1853,7 +1842,7 @@ namespace DualSenseY
         private void audioToHapticsBtn_Unchecked(object sender, RoutedEventArgs e)
         {
             testSpeakerButton.IsEnabled = true;
-            if(controllerEmulation != null)
+            if (controllerEmulation != null)
                 controllerEmulation.ForceStopRumble = false;
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
@@ -1946,8 +1935,6 @@ namespace DualSenseY
                 {
                     crnEmulatingText.Text = string.Empty;
                 }
-
-                ReadCurrentValues();
             }
         }
 
@@ -1972,6 +1959,8 @@ namespace DualSenseY
                 {
                     crnEmulatingText.Text = string.Empty;
                 }
+
+                ReadCurrentValues();
             }
         }
 
@@ -1986,7 +1975,7 @@ namespace DualSenseY
                 x360EmuButton.IsEnabled = true;
                 textUnderControllerEmuButtons.Visibility = Visibility.Visible;
                 crnEmulatingText.Text = "";
-                RestoreController(true);
+                RestoreController(true, dualsense[currentControllerNumber], false);
             }
         }
 
@@ -2020,25 +2009,29 @@ namespace DualSenseY
             {
                 tempDevice.Disable();
             }
-            catch{ } // Do nothing, it's over.
+            catch { } // Do nothing, it's over.
             tempDevice.Enable();
         }
 
-        private void RestoreController(bool restart)
+        private void RestoreController(bool restart, Dualsense dualsense, bool dispose)
         {
             hidHide.ClearBlockedInstancesList();
             hidHide.ClearApplicationsList();
             hidHide.IsActive = false;
 
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense[currentControllerNumber].DeviceID);
+                PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense.DeviceID);
 
                 if (restart)
                 {
                     isHiding = true;
                     try
                     {
+                        if (dispose)
+                        {
+                            dualsense.Dispose();
+                        }
                         tempDevice.Disable();
                     }
                     catch { }
@@ -2060,7 +2053,7 @@ namespace DualSenseY
 
         private void ds4LightbarIgnoreBox_Checked(object sender, RoutedEventArgs e)
         {
-            if(controllerEmulation != null)
+            if (controllerEmulation != null)
             {
                 controllerEmulation.IgnoreDS4Lightbar = true;
             }

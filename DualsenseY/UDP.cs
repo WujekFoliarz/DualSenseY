@@ -3,7 +3,6 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Windows;
 
 namespace DualSenseY
 {
@@ -59,6 +58,7 @@ namespace DualSenseY
                 }
             }
             catch { }
+
         }
 
         public void Dispose()
