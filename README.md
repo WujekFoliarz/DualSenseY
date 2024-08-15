@@ -8,7 +8,7 @@
 ### If you need any help, add me on discord - wujek_foliarz
 
 ## Using Haptic Feedback via UDP (for mods)
-Simply send this json
+Simply send this json (this can be easily done in existing DSX mods)
 ```
 {
   "instructions":[
