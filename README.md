@@ -39,12 +39,13 @@ Simply send this json (this can be easily done in existing DSX mods)
 - Use system audio as haptic feedback
 - Audio volume display on your controller (LED)
 
-![image](https://github.com/user-attachments/assets/e5ee0fe9-211d-444b-8bbc-bd78cb886cb8)
+![image](https://github.com/user-attachments/assets/081590c9-53a0-4659-bd74-8c0a5834866d)
 
-![image](https://github.com/user-attachments/assets/d559cc36-1e82-4195-9882-8490631b0904)
+![image](https://github.com/user-attachments/assets/d8eec1f7-7af8-4702-9e8e-8f8a987bd115)
 
-![image](https://github.com/user-attachments/assets/eab4f200-7c25-477d-96f7-9b63753d6a0f)
+![image](https://github.com/user-attachments/assets/c070c340-2dc6-4d67-b1f6-290065c5a6bb)
 
-![image](https://github.com/user-attachments/assets/ac230c1a-577e-4597-95a4-7a38d605c3cc)
+![image](https://github.com/user-attachments/assets/8d711908-c4a4-421b-8d4a-7129e99ca10a)
 
-![image](https://github.com/user-attachments/assets/61eb7a45-8961-4a1c-b41d-571477494305)
+![image](https://github.com/user-attachments/assets/cf1edb04-69f7-4b44-b0fc-a9382b8d778f)
+
