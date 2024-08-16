@@ -7,6 +7,25 @@
 
 ### If you need any help, add me on discord - wujek_foliarz
 
+## Using Haptic Feedback via UDP (for mods)
+Simply send this json (this can be easily done in existing DSX mods)
+```
+{
+  "instructions":[
+    {
+      "type":8,
+      "parameters":[
+        0, // INT - Controller index
+        "C:/game/bin/win64/haptics/effect.wav", // STRING - Path to WAV file (Must be a Stereo 48KHz IEEE Float PCM)
+        1, // FLOAT 0-1 - Speaker volume
+        1, // FLOAT 0-1 - Left actuator volume
+        1, // FLOAT 0-1 - Right actuator volume
+        1 // BOOL - Clear buffer (this will stop the currently playing effect, if set to 0 the effect will play after the previous one has finished)
+    ]
+  }
+]
+```
+
 ## Features
 
 - Works with UDP protocol of another application with similar name
