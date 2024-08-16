@@ -33,6 +33,8 @@
                 Canvas.Top="25" Margin="3,-2,0,0"/>
             </StackPanel>
             <TextBlock x:Name="txtStatus" Text="Status: Disconnected" Margin="0,0,0,10"/>
+            <Image x:Name="connectionTypeBTicon" Margin="-330,-34,0,0" Width="20" Height="20" Source="Resources/bt.png"></Image>
+            <Image x:Name="connectionTypeUSBicon" Margin="-330,-34,0,0" Width="20" Height="20" Source="Resources/usb.png"></Image>
             <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-95,0,0" Grid.Column="1"/>
             <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-95,0,0" Grid.Column="1"/>
         </StackPanel>
@@ -206,8 +208,9 @@
 
 
                     <StackPanel Margin="10,24,-554,-106" >
-                        <CheckBox x:Name="audioToHapticsBtn" Content=": Audio to haptics" Checked="audioToHapticsBtn_Checked" Unchecked="audioToHapticsBtn_Unchecked"/>
-                        <TextBlock Text="Speaker"/>
+                        <CheckBox x:Name="audioToHapticsBtn" Content="Audio passthrough" Checked="audioToHapticsBtn_Checked" Unchecked="audioToHapticsBtn_Unchecked" Width="125" HorizontalAlignment="Left"/>
+                        <CheckBox x:Name="outputHeadsetBox" Content="Output sound to headset" Width="160" HorizontalAlignment="Left" Margin="130,-15,0,0" Checked="outputHeadsetBox_Checked" Unchecked="outputHeadsetBox_Unchecked" IsEnabled="True"/>
+                        <TextBlock x:Name="speakerLabel" Text="Speaker"/>
                         <Slider x:Name="speakerSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
                         <TextBlock Text="Left actuator"/>
                         <Slider x:Name="leftActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>

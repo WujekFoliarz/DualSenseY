@@ -18,7 +18,9 @@
 
   <ItemGroup>
     <None Remove="icon.png" />
+    <None Remove="Resources\bt.png" />
     <None Remove="Resources\ds4.png" />
+    <None Remove="Resources\usb.png" />
     <None Remove="Resources\x360.png" />
   </ItemGroup>
 
@@ -32,6 +34,9 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Resources\bt.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Resources\ds4.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
@@ -41,7 +46,7 @@
     <PackageReference Include="Nefarius.Drivers.HidHide" Version="2.2.0" />
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Wujek_Dualsense_API" Version="1.2.6" />
+    <PackageReference Include="Wujek_Dualsense_API" Version="1.2.7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,6 +57,9 @@
 
   <ItemGroup>
     <Resource Include="icon.png" />
+    <Resource Include="Resources\usb.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Resources\x360.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>

@@ -1,4 +1,5 @@
-﻿using NAudio.CoreAudioApi;
+﻿using HidSharp;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using Nefarius.Drivers.HidHide;
 using Nefarius.Utilities.DeviceManagement.PnP;
@@ -29,6 +30,7 @@ namespace DualSenseY
         private Stopwatch AudioTestCooldown = new Stopwatch();
         private ControllerEmulation controllerEmulation;
         private Settings settings = new Settings();
+        private bool connected = false;
         private bool useTouchpadAsMouse = false;
         private bool audioToLED = false;
         private int audioR = 0;
@@ -51,6 +53,8 @@ namespace DualSenseY
             controlPanel.Visibility = Visibility.Hidden;
             loadConfigBtn.Visibility = Visibility.Hidden;
             saveConfigBtn.Visibility = Visibility.Hidden;
+            connectionTypeBTicon.Visibility = Visibility.Hidden;
+            connectionTypeUSBicon.Visibility = Visibility.Hidden;
             cmbControllerSelect.SelectedIndex = 0;
 
             leftTriggerForces[0] = 0;
@@ -876,6 +880,7 @@ namespace DualSenseY
                 isHiding = false;
                 dualsense[currentControllerNumber].Dispose();
                 UpdateConnectionStatus();
+                connected = false;
             }
             else
             {
@@ -929,10 +934,10 @@ namespace DualSenseY
                             break;
                     }
 
+                    connected = true;
                     ReadCurrentValues();
                     UpdateConnectionStatus();
                     audioToHapticsBtn.IsChecked = false;
-
                 }
                 catch (Exception error)
                 {
@@ -1094,6 +1099,8 @@ namespace DualSenseY
                         soundLEDcheckbox.IsEnabled = false;
                         audioToHapticsBtn.IsEnabled = false;
                         touchpadTab.IsEnabled = false;
+                        connectionTypeBTicon.Visibility = Visibility.Visible;
+                        connectionTypeUSBicon.Visibility = Visibility.Hidden;
                         if (controllerEmulation != null)
                         {
                             controllerEmulation.ForceStopRumble = false;
@@ -1115,6 +1122,8 @@ namespace DualSenseY
                         soundLEDcheckbox.IsEnabled = true;
                         audioToHapticsBtn.IsEnabled = true;
                         touchpadTab.IsEnabled = true;
+                        connectionTypeBTicon.Visibility = Visibility.Hidden;
+                        connectionTypeUSBicon.Visibility = Visibility.Visible;
                     }
 
                 }
@@ -1127,6 +1136,9 @@ namespace DualSenseY
                     cmbControllerSelect.Visibility = Visibility.Visible;
                     loadConfigBtn.Visibility = Visibility.Hidden;
                     saveConfigBtn.Visibility = Visibility.Hidden;
+                    connectionTypeBTicon.Visibility = Visibility.Hidden;
+                    connectionTypeUSBicon.Visibility = Visibility.Hidden;
+                    controlPanel.SelectedIndex = 0;
                 }
             });
         }
@@ -1138,33 +1150,41 @@ namespace DualSenseY
                 this.Dispatcher.Invoke(() =>
                 {
                     dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
-                    if (!audioToLED)
-                        dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
-                    switch (LEDbox.SelectedIndex)
+                    if (!audioToLED && connected)
                     {
-                        case 0:
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
-                            break;
-                        case 1:
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
-                            break;
-                        case 2:
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
-                            break;
-                        case 3:
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
-                            break;
-                        case 4:
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
-                            break;
-                        case 5:
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
-                            break;
+                        dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
+                        switch (LEDbox.SelectedIndex)
+                        {
+                            case 0:
+                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                                break;
+                            case 1:
+                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                                break;
+                            case 2:
+                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                                break;
+                            case 3:
+                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                                break;
+                            case 4:
+                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                                break;
+                            case 5:
+                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
+                                break;
+                        }
                     }
-                    if (micLEDcheckbox.IsChecked == true)
+                    if (micLEDcheckbox.IsChecked == true && connected)
                         dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
                     else
                         dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+
+                    if (outputHeadsetBox.IsChecked == true && connected)
+                        dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.HEADSET);
+                    else
+                        dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.SPEAKER);
+
                     dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, leftTriggerForces[0], leftTriggerForces[1], leftTriggerForces[2], leftTriggerForces[3], leftTriggerForces[4], leftTriggerForces[5], leftTriggerForces[6]);
                     dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, rightTriggerForces[0], rightTriggerForces[1], rightTriggerForces[2], rightTriggerForces[3], rightTriggerForces[4], rightTriggerForces[5], rightTriggerForces[6]);
                 });
@@ -1594,6 +1614,7 @@ namespace DualSenseY
                 profile.MicrophoneVolume = (int)sliderMicVolume.Value;
                 profile.LeftActuatorVolume = (float)leftActuatorSlider.Value;
                 profile.RightActuatorVolume = (float)rightActuatorSlider.Value;
+                profile.UseHeadset = (bool)outputHeadsetBox.IsChecked;
 
                 var dialog = new DialogBox();
                 if (dialog.ShowDialog() == true)
@@ -1676,6 +1697,7 @@ namespace DualSenseY
                         speakerSlider.Value = profile.SpeakerVolume;
                         leftActuatorSlider.Value = profile.LeftActuatorVolume;
                         rightActuatorSlider.Value = profile.RightActuatorVolume;
+                        outputHeadsetBox.IsChecked = profile.UseHeadset;
                         sliderMicVolume.Value = profile.MicrophoneVolume;
 
                         try
@@ -1830,13 +1852,22 @@ namespace DualSenseY
 
         private void audioToHapticsBtn_Checked(object sender, RoutedEventArgs e)
         {
-            testSpeakerButton.IsEnabled = false;
-            if (controllerEmulation != null)
-                controllerEmulation.ForceStopRumble = true;
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            MMDevice defaultAudio = MDE.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            if (!defaultAudio.FriendlyName.Contains("Wireless Controller"))
             {
-                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
-                dualsense[currentControllerNumber].StartSystemAudioToHaptics();
+                testSpeakerButton.IsEnabled = false;
+                if (controllerEmulation != null)
+                    controllerEmulation.ForceStopRumble = true;
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                {
+                    dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                    dualsense[currentControllerNumber].StartSystemAudioToHaptics();
+                }
+            }
+            else
+            {
+                MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                audioToHapticsBtn.IsChecked = false;
             }
         }
 
@@ -2075,6 +2106,24 @@ namespace DualSenseY
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
                 dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+            }
+        }
+
+        private void outputHeadsetBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                speakerLabel.Text = "Headset";
+                dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.HEADSET);
+            }
+        }
+
+        private void outputHeadsetBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                speakerLabel.Text = "Speaker";
+                dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.SPEAKER);
             }
         }
     }

@@ -44,6 +44,7 @@ namespace DualSenseY
             public float SpeakerVolume { get; set; }
             public float LeftActuatorVolume { get; set; }
             public float RightActuatorVolume { get; set; }
+            public bool UseHeadset { get; set; }
             public LED.PlayerLED playerLED { get; set; }
             public LED.MicrophoneLED microphoneLED { get; set; }
             public TriggerType.TriggerModes leftTriggerMode { get; set; }
