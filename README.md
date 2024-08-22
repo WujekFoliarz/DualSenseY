@@ -1,5 +1,8 @@
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/WujekFoliarz/DualSenseY/total)
 
+##
+### Download → https://github.com/WujekFoliarz/DualSenseY/releases
+
 ## Notes
 - Bluetooth connection is recommended only for controller emulation and UDP protocol, use USB if possible.
 - Please report bugs
