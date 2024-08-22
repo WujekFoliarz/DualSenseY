@@ -37,7 +37,7 @@ Simply send this json (this can be easily done in existing DSX mods)
 - Test touchpad
 - Use touchpad as mouse
 - Use system audio as haptic feedback
-- Audio volume display on your controller (LED)
+- Display audio volume on your controller (LED)
 
 ![image](https://github.com/user-attachments/assets/081590c9-53a0-4659-bd74-8c0a5834866d)
 
