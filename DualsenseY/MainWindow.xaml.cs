@@ -1,5 +1,4 @@
-﻿using HidSharp;
-using NAudio.CoreAudioApi;
+﻿using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using Nefarius.Drivers.HidHide;
 using Nefarius.Utilities.DeviceManagement.PnP;
@@ -36,6 +35,7 @@ namespace DualSenseY
         private int audioR = 0;
         private int audioG = 0;
         private int audioB = 0;
+        private bool VigemAndHidHidePresent = true;
 
         private bool firstTimeCmbSelect = true;
         private HidHideControlService hidHide = new HidHideControlService();
@@ -79,6 +79,7 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; WatchHotkeys(); }).Start();
             new Thread(() =>
             {
                 Thread.CurrentThread.IsBackground = true;
@@ -101,6 +102,118 @@ namespace DualSenseY
                     Thread.Sleep(500);
                 }
             }).Start();
+        }
+
+        private bool micOff = true;
+        private void HandleHotkey(int selectedIndex)
+        {
+            switch (selectedIndex)
+            {
+                case 0: // Screenshot
+                    {
+                        Utils.ScreenshotToClipboard();
+                        break;
+                    }
+                case 1: // X360 Controller emu
+                    {
+                        if (VigemAndHidHidePresent)
+                        {
+                            x360Emu();
+                        }
+                        break;
+                    }
+                case 2: // DS4 emu
+                    {
+                        if (VigemAndHidHidePresent)
+                        {
+                            ds4Emu();
+                        }
+                        break;
+                    }
+                case 3: // Turn microphone on/off
+                    {
+                        if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                        {
+                            if (micOff)
+                            {
+                                dualsense[currentControllerNumber].TurnMicrophoneOn();
+                            }
+                            else
+                            {
+                                dualsense[currentControllerNumber].TurnMicrophoneOff();
+                            }
+                        }
+                        break;
+                    }
+                case 4: // Audio passthrough
+                    {
+                        if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                        {
+                            if (audioToHapticsBtn.IsChecked == false)
+                            {
+                                audioToHapticsBtn.IsChecked = true;
+                            }
+                            else
+                            {
+                                audioToHapticsBtn.IsChecked = false;
+                            }
+                        }
+                        break;
+                    }
+            }
+        }
+
+        private void WatchHotkeys()
+        {
+            bool micOff = false;
+            bool lastMicButton = false;
+            bool lastUp = false;
+            bool lastLeft = false;
+            bool lastRight = false;
+            bool lastDown = false;
+            while (true)
+            {
+                Thread.Sleep(100);
+                try
+                {
+                    this.Dispatcher.Invoke(() => {
+                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                        {
+                            if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton && !lastUp && !lastLeft && !lastRight && !lastDown)
+                            {
+                                HandleHotkey(hotkeyBoxMic.SelectedIndex); // MIC BUTTON
+                            }
+                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
+                            && !dualsense[currentControllerNumber].ButtonState.DpadUp && lastUp)
+                            {
+                                HandleHotkey(hotkeyBoxMicPlusUp.SelectedIndex);
+                            }
+                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
+                            && !dualsense[currentControllerNumber].ButtonState.DpadLeft && lastLeft)
+                            {
+                                HandleHotkey(hotkeyBoxMicPlusLeft.SelectedIndex);
+                            }
+                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
+                            && !dualsense[currentControllerNumber].ButtonState.DpadRight && lastRight)
+                            {
+                                HandleHotkey(hotkeyBoxMicPlusRight.SelectedIndex);
+                            }
+                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
+                            && !dualsense[currentControllerNumber].ButtonState.DpadDown && lastDown)
+                            {
+                                HandleHotkey(hotkeyBoxMicPlusDown.SelectedIndex);
+                            }
+
+                            lastMicButton = dualsense[currentControllerNumber].ButtonState.micBtn;
+                            lastUp = dualsense[currentControllerNumber].ButtonState.DpadUp;
+                            lastLeft = dualsense[currentControllerNumber].ButtonState.DpadLeft;
+                            lastRight = dualsense[currentControllerNumber].ButtonState.DpadRight;
+                            lastDown = dualsense[currentControllerNumber].ButtonState.DpadDown;
+                        }
+                    });
+                }
+                catch (TaskCanceledException) { Environment.Exit(0); }
+            }
         }
 
         private void Events_NewPacket(object? sender, Events.PacketEvent e)
@@ -1060,6 +1173,7 @@ namespace DualSenseY
                     }
                     else
                     {
+                        VigemAndHidHidePresent = false;
                         ViGEMBusStatusText.Text = "ViGEMBus Status: Not found";
                         ViGEMBusDownloadBtn.Visibility = Visibility.Visible;
                         x360EmuButton.IsEnabled = false;
@@ -1076,6 +1190,7 @@ namespace DualSenseY
                         }
                         else
                         {
+                            VigemAndHidHidePresent = false;
                             hidhideVersionText.Text = "HidHide: Not found";
                             HidHideDownloadBtn.Visibility = Visibility.Visible;
                             x360EmuButton.IsEnabled = false;
@@ -1085,6 +1200,7 @@ namespace DualSenseY
                     }
                     catch (Nefarius.Drivers.HidHide.Exceptions.HidHideDriverNotFoundException)
                     {
+                        VigemAndHidHidePresent = false;
                         hidhideVersionText.Text = "HidHide: Not found";
                         HidHideDownloadBtn.Visibility = Visibility.Visible;
                         x360EmuButton.IsEnabled = false;
@@ -1622,25 +1738,24 @@ namespace DualSenseY
                     try
                     {
                         settings.SaveProfileToFile(dialog.ResponseText, profile);
-                        MessageBox.Show("Your config was created successfuly!", "Config creation", MessageBoxButton.OK, MessageBoxImage.Information);
+                        System.Windows.MessageBox.Show("Your config was created successfuly!", "Config creation", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch
                     {
-                        MessageBox.Show("File couldn't be saved, contact the developer", "File write error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        System.Windows.MessageBox.Show("File couldn't be saved, contact the developer", "File write error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Failed!");
+                    System.Windows.MessageBox.Show("Failed!");
                 }
             }
         }
 
         private void configBtn_Click(object sender, RoutedEventArgs e)
         {
-            Button control = (Button)sender;
+            var control = (Button)sender;
             string path = Settings.Path + "\\" + control.Content + ".dyp";
-
         }
 
         private void controlPanel_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1830,12 +1945,12 @@ namespace DualSenseY
                     }
                     else
                     {
-                        MessageBox.Show("File is corrupted", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        System.Windows.MessageBox.Show("File is corrupted", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 else
                 {
-                    MessageBox.Show("File doesn't exist", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show("File doesn't exist", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -1866,7 +1981,7 @@ namespace DualSenseY
             }
             else
             {
-                MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                 audioToHapticsBtn.IsChecked = false;
             }
         }
@@ -1931,7 +2046,15 @@ namespace DualSenseY
         {
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
-                dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
+                if(speakerSlider.Value == 0)
+                {
+                    dualsense[currentControllerNumber].SetSpeakerVolume(0);
+                }
+                else
+                {
+                    dualsense[currentControllerNumber].SetSpeakerVolume(100);
+                    dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
+                }
             }
         }
 
@@ -2047,34 +2170,41 @@ namespace DualSenseY
 
         private void RestoreController(bool restart, Dualsense dualsense, bool dispose)
         {
-            hidHide.ClearBlockedInstancesList();
-            hidHide.ClearApplicationsList();
-            hidHide.IsActive = false;
-
-            if (dualsense != null && dualsense.Working)
+            try
             {
-                PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense.DeviceID);
-
-                if (restart)
+                if (hidHide.IsInstalled)
                 {
-                    isHiding = true;
-                    try
+                    if (dualsense != null && dualsense.Working)
                     {
-                        if (dispose)
-                        {
-                            dualsense.Dispose();
-                        }
-                        tempDevice.Disable();
-                    }
-                    catch { }
-                }
-                else
-                {
-                    isHiding = false;
-                }
+                        PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense.DeviceID);
 
-                tempDevice.Enable();
+                        if (restart)
+                        {
+                            isHiding = true;
+                            try
+                            {
+                                if (dispose)
+                                {
+                                    dualsense.Dispose();
+                                }
+                                tempDevice.Disable();
+                            }
+                            catch { }
+                        }
+                        else
+                        {
+                            isHiding = false;
+                        }
+
+                        tempDevice.Enable();
+                    }
+
+                    hidHide.ClearBlockedInstancesList();
+                    hidHide.ClearApplicationsList();
+                    hidHide.IsActive = false;
+                }
             }
+            catch (Nefarius.Drivers.HidHide.Exceptions.HidHideDriverNotFoundException){}
         }
 
         private void sensitivitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -2125,6 +2255,11 @@ namespace DualSenseY
                 speakerLabel.Text = "Speaker";
                 dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.SPEAKER);
             }
+        }
+
+        private void keyboardHotkeyMic_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            
         }
     }
 }

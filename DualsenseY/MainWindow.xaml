@@ -39,7 +39,7 @@
             <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-95,0,0" Grid.Column="1"/>
         </StackPanel>
 
-        <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="2" SelectionChanged="controlPanel_SelectionChanged">
+        <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="2" SelectionChanged="controlPanel_SelectionChanged" TabStripPlacement="Left">
 
 
             <TabItem Header="Vibration" x:Name="vibrationTab">
@@ -74,6 +74,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
                     <TextBlock x:Name="LEDlabel" Text="LED Color: (0,0,0)" Margin="0,0,0,5"/>
@@ -84,8 +85,6 @@
                         <Slider x:Name="sliderGreen" Width="100" Minimum="0" Maximum="255" ValueChanged="sliderLED_ValueChanged"/>
                         <TextBlock Text="B:" VerticalAlignment="Center" Margin="10,0,5,0"/>
                         <Slider x:Name="sliderBlue" Width="100" Minimum="0" Maximum="255" ValueChanged="sliderLED_ValueChanged"/>
-                        <CheckBox x:Name="ds4LightbarIgnoreBox" Margin="15,0,0,0" Checked="ds4LightbarIgnoreBox_Checked" Unchecked="ds4LightbarIgnoreBox_Unchecked"/>
-                        <TextBlock Text=" Ignore DS4 lightbar"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,10,0,0">
@@ -107,6 +106,11 @@
                     <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,10,0,0">
                         <TextBlock Text="Sound to LED: "/>
                         <CheckBox x:Name="soundLEDcheckbox" Checked="soundLEDcheckbox_Checked" Unchecked="soundLEDcheckbox_Unchecked"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="7" Margin="0,10,0,0">
+                        <TextBlock Text="Ignore DS4 lightbar:"/>
+                        <CheckBox Margin="-180,-15,0,0" Width="15" x:Name="ds4LightbarIgnoreBox" Checked="ds4LightbarIgnoreBox_Checked" Unchecked="ds4LightbarIgnoreBox_Unchecked"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -148,31 +152,31 @@
                     </ComboBox>
 
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Force 1:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce1" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce1_ValueChanged"/>
+                    <Slider x:Name="sliderForce1" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,103,18" ValueChanged="sliderForce1_ValueChanged" Grid.RowSpan="2"/>
                     <TextBlock x:Name="textForce1" Grid.Row="1" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="Force 2:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce2" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce2_ValueChanged"/>
+                    <Slider x:Name="sliderForce2" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,103,18" ValueChanged="sliderForce2_ValueChanged" Grid.RowSpan="2"/>
                     <TextBlock x:Name="textForce2" Grid.Row="2" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Force 3:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce3" Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce3_ValueChanged"/>
+                    <Slider x:Name="sliderForce3" Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,103,18" ValueChanged="sliderForce3_ValueChanged" Grid.RowSpan="2"/>
                     <TextBlock x:Name="textForce3" Grid.Row="3" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Force 4:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce4" Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce4_ValueChanged"/>
+                    <Slider x:Name="sliderForce4" Grid.Row="3" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,18,103,0" ValueChanged="sliderForce4_ValueChanged" Grid.RowSpan="2"/>
                     <TextBlock x:Name="textForce4" Grid.Row="4" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="5" Grid.Column="0" Text="Force 5:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce5" Grid.Row="5" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce5_ValueChanged"/>
+                    <Slider x:Name="sliderForce5" Grid.Row="4" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,18,103,18" ValueChanged="sliderForce5_ValueChanged" Grid.RowSpan="3"/>
                     <TextBlock x:Name="textForce5" Grid.Row="5" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Force 6:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce6" Grid.Row="6" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce6_ValueChanged"/>
+                    <Slider x:Name="sliderForce6" Grid.Row="5" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,18,103,1" ValueChanged="sliderForce6_ValueChanged" Grid.RowSpan="2"/>
                     <TextBlock x:Name="textForce6" Grid.Row="6" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
 
                     <TextBlock Grid.Row="7" Grid.Column="0" Text="Force 7:" VerticalAlignment="Center" Height="16"/>
-                    <Slider x:Name="sliderForce7" Grid.Row="7" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,0,0" ValueChanged="sliderForce7_ValueChanged"/>
+                    <Slider x:Name="sliderForce7" Grid.Row="7" Grid.Column="1" Minimum="0" Maximum="255" Margin="10,0,103,0" ValueChanged="sliderForce7_ValueChanged"/>
                     <TextBlock x:Name="textForce7" Grid.Row="7" Grid.Column="2" Text="0" VerticalAlignment="Center" Height="16" Margin="0,0,220,0"/>
                 </Grid>
             </TabItem>
@@ -207,15 +211,15 @@
                     </Grid.ColumnDefinitions>
 
 
-                    <StackPanel Margin="10,24,-554,-106" >
+                    <StackPanel Margin="10,24,-432,-106" >
                         <CheckBox x:Name="audioToHapticsBtn" Content="Audio passthrough" Checked="audioToHapticsBtn_Checked" Unchecked="audioToHapticsBtn_Unchecked" Width="125" HorizontalAlignment="Left"/>
                         <CheckBox x:Name="outputHeadsetBox" Content="Output sound to headset" Width="160" HorizontalAlignment="Left" Margin="130,-15,0,0" Checked="outputHeadsetBox_Checked" Unchecked="outputHeadsetBox_Unchecked" IsEnabled="True"/>
                         <TextBlock x:Name="speakerLabel" Text="Speaker"/>
-                        <Slider x:Name="speakerSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
+                        <Slider x:Name="speakerSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged" HorizontalAlignment="Left" Width="422"/>
                         <TextBlock Text="Left actuator"/>
-                        <Slider x:Name="leftActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
+                        <Slider x:Name="leftActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged" HorizontalAlignment="Left" Width="422"/>
                         <TextBlock Text="Right actuator"/>
-                        <Slider x:Name="rightActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged"/>
+                        <Slider x:Name="rightActuatorSlider" Minimum="0" Maximum="1" Value="1" ValueChanged="speakerSlider_ValueChanged" HorizontalAlignment="Left" Width="422"/>
 
                         <TextBlock Grid.Row="0" Text="Click here to play a sound" FontSize="15" HorizontalAlignment="Center"/>
                         <Button Height="40" Width="90" x:Name="testSpeakerButton" Content="Test speaker" FontSize="15" Click="testSpeakerButton_Click"/>
@@ -234,8 +238,8 @@
                         <ColumnDefinition Width="Auto"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Row="0" x:Name="touchPadBorder" Height="150" Width="300" BorderBrush="Black" BorderThickness="2,2,2,2" Background="{x:Null}" Margin="130,0,0,0"/>
-                    <Grid Grid.Row="0" Margin="130,0,0,0">
+                    <Border Grid.Row="0" x:Name="touchPadBorder" Height="150" Width="300" BorderBrush="Black" BorderThickness="2,2,2,2" Background="{x:Null}" Margin="80,0,0,0"/>
+                    <Grid Grid.Row="0" Margin="83,0,3,0">
                         <Ellipse x:Name="touchLeftDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                         <Ellipse x:Name="touchRightDot" Width="10" Height="10" Fill="Red" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                     </Grid>
@@ -243,7 +247,7 @@
                     <StackPanel Grid.Row="1">
                         <TextBlock x:Name="touchPadText" Text="" FontSize="12"></TextBlock>
                         <TextBlock Text="Use as mouse: " FontSize="14"/>
-                        <CheckBox x:Name="useAsMouseBox" Margin="-230,-16,0,0" Width="17" Checked="useAsMouseBox_Checked" Unchecked="useAsMouseBox_Unchecked"/>
+                        <CheckBox x:Name="useAsMouseBox" Margin="-180,-16,0,0" Width="17" Checked="useAsMouseBox_Checked" Unchecked="useAsMouseBox_Unchecked"/>
                         <TextBlock x:Name="sensitivityText" Text="Sensitivity: 3" FontSize="14"/>
                         <Slider x:Name="sensitivitySlider" Margin="80,-18,0,0" Minimum="1" Maximum="20" Value="1" ValueChanged="sensitivitySlider_ValueChanged"/>
                     </StackPanel>
@@ -263,8 +267,8 @@
                         <TextBlock x:Name="hidhideVersionText" Text="HidHide version: xx.xx.xx"/>
                         <TextBlock x:Name="ViGEMBusStatusText" Text="ViGEMBus status:"/>
                         <TextBlock x:Name="crnEmulatingText" Text=""/>
-                        <Button x:Name="ViGEMBusDownloadBtn" Content="ViGEMBus Download" Width="120" Height="25" Margin="150,-40,0,0" Click="ViGEMBusDownloadBtn_Click"/>
-                        <Button x:Name="HidHideDownloadBtn" Content="HidHide Download" Width="120" Height="25" Margin="400,-40,0,0" Click="HidHideDownloadBtn_Click"/>
+                        <Button x:Name="ViGEMBusDownloadBtn" Content="ViGEMBus Download" Width="120" Height="25" Margin="50,-40,0,0" Click="ViGEMBusDownloadBtn_Click"/>
+                        <Button x:Name="HidHideDownloadBtn" Content="HidHide Download" Width="120" Height="25" Margin="300,-40,0,0" Click="HidHideDownloadBtn_Click"/>
                     </StackPanel>
 
                     <StackPanel Margin="60" x:Name="controllerSelectionPanel">
@@ -280,6 +284,85 @@
                     </StackPanel>
                 </Grid>
             </TabItem>
+
+            <TabItem Header="Hotkeys" x:Name="hotkeysTab">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                        <RowDefinition Height="Auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <TextBlock FontSize="15" Text="Mic button" Margin="0,5,0,0"/>
+                        <ComboBox x:Name="hotkeyBoxMic" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5">
+                            <ComboBoxItem Content="Screenshot"/>
+                            <ComboBoxItem Content="X360 Controller Emulation"/>
+                            <ComboBoxItem Content="DS4 Emulation"/>
+                            <ComboBoxItem Content="Disable/Enable Microphone"/>
+                            <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="None"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1">
+                        <TextBlock FontSize="15" Text="Mic button + DUP" Margin="0,5,0,0"/>
+                        <ComboBox x:Name="hotkeyBoxMicPlusUp" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5">
+                            <ComboBoxItem Content="Screenshot"/>
+                            <ComboBoxItem Content="X360 Controller Emulation"/>
+                            <ComboBoxItem Content="DS4 Emulation"/>
+                            <ComboBoxItem Content="Disable/Enable Microphone"/>
+                            <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="None"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2">
+                        <TextBlock FontSize="15" Text="Mic button + DRIGHT" Margin="0,5,0,0"/>
+                        <ComboBox x:Name="hotkeyBoxMicPlusRight" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5">
+                            <ComboBoxItem Content="Screenshot"/>
+                            <ComboBoxItem Content="X360 Controller Emulation"/>
+                            <ComboBoxItem Content="DS4 Emulation"/>
+                            <ComboBoxItem Content="Disable/Enable Microphone"/>
+                            <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="None"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="3">
+                        <TextBlock FontSize="15" Text="Mic button + DLEFT" Margin="0,5,0,0"/>
+                        <ComboBox x:Name="hotkeyBoxMicPlusLeft" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5">
+                            <ComboBoxItem Content="Screenshot"/>
+                            <ComboBoxItem Content="X360 Controller Emulation"/>
+                            <ComboBoxItem Content="DS4 Emulation"/>
+                            <ComboBoxItem Content="Disable/Enable Microphone"/>
+                            <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="None"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4">
+                        <TextBlock FontSize="15" Text="Mic button + DDOWN" Margin="0,5,0,0"/>
+                        <ComboBox x:Name="hotkeyBoxMicPlusDown" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5">
+                            <ComboBoxItem Content="Screenshot"/>
+                            <ComboBoxItem Content="X360 Controller Emulation"/>
+                            <ComboBoxItem Content="DS4 Emulation"/>
+                            <ComboBoxItem Content="Disable/Enable Microphone"/>
+                            <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="None"/>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Settings">
+
+            </TabItem>
+
         </TabControl>
     </Grid>
 </Window>
