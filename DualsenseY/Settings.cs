@@ -44,6 +44,11 @@ namespace DualSenseY
             public float SpeakerVolume { get; set; }
             public float LeftActuatorVolume { get; set; }
             public float RightActuatorVolume { get; set; }
+            public int HotKey1 { get; set; }
+            public int HotKey2 { get; set; }
+            public int HotKey3 { get; set; }
+            public int HotKey4 { get; set; }
+            public int HotKey5 { get; set; }
             public bool UseHeadset { get; set; }
             public LED.PlayerLED playerLED { get; set; }
             public LED.MicrophoneLED microphoneLED { get; set; }

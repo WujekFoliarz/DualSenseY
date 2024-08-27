@@ -1,8 +1,10 @@
-﻿using NAudio.CoreAudioApi;
+﻿using Microsoft.Win32;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using Nefarius.Drivers.HidHide;
 using Nefarius.Utilities.DeviceManagement.PnP;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -39,10 +41,41 @@ namespace DualSenseY
 
         private bool firstTimeCmbSelect = true;
         private HidHideControlService hidHide = new HidHideControlService();
+        private System.Windows.Forms.NotifyIcon MyNotifyIcon;
 
         public MainWindow()
         {
+            if(Process.GetProcessesByName("DualSenseY").Count() > 1)
+            {
+                MessageBox.Show("DualSenseY is already running!");
+                Environment.Exit(0);
+            }
+
             InitializeComponent();
+            MyNotifyIcon = new System.Windows.Forms.NotifyIcon();
+            Stream iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/dualsenseyicon.ico")).Stream;
+            MyNotifyIcon.Icon = new System.Drawing.Icon(iconStream);
+            MyNotifyIcon.Click += MyNotifyIcon_Click;
+            iconStream.Dispose();
+            this.ShowInTaskbar = true;
+
+            minimizeToTrayBox.IsChecked = DualSenseY.Properties.Settings.Default.minimizeToTray;
+            launchMinimizedBox.IsChecked = DualSenseY.Properties.Settings.Default.launchMinimized;
+            //launchWithWindowsBox.IsChecked = DualSenseY.Properties.Settings.Default.launchWithWindows;
+            connectOnStartupBox.IsChecked = DualSenseY.Properties.Settings.Default.connectOnStartup;
+
+            if (DualSenseY.Properties.Settings.Default.launchMinimized)
+            {
+                this.ShowInTaskbar = false;
+                this.Hide();
+                MyNotifyIcon.Visible = true;
+            }
+
+            if (DualSenseY.Properties.Settings.Default.connectOnStartup)
+            {
+                ConnectToController();
+            }
+           
             controlPanelText.Text = $"DualSense Control Panel -- Version {version.CurrentVersion}";
             version.RemoveOldFiles();
             if (version.IsOutdated())
@@ -76,6 +109,7 @@ namespace DualSenseY
             udp = new UDP();
             udp.Events.NewPacket += Events_NewPacket;
             UDPtime.Start();
+            screenshotCooldown.Start();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
@@ -104,48 +138,69 @@ namespace DualSenseY
             }).Start();
         }
 
-        private bool micOff = true;
+        private void MyNotifyIcon_Click(object? sender, EventArgs e)
+        {
+            this.Show();
+            this.Activate();
+            this.Focus();
+            this.WindowState = WindowState.Normal;
+            this.ShowInTaskbar = true;
+            MyNotifyIcon.Visible = false;
+        }
+
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            if(this.WindowState == WindowState.Minimized && minimizeToTrayBox.IsChecked == true)
+            {
+                this.ShowInTaskbar = false;
+                MyNotifyIcon.Visible = true;
+            }
+        }
+
+        private bool micOff = false;
+        private Stopwatch screenshotCooldown = new Stopwatch();
         private void HandleHotkey(int selectedIndex)
         {
             switch (selectedIndex)
             {
                 case 0: // Screenshot
                     {
-                        Utils.ScreenshotToClipboard();
+                        if(screenshotCooldown.ElapsedMilliseconds > 500)
+                        {
+                            Utils.ScreenshotToClipboard();
+                            screenshotCooldown.Restart();
+                            if(audioToHapticsBtn.IsChecked == false)
+                            {
+                                dualsense[currentControllerNumber].PlayHaptics("screenshot.wav", 1, 0, 0, true);
+                            }
+                        }                        
                         break;
                     }
                 case 1: // X360 Controller emu
                     {
-                        if (VigemAndHidHidePresent)
+                        if (VigemAndHidHidePresent && emuStatusForConfig == 0 || emuStatusForConfig == 2)
                         {
                             x360Emu();
+                        }
+                        else if (VigemAndHidHidePresent && emuStatusForConfig == 1)
+                        {
+                            stopEmu();
                         }
                         break;
                     }
                 case 2: // DS4 emu
                     {
-                        if (VigemAndHidHidePresent)
+                        if (VigemAndHidHidePresent && emuStatusForConfig == 0 || emuStatusForConfig == 1)
                         {
                             ds4Emu();
                         }
-                        break;
-                    }
-                case 3: // Turn microphone on/off
-                    {
-                        if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                        else if(VigemAndHidHidePresent && emuStatusForConfig == 2)
                         {
-                            if (micOff)
-                            {
-                                dualsense[currentControllerNumber].TurnMicrophoneOn();
-                            }
-                            else
-                            {
-                                dualsense[currentControllerNumber].TurnMicrophoneOff();
-                            }
+                            stopEmu();
                         }
                         break;
                     }
-                case 4: // Audio passthrough
+                case 3: // Audio passthrough
                     {
                         if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
                         {
@@ -997,71 +1052,81 @@ namespace DualSenseY
             }
             else
             {
-                try
-                {
-                    switch (cmbControllerSelect.SelectedIndex)
-                    {
-                        case 0:
-                            if (dualsense[0] == null || !dualsense[0].Working)
-                            {
-                                dualsense[0] = new Dualsense(0);
-                                dualsense[0].Start();
-                                dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 0;
-                                controllerEmulation = new ControllerEmulation();
-                                controllerEmulation.dualsense = dualsense[0];
-                            }
-                            break;
-                        case 1:
-                            if (dualsense[1] == null || !dualsense[1].Working)
-                            {
-                                dualsense[1] = new Dualsense(1);
-                                dualsense[1].Start();
-                                dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 1;
-                                controllerEmulation = new ControllerEmulation();
-                                controllerEmulation.dualsense = dualsense[1];
-                            }
-                            break;
-                        case 2:
-                            if (dualsense[2] == null || !dualsense[2].Working)
-                            {
-                                dualsense[2] = new Dualsense(2);
-                                dualsense[2].Start();
-                                dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 2;
-                                controllerEmulation = new ControllerEmulation();
-                                controllerEmulation.dualsense = dualsense[2];
-                            }
-                            break;
-                        case 3:
-                            if (dualsense[3] == null || !dualsense[3].Working)
-                            {
-                                dualsense[3] = new Dualsense(3);
-                                dualsense[3].Start();
-                                dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 3;
-                                controllerEmulation = new ControllerEmulation();
-                                controllerEmulation.dualsense = dualsense[3];
-                            }
-                            break;
-                    }
+                ConnectToController();
+            }
+        }
 
-                    connected = true;
-                    ReadCurrentValues();
-                    UpdateConnectionStatus();
-                    audioToHapticsBtn.IsChecked = false;
-                }
-                catch (Exception error)
+        private void ConnectToController()
+        {
+            try
+            {
+                switch (cmbControllerSelect.SelectedIndex)
                 {
-                    if (error.Message.Contains("Couldn't"))
-                    {
-                        MessageBox.Show($"Controller {currentControllerNumber + 1} is not plugged in");
-                    }
-                    else
-                    {
-                        MessageBox.Show("ERROR, PLEASE CONTACT THE DEVELOPER" + "\n\n" + error.Message + "\n" + error.StackTrace, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
+                    case 0:
+                        if (dualsense[0] == null || !dualsense[0].Working)
+                        {
+                            dualsense[0] = new Dualsense(0);
+                            dualsense[0].Start();
+                            dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                            currentControllerNumber = 0;
+                            controllerEmulation = new ControllerEmulation();
+                            controllerEmulation.dualsense = dualsense[0];
+                        }
+                        break;
+                    case 1:
+                        if (dualsense[1] == null || !dualsense[1].Working)
+                        {
+                            dualsense[1] = new Dualsense(1);
+                            dualsense[1].Start();
+                            dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                            currentControllerNumber = 1;
+                            controllerEmulation = new ControllerEmulation();
+                            controllerEmulation.dualsense = dualsense[1];
+                        }
+                        break;
+                    case 2:
+                        if (dualsense[2] == null || !dualsense[2].Working)
+                        {
+                            dualsense[2] = new Dualsense(2);
+                            dualsense[2].Start();
+                            dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                            currentControllerNumber = 2;
+                            controllerEmulation = new ControllerEmulation();
+                            controllerEmulation.dualsense = dualsense[2];
+                        }
+                        break;
+                    case 3:
+                        if (dualsense[3] == null || !dualsense[3].Working)
+                        {
+                            dualsense[3] = new Dualsense(3);
+                            dualsense[3].Start();
+                            dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                            currentControllerNumber = 3;
+                            controllerEmulation = new ControllerEmulation();
+                            controllerEmulation.dualsense = dualsense[3];
+                        }
+                        break;
+                }
+
+                connected = true;
+                ReadCurrentValues();
+                UpdateConnectionStatus();
+                audioToHapticsBtn.IsChecked = false;
+                if (DualSenseY.Properties.Settings.Default.defaultConfigPath != string.Empty && File.Exists(DualSenseY.Properties.Settings.Default.defaultConfigPath))
+                {
+                    loadConfigOnStartupBtn.Content = Path.GetFileNameWithoutExtension(DualSenseY.Properties.Settings.Default.defaultConfigPath);
+                    ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.defaultConfigPath));
+                }
+            }
+            catch (Exception error)
+            {
+                if (error.Message.Contains("Couldn't"))
+                {
+                    MessageBox.Show($"Controller {currentControllerNumber + 1} is not plugged in");
+                }
+                else
+                {
+                    MessageBox.Show("ERROR, PLEASE CONTACT THE DEVELOPER" + "\n\n" + error.Message + "\n" + error.StackTrace, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
@@ -1117,6 +1182,10 @@ namespace DualSenseY
                             break;
                     }
 
+                    if (emuStatusForConfig == 2 && dualsense[currentControllerNumber] != null && audioToHapticsBtn.IsChecked == false)
+                    {
+                        dualsense[currentControllerNumber].PlayHaptics("blip.wav", 1, 0, 0, true);
+                    }
                     ReadCurrentValues();
                 });
 
@@ -1718,6 +1787,12 @@ namespace DualSenseY
                 profile.leftTriggerForces = leftTriggerForces;
                 profile.rightTriggerForces = rightTriggerForces;
 
+                profile.HotKey1 = hotkeyBoxMic.SelectedIndex;
+                profile.HotKey2 = hotkeyBoxMicPlusUp.SelectedIndex;
+                profile.HotKey3 = hotkeyBoxMicPlusRight.SelectedIndex;
+                profile.HotKey4 = hotkeyBoxMicPlusLeft.SelectedIndex;
+                profile.HotKey5 = hotkeyBoxMicPlusDown.SelectedIndex;
+
                 if (controllerEmulation != null)
                 {
                     profile.IgnoreDS4Lightbar = (bool)ds4LightbarIgnoreBox.IsChecked;
@@ -1793,155 +1868,7 @@ namespace DualSenseY
 
                     if (profile != null)
                     {
-                        dualsense[currentControllerNumber].SetLightbarTransition(profile.R, profile.G, profile.B, 10, 10);
-                        dualsense[currentControllerNumber].SetLeftTrigger(profile.leftTriggerMode, profile.leftTriggerForces[0], profile.leftTriggerForces[1], profile.leftTriggerForces[2], profile.leftTriggerForces[3], profile.leftTriggerForces[4], profile.leftTriggerForces[5], profile.leftTriggerForces[6]);
-                        dualsense[currentControllerNumber].SetRightTrigger(profile.rightTriggerMode, profile.rightTriggerForces[0], profile.rightTriggerForces[1], profile.rightTriggerForces[2], profile.rightTriggerForces[3], profile.rightTriggerForces[4], profile.rightTriggerForces[5], profile.rightTriggerForces[6]);
-                        dualsense[currentControllerNumber].SetMicrophoneLED(profile.microphoneLED);
-                        dualsense[currentControllerNumber].SetPlayerLED(profile.playerLED);
-
-                        controlPanel.SelectedIndex = 0;
-                        triggerLeftOrRightBox.SelectedIndex = 0;
-                        sliderRed.Value = profile.R;
-                        sliderGreen.Value = profile.G;
-                        sliderBlue.Value = profile.B;
-                        currentLeftTrigger = profile.leftTriggerMode;
-                        currentRightTrigger = profile.rightTriggerMode;
-                        ds4LightbarIgnoreBox.IsChecked = profile.IgnoreDS4Lightbar;
-                        useAsMouseBox.IsChecked = profile.UseTouchpadAsMouse;
-                        sensitivitySlider.Value = profile.TouchpadSensitivity;
-                        speakerSlider.Value = profile.SpeakerVolume;
-                        leftActuatorSlider.Value = profile.LeftActuatorVolume;
-                        rightActuatorSlider.Value = profile.RightActuatorVolume;
-                        outputHeadsetBox.IsChecked = profile.UseHeadset;
-                        sliderMicVolume.Value = profile.MicrophoneVolume;
-
-                        try
-                        {
-                            if (controllerEmulation != null && controllerEmulation.isViGEMBusInstalled && hidHide.IsInstalled)
-                            {
-                                switch (profile.ControllerEmulation)
-                                {
-                                    case 0:
-                                        stopEmu();
-                                        break;
-                                    case 1:
-                                        x360Emu();
-                                        break;
-                                    case 2:
-                                        ds4Emu();
-                                        break;
-                                }
-                            }
-                        }
-                        catch { }
-
-
-                        switch (profile.playerLED)
-                        {
-                            case LED.PlayerLED.OFF:
-                                LEDbox.SelectedIndex = 0;
-                                break;
-                            case LED.PlayerLED.PLAYER_1:
-                                LEDbox.SelectedIndex = 1;
-                                break;
-                            case LED.PlayerLED.PLAYER_2:
-                                LEDbox.SelectedIndex = 2;
-                                break;
-                            case LED.PlayerLED.PLAYER_3:
-                                LEDbox.SelectedIndex = 3;
-                                break;
-                            case LED.PlayerLED.PLAYER_4:
-                                LEDbox.SelectedIndex = 4;
-                                break;
-                            case LED.PlayerLED.ALL:
-                                LEDbox.SelectedIndex = 5;
-                                break;
-                        }
-
-                        if (profile.microphoneLED == LED.MicrophoneLED.ON)
-                            micLEDcheckbox.IsChecked = true;
-                        else
-                            micLEDcheckbox.IsChecked = false;
-
-                        switch (currentLeftTrigger)
-                        {
-                            case TriggerType.TriggerModes.Off:
-                                leftTriggerModeIndex = 0;
-                                break;
-                            case TriggerType.TriggerModes.Rigid:
-                                leftTriggerModeIndex = 1;
-                                break;
-                            case TriggerType.TriggerModes.Pulse:
-                                leftTriggerModeIndex = 2;
-                                break;
-                            case TriggerType.TriggerModes.Rigid_A:
-                                leftTriggerModeIndex = 3;
-                                break;
-                            case TriggerType.TriggerModes.Rigid_B:
-                                leftTriggerModeIndex = 4;
-                                break;
-                            case TriggerType.TriggerModes.Rigid_AB:
-                                leftTriggerModeIndex = 5;
-                                break;
-                            case TriggerType.TriggerModes.Pulse_A:
-                                leftTriggerModeIndex = 6;
-                                break;
-                            case TriggerType.TriggerModes.Pulse_B:
-                                leftTriggerModeIndex = 7;
-                                break;
-                            case TriggerType.TriggerModes.Pulse_AB:
-                                leftTriggerModeIndex = 8;
-                                break;
-                            case TriggerType.TriggerModes.Calibration:
-                                leftTriggerModeIndex = 9;
-                                break;
-                        }
-
-                        switch (currentRightTrigger)
-                        {
-                            case TriggerType.TriggerModes.Off:
-                                rightTriggerModeIndex = 0;
-                                break;
-                            case TriggerType.TriggerModes.Rigid:
-                                rightTriggerModeIndex = 1;
-                                break;
-                            case TriggerType.TriggerModes.Pulse:
-                                rightTriggerModeIndex = 2;
-                                break;
-                            case TriggerType.TriggerModes.Rigid_A:
-                                rightTriggerModeIndex = 3;
-                                break;
-                            case TriggerType.TriggerModes.Rigid_B:
-                                rightTriggerModeIndex = 4;
-                                break;
-                            case TriggerType.TriggerModes.Rigid_AB:
-                                rightTriggerModeIndex = 5;
-                                break;
-                            case TriggerType.TriggerModes.Pulse_A:
-                                rightTriggerModeIndex = 6;
-                                break;
-                            case TriggerType.TriggerModes.Pulse_B:
-                                rightTriggerModeIndex = 7;
-                                break;
-                            case TriggerType.TriggerModes.Pulse_AB:
-                                rightTriggerModeIndex = 8;
-                                break;
-                            case TriggerType.TriggerModes.Calibration:
-                                rightTriggerModeIndex = 9;
-                                break;
-                        }
-
-                        leftTriggerForces = profile.leftTriggerForces;
-                        triggerModeCmb.SelectedIndex = leftTriggerModeIndex;
-                        sliderForce1.Value = leftTriggerForces[0];
-                        sliderForce2.Value = leftTriggerForces[1];
-                        sliderForce3.Value = leftTriggerForces[2];
-                        sliderForce4.Value = leftTriggerForces[3];
-                        sliderForce5.Value = leftTriggerForces[4];
-                        sliderForce6.Value = leftTriggerForces[5];
-                        sliderForce7.Value = leftTriggerForces[6];
-                        rightTriggerForces = profile.rightTriggerForces;
-
+                        ApplySettingsFromProfile(profile);
                     }
                     else
                     {
@@ -1953,6 +1880,164 @@ namespace DualSenseY
                     System.Windows.MessageBox.Show("File doesn't exist", "File read error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+        }
+
+        private void ApplySettingsFromProfile(Settings.Profile profile)
+        {
+            dualsense[currentControllerNumber].SetLightbarTransition(profile.R, profile.G, profile.B, 10, 10);
+            dualsense[currentControllerNumber].SetLeftTrigger(profile.leftTriggerMode, profile.leftTriggerForces[0], profile.leftTriggerForces[1], profile.leftTriggerForces[2], profile.leftTriggerForces[3], profile.leftTriggerForces[4], profile.leftTriggerForces[5], profile.leftTriggerForces[6]);
+            dualsense[currentControllerNumber].SetRightTrigger(profile.rightTriggerMode, profile.rightTriggerForces[0], profile.rightTriggerForces[1], profile.rightTriggerForces[2], profile.rightTriggerForces[3], profile.rightTriggerForces[4], profile.rightTriggerForces[5], profile.rightTriggerForces[6]);
+            dualsense[currentControllerNumber].SetMicrophoneLED(profile.microphoneLED);
+            dualsense[currentControllerNumber].SetPlayerLED(profile.playerLED);
+
+            controlPanel.SelectedIndex = 0;
+            triggerLeftOrRightBox.SelectedIndex = 0;
+            sliderRed.Value = profile.R;
+            sliderGreen.Value = profile.G;
+            sliderBlue.Value = profile.B;
+            currentLeftTrigger = profile.leftTriggerMode;
+            currentRightTrigger = profile.rightTriggerMode;
+            ds4LightbarIgnoreBox.IsChecked = profile.IgnoreDS4Lightbar;
+            useAsMouseBox.IsChecked = profile.UseTouchpadAsMouse;
+            sensitivitySlider.Value = profile.TouchpadSensitivity;
+            speakerSlider.Value = profile.SpeakerVolume;
+            leftActuatorSlider.Value = profile.LeftActuatorVolume;
+            rightActuatorSlider.Value = profile.RightActuatorVolume;
+            outputHeadsetBox.IsChecked = profile.UseHeadset;
+            sliderMicVolume.Value = profile.MicrophoneVolume;
+
+            hotkeyBoxMic.SelectedIndex = profile.HotKey1;
+            hotkeyBoxMicPlusUp.SelectedIndex = profile.HotKey2;
+            hotkeyBoxMicPlusRight.SelectedIndex = profile.HotKey3;
+            hotkeyBoxMicPlusLeft.SelectedIndex = profile.HotKey4;
+            hotkeyBoxMicPlusDown.SelectedIndex = profile.HotKey5;
+
+            try
+            {
+                if (controllerEmulation != null && controllerEmulation.isViGEMBusInstalled && hidHide.IsInstalled)
+                {
+                    switch (profile.ControllerEmulation)
+                    {
+                        case 0:
+                            stopEmu();
+                            break;
+                        case 1:
+                            x360Emu();
+                            break;
+                        case 2:
+                            ds4Emu();
+                            break;
+                    }
+                }
+            }
+            catch { }
+
+
+            switch (profile.playerLED)
+            {
+                case LED.PlayerLED.OFF:
+                    LEDbox.SelectedIndex = 0;
+                    break;
+                case LED.PlayerLED.PLAYER_1:
+                    LEDbox.SelectedIndex = 1;
+                    break;
+                case LED.PlayerLED.PLAYER_2:
+                    LEDbox.SelectedIndex = 2;
+                    break;
+                case LED.PlayerLED.PLAYER_3:
+                    LEDbox.SelectedIndex = 3;
+                    break;
+                case LED.PlayerLED.PLAYER_4:
+                    LEDbox.SelectedIndex = 4;
+                    break;
+                case LED.PlayerLED.ALL:
+                    LEDbox.SelectedIndex = 5;
+                    break;
+            }
+
+            if (profile.microphoneLED == LED.MicrophoneLED.ON)
+                micLEDcheckbox.IsChecked = true;
+            else
+                micLEDcheckbox.IsChecked = false;
+
+            switch (currentLeftTrigger)
+            {
+                case TriggerType.TriggerModes.Off:
+                    leftTriggerModeIndex = 0;
+                    break;
+                case TriggerType.TriggerModes.Rigid:
+                    leftTriggerModeIndex = 1;
+                    break;
+                case TriggerType.TriggerModes.Pulse:
+                    leftTriggerModeIndex = 2;
+                    break;
+                case TriggerType.TriggerModes.Rigid_A:
+                    leftTriggerModeIndex = 3;
+                    break;
+                case TriggerType.TriggerModes.Rigid_B:
+                    leftTriggerModeIndex = 4;
+                    break;
+                case TriggerType.TriggerModes.Rigid_AB:
+                    leftTriggerModeIndex = 5;
+                    break;
+                case TriggerType.TriggerModes.Pulse_A:
+                    leftTriggerModeIndex = 6;
+                    break;
+                case TriggerType.TriggerModes.Pulse_B:
+                    leftTriggerModeIndex = 7;
+                    break;
+                case TriggerType.TriggerModes.Pulse_AB:
+                    leftTriggerModeIndex = 8;
+                    break;
+                case TriggerType.TriggerModes.Calibration:
+                    leftTriggerModeIndex = 9;
+                    break;
+            }
+
+            switch (currentRightTrigger)
+            {
+                case TriggerType.TriggerModes.Off:
+                    rightTriggerModeIndex = 0;
+                    break;
+                case TriggerType.TriggerModes.Rigid:
+                    rightTriggerModeIndex = 1;
+                    break;
+                case TriggerType.TriggerModes.Pulse:
+                    rightTriggerModeIndex = 2;
+                    break;
+                case TriggerType.TriggerModes.Rigid_A:
+                    rightTriggerModeIndex = 3;
+                    break;
+                case TriggerType.TriggerModes.Rigid_B:
+                    rightTriggerModeIndex = 4;
+                    break;
+                case TriggerType.TriggerModes.Rigid_AB:
+                    rightTriggerModeIndex = 5;
+                    break;
+                case TriggerType.TriggerModes.Pulse_A:
+                    rightTriggerModeIndex = 6;
+                    break;
+                case TriggerType.TriggerModes.Pulse_B:
+                    rightTriggerModeIndex = 7;
+                    break;
+                case TriggerType.TriggerModes.Pulse_AB:
+                    rightTriggerModeIndex = 8;
+                    break;
+                case TriggerType.TriggerModes.Calibration:
+                    rightTriggerModeIndex = 9;
+                    break;
+            }
+
+            leftTriggerForces = profile.leftTriggerForces;
+            triggerModeCmb.SelectedIndex = leftTriggerModeIndex;
+            sliderForce1.Value = leftTriggerForces[0];
+            sliderForce2.Value = leftTriggerForces[1];
+            sliderForce3.Value = leftTriggerForces[2];
+            sliderForce4.Value = leftTriggerForces[3];
+            sliderForce5.Value = leftTriggerForces[4];
+            sliderForce6.Value = leftTriggerForces[5];
+            sliderForce7.Value = leftTriggerForces[6];
+            rightTriggerForces = profile.rightTriggerForces;
         }
 
         private void useAsMouseBox_Checked(object sender, RoutedEventArgs e)
@@ -2046,15 +2131,7 @@ namespace DualSenseY
         {
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
             {
-                if(speakerSlider.Value == 0)
-                {
-                    dualsense[currentControllerNumber].SetSpeakerVolume(0);
-                }
-                else
-                {
-                    dualsense[currentControllerNumber].SetSpeakerVolume(100);
-                    dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
-                }
+                dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
             }
         }
 
@@ -2257,9 +2334,86 @@ namespace DualSenseY
             }
         }
 
-        private void keyboardHotkeyMic_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void loadConfigOnStartupBtn_Click(object sender, RoutedEventArgs e)
         {
-            
+            var dialog = new Microsoft.Win32.OpenFileDialog();
+
+            if (!Directory.Exists(Settings.Path))
+                Directory.CreateDirectory(Settings.Path);
+
+            dialog.InitialDirectory = Settings.Path;
+            dialog.FileName = "DualSense Profile"; // Default file name
+            dialog.DefaultExt = ".dyp"; // Default file extension
+            dialog.Filter = "DualSenseY Profile (.dyp)|*.dyp"; // Filter files by extension
+
+            // Show open file dialog box
+            bool? result = dialog.ShowDialog();
+
+            // Process open file dialog box results
+            if (result == true)
+            {
+                // Open document
+                string path = dialog.FileName;
+
+                if (File.Exists(path))
+                {
+                    Properties.Settings.Default.defaultConfigPath = path;
+                    Properties.Settings.Default.Save();
+                    loadConfigOnStartupBtn.Content = Path.GetFileNameWithoutExtension(path);
+                }
+            }
+        }
+
+        private void minimizeToTrayBox_Checked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.minimizeToTray = true;
+            Properties.Settings.Default.Save();
+        }
+
+        private void minimizeToTrayBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.minimizeToTray = false;
+            Properties.Settings.Default.Save();
+        }
+
+        private void connectOnStartupBox_Checked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.connectOnStartup = true;
+            Properties.Settings.Default.Save();
+        }
+
+        private void connectOnStartupBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.connectOnStartup = false;
+            Properties.Settings.Default.Save();
+        }
+
+        private void launchWithWindowsBox_Checked(object sender, RoutedEventArgs e)
+        {
+            RegistryKey rk = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            rk.SetValue("DualSenseY", System.Reflection.Assembly.GetEntryAssembly().Location.Replace(".dll", ".exe"));
+            Properties.Settings.Default.launchWithWindows = true;
+            Properties.Settings.Default.Save();
+        }
+
+        private void launchWithWindowsBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            RegistryKey rk = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", true);
+            rk.DeleteValue("DualSenseY", false);
+            Properties.Settings.Default.launchWithWindows = false;
+            Properties.Settings.Default.Save();
+        }
+
+        private void launchMinimizedBox_Checked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.launchMinimized = true;
+            Properties.Settings.Default.Save();
+        }
+
+        private void launchMinimizedBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.launchMinimized = false;
+            Properties.Settings.Default.Save();
         }
     }
 }
