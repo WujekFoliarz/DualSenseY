@@ -3,6 +3,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Windows;
 
 namespace DualSenseY
 {
@@ -28,11 +29,19 @@ namespace DualSenseY
 
         private void Connect()
         {
-            serverOn = false;
-            var portNumber = File.ReadAllText(@"C:\Temp\DualSenseX\DualSenseX_PortNumber.txt");
-            client = new UdpClient(Convert.ToInt32(portNumber));
-            serverOn = true;
-            new Thread(() => Listen()).Start();
+            try
+            {
+                serverOn = false;
+                var portNumber = File.ReadAllText(@"C:\Temp\DualSenseX\DualSenseX_PortNumber.txt");
+                client = new UdpClient(Convert.ToInt32(portNumber));
+                serverOn = true;
+                new Thread(() => Listen()).Start();
+            }
+            catch
+            {
+                MessageBox.Show("Something went wrong when starting UDP server, DualSenseY might already be running.");
+                Environment.Exit(0);
+            }
         }
 
         private void Listen()

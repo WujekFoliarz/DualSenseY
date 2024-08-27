@@ -45,13 +45,14 @@ namespace DualSenseY
 
         public MainWindow()
         {
-            if(Process.GetProcessesByName("DualSenseY").Count() > 1)
+            try
             {
-                MessageBox.Show("DualSenseY is already running!");
-                Environment.Exit(0);
+                InitializeComponent();
             }
-
-            InitializeComponent();
+            catch
+            {
+                MessageBox.Show("error");
+            }
             MyNotifyIcon = new System.Windows.Forms.NotifyIcon();
             Stream iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/dualsenseyicon.ico")).Stream;
             MyNotifyIcon.Icon = new System.Drawing.Icon(iconStream);

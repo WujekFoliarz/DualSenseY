@@ -28,7 +28,7 @@ namespace DualSenseY
                     }
                     ZipFile.ExtractToDirectory("update.zip", Directory.GetCurrentDirectory());
                     System.Diagnostics.Process.Start("DualSenseY.exe");
-                    Application.Current.Shutdown();
+                    Environment.Exit(0);
                 }
 
             }
