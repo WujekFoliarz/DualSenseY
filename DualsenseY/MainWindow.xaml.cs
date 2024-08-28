@@ -115,28 +115,32 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; WatchHotkeys(); }).Start();
-            new Thread(() =>
-            {
-                Thread.CurrentThread.IsBackground = true;
-                Thread.CurrentThread.Priority = ThreadPriority.Lowest;
-                while (true)
-                {
-                    try
-                    {
-                        this.Dispatcher.Invoke(() =>
-                        {
-                            if (audioToHapticsBtn.IsChecked == false && AudioTestCooldown.ElapsedMilliseconds >= 3500)
-                            {
-                                audioToHapticsBtn.IsEnabled = true;
-                                testSpeakerButton.IsEnabled = true;
-                            }
-                        });
-                    }
-                    catch (TaskCanceledException) { Environment.Exit(0); } // fix this shit later
+            Thread t = new Thread(() => { WatchAudioDefaultDevice(); });
+            t.SetApartmentState(ApartmentState.STA);
+            t.IsBackground = true;
+            t.Start();
+        }
 
-                    Thread.Sleep(500);
+        private void WatchAudioDefaultDevice()
+        {
+            MMDeviceEnumerator enumerator = new MMDeviceEnumerator();
+            MMDevice device = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+
+            while (true)
+            {
+                MMDevice newDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+                if (newDevice.ID != device.ID)
+                {
+                    device = newDevice;
+                    Thread.Sleep(1000);
+                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && newDevice.State == DeviceState.Active)
+                    {
+                        dualsense[currentControllerNumber].ReinitializeHapticFeedback();
+                    }
                 }
-            }).Start();
+
+                Thread.Sleep(100);
+            }
         }
 
         private void MyNotifyIcon_Click(object? sender, EventArgs e)
@@ -170,10 +174,7 @@ namespace DualSenseY
                         {
                             Utils.ScreenshotToClipboard();
                             screenshotCooldown.Restart();
-                            if(audioToHapticsBtn.IsChecked == false)
-                            {
-                                dualsense[currentControllerNumber].PlayHaptics("screenshot.wav", 1, 0, 0, true);
-                            }
+                            dualsense[currentControllerNumber].PlayHaptics("screenshot.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
                         }                        
                         break;
                     }
@@ -1737,8 +1738,6 @@ namespace DualSenseY
         {
             if (this.IsInitialized)
             {
-                audioToHapticsBtn.IsEnabled = false;
-                testSpeakerButton.IsEnabled = false;
                 dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                 AudioTestCooldown.Restart();
                 dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
@@ -2056,7 +2055,6 @@ namespace DualSenseY
             MMDevice defaultAudio = MDE.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
             if (!defaultAudio.FriendlyName.Contains("Wireless Controller"))
             {
-                testSpeakerButton.IsEnabled = false;
                 if (controllerEmulation != null)
                     controllerEmulation.ForceStopRumble = true;
                 if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
@@ -2074,7 +2072,6 @@ namespace DualSenseY
 
         private void audioToHapticsBtn_Unchecked(object sender, RoutedEventArgs e)
         {
-            testSpeakerButton.IsEnabled = true;
             if (controllerEmulation != null)
                 controllerEmulation.ForceStopRumble = false;
             if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)

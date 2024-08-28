@@ -8,7 +8,7 @@ namespace DualSenseY
 {
     public class Version
     {
-        public double CurrentVersion = 3.5;
+        public double CurrentVersion = 3.6;
 
         public void Update()
         {
