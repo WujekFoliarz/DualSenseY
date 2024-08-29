@@ -52,5 +52,6 @@ Simply send this json (this can be easily done in existing DSX mods)
 
 ![{CC5EF9C3-E156-41EB-AB8B-39D9A0ACF33A}](https://github.com/user-attachments/assets/5d86e224-b553-40be-b43b-17b923263c86)
 
-![{FFB936B1-3829-411C-91DE-AB930DB09F18}](https://github.com/user-attachments/assets/09cddb9b-3b8e-409e-bfb1-092b34677398)
+![{CB903D0C-EA16-4D3D-B9EF-718504E4DDF7}](https://github.com/user-attachments/assets/d99298bc-3368-463b-86c2-e18c08b02e6b)
 
+![{FFB936B1-3829-411C-91DE-AB930DB09F18}](https://github.com/user-attachments/assets/09cddb9b-3b8e-409e-bfb1-092b34677398)
