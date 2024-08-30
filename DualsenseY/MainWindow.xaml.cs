@@ -60,6 +60,9 @@ namespace DualSenseY
             iconStream.Dispose();
             this.ShowInTaskbar = true;
 
+            connectionTypeBTicon.Visibility = Visibility.Hidden;
+            connectionTypeUSBicon.Visibility = Visibility.Hidden;
+
             minimizeToTrayBox.IsChecked = DualSenseY.Properties.Settings.Default.minimizeToTray;
             launchMinimizedBox.IsChecked = DualSenseY.Properties.Settings.Default.launchMinimized;
             //launchWithWindowsBox.IsChecked = DualSenseY.Properties.Settings.Default.launchWithWindows;
@@ -87,8 +90,6 @@ namespace DualSenseY
             controlPanel.Visibility = Visibility.Hidden;
             loadConfigBtn.Visibility = Visibility.Hidden;
             saveConfigBtn.Visibility = Visibility.Hidden;
-            connectionTypeBTicon.Visibility = Visibility.Hidden;
-            connectionTypeUSBicon.Visibility = Visibility.Hidden;
             cmbControllerSelect.SelectedIndex = 0;
 
             leftTriggerForces[0] = 0;
@@ -131,11 +132,25 @@ namespace DualSenseY
                 MMDevice newDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
                 if (newDevice.ID != device.ID)
                 {
-                    device = newDevice;
-                    Thread.Sleep(1000);
-                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && newDevice.State == DeviceState.Active)
+                    if(!newDevice.FriendlyName.Contains("Wireless Controller"))
                     {
-                        dualsense[currentControllerNumber].ReinitializeHapticFeedback();
+                        device = newDevice;
+                        Thread.Sleep(1000);
+                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && newDevice.State == DeviceState.Active)
+                        {
+                            dualsense[currentControllerNumber].ReinitializeHapticFeedback();
+                        }
+                    }
+                    else
+                    {
+                        this.Dispatcher.Invoke(() =>
+                        {
+                            if(audioToHapticsBtn.IsChecked == true)
+                            {
+                                audioToHapticsBtn.IsChecked = false;
+                                System.Windows.MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
+                        });
                     }
                 }
 
@@ -2065,8 +2080,8 @@ namespace DualSenseY
             }
             else
             {
-                System.Windows.MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                 audioToHapticsBtn.IsChecked = false;
+                System.Windows.MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
