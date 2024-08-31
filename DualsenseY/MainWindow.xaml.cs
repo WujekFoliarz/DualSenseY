@@ -1822,22 +1822,27 @@ namespace DualSenseY
                 profile.RightActuatorVolume = (float)rightActuatorSlider.Value;
                 profile.UseHeadset = (bool)outputHeadsetBox.IsChecked;
 
-                var dialog = new DialogBox();
-                if (dialog.ShowDialog() == true)
+                var dialog = new Microsoft.Win32.SaveFileDialog();
+
+                if (!Directory.Exists(Settings.Path))
+                    Directory.CreateDirectory(Settings.Path);
+
+                dialog.InitialDirectory = Settings.Path;
+                dialog.DefaultExt = ".dyp"; // Default file extension
+                dialog.Filter = "DualSenseY Profile (.dyp)|*.dyp"; // Filter files by extension
+
+                bool? result = dialog.ShowDialog();
+
+                if (result == true)
                 {
                     try
                     {
-                        settings.SaveProfileToFile(dialog.ResponseText, profile);
-                        System.Windows.MessageBox.Show("Your config was created successfuly!", "Config creation", MessageBoxButton.OK, MessageBoxImage.Information);
+                        settings.SaveProfileToFile(dialog.FileName, profile);
                     }
-                    catch
+                    catch(Exception ex)
                     {
-                        System.Windows.MessageBox.Show("File couldn't be saved, contact the developer", "File write error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Config creation failed!\n" + ex.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                }
-                else
-                {
-                    System.Windows.MessageBox.Show("Failed!");
                 }
             }
         }
@@ -1868,13 +1873,10 @@ namespace DualSenseY
             dialog.DefaultExt = ".dyp"; // Default file extension
             dialog.Filter = "DualSenseY Profile (.dyp)|*.dyp"; // Filter files by extension
 
-            // Show open file dialog box
             bool? result = dialog.ShowDialog();
 
-            // Process open file dialog box results
             if (result == true)
             {
-                // Open document
                 string path = dialog.FileName;
 
                 if (File.Exists(path))

@@ -14,7 +14,7 @@ namespace DualSenseY
             if (!Directory.Exists(Path))
                 Directory.CreateDirectory(Path);
 
-            File.WriteAllText(Path + "\\" + fileName + ".dyp", JsonConvert.SerializeObject(profile));
+            File.WriteAllText(fileName, JsonConvert.SerializeObject(profile));
         }
 
         public Profile ReadProfileFromFile(string path)
