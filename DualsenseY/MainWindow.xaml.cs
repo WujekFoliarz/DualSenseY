@@ -1300,7 +1300,6 @@ namespace DualSenseY
                         speakerTab.IsEnabled = false;
                         soundLEDcheckbox.IsEnabled = false;
                         audioToHapticsBtn.IsEnabled = false;
-                        touchpadTab.IsEnabled = false;
                         connectionTypeBTicon.Visibility = Visibility.Visible;
                         connectionTypeUSBicon.Visibility = Visibility.Hidden;
                         if (controllerEmulation != null)
@@ -2429,6 +2428,16 @@ namespace DualSenseY
         {
             Properties.Settings.Default.launchMinimized = false;
             Properties.Settings.Default.Save();
+        }
+
+        private void discordBtn_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("explorer", "https://discord.gg/AFYvxf282U");
+        }
+
+        private void githubBtn_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start("explorer", "https://github.com/WujekFoliarz/DualSenseY/issues");
         }
     }
 }

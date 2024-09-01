@@ -39,9 +39,9 @@
             <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-95,0,0" Grid.Column="1"/>
             <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-95,0,0" Grid.Column="1"/>
         </StackPanel>
+        
 
         <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="3" SelectionChanged="controlPanel_SelectionChanged" TabStripPlacement="Left">
-
 
             <TabItem Header="Vibration" x:Name="vibrationTab">
                 <Grid Margin="10">
@@ -369,6 +369,17 @@
                         <CheckBox x:Name="launchMinimizedBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="launchMinimizedBox_Checked" Unchecked="launchMinimizedBox_Unchecked"/>
                     </StackPanel>
 
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="helpTab" Header="Help">
+                <Grid>
+                    <Button x:Name="discordBtn" Margin="-200,0,0,0" Height="150" Width="150" Click="discordBtn_Click">
+                        <Image Source="Resources/discordicon.jpg"/>
+                    </Button>
+
+                    <Button x:Name="githubBtn" Margin="200,0,0,0" Height="150" Width="150" Click="githubBtn_Click">
+                        <Image Source="Resources/githubicon.jpg"/>
+                    </Button>
                 </Grid>
             </TabItem>
 
