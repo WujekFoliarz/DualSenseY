@@ -135,7 +135,10 @@ namespace DualSenseY
                     if(!newDevice.FriendlyName.Contains("Wireless Controller"))
                     {
                         device = newDevice;
+                        watchSystemAudio = false;
                         Thread.Sleep(1000);
+                        watchSystemAudio = true;
+                        new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
                         if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && newDevice.State == DeviceState.Active)
                         {
                             dualsense[currentControllerNumber].ReinitializeHapticFeedback();
@@ -794,12 +797,12 @@ namespace DualSenseY
         private MMDeviceEnumerator MDE = new MMDeviceEnumerator();
         private MMDevice[] MD = new MMDevice[4];
         private WaveInEvent waveInStream = new WaveInEvent();
-
+        private bool watchSystemAudio = true;
         private void WatchSystemAudioLevel()
         {
             MMDevice defaultAudio = MDE.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
 
-            while (true)
+            while (watchSystemAudio)
             {
 
                 if (UDPtime.ElapsedMilliseconds >= 1000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
