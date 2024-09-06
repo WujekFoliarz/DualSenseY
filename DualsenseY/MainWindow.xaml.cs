@@ -6,6 +6,7 @@ using Nefarius.Utilities.DeviceManagement.PnP;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -116,10 +117,42 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; WatchHotkeys(); }).Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchBatteryStatus(); }).Start();
             Thread t = new Thread(() => { WatchAudioDefaultDevice(); });
             t.SetApartmentState(ApartmentState.STA);
             t.IsBackground = true;
             t.Start();
+        }
+
+        private void WatchBatteryStatus()
+        {
+            while (true) {
+                this.Dispatcher.Invoke(() => {
+                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                    {
+                        batteryStatusText.Visibility = Visibility.Visible;
+
+                        switch (dualsense[currentControllerNumber].Battery.State)
+                        {
+                            case BatteryState.State.POWER_SUPPLY_STATUS_DISCHARGING:
+                                batteryStatusText.Text = $"Battery Status: DISCHARGING | {dualsense[currentControllerNumber].Battery.Level}%";
+                                break;
+                            case BatteryState.State.POWER_SUPPLY_STATUS_CHARGING:
+                                batteryStatusText.Text = $"Battery Status: CHARGING | {dualsense[currentControllerNumber].Battery.Level}%";
+                                break;
+                            default:
+                                batteryStatusText.Text = $"Battery Status: UNKNOWN | {dualsense[currentControllerNumber].Battery.Level}%";
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        batteryStatusText.Visibility = Visibility.Hidden;
+                    }
+                });
+
+                Thread.Sleep(5000);
+            }
         }
 
         private void WatchAudioDefaultDevice()
