@@ -43,16 +43,16 @@ Simply send this json (this can be easily done in existing DSX mods)
 - Use system audio as haptic feedback
 - Display audio volume on your controller (LED)
 
-![{B1075178-268A-411B-AF7D-9B171F2DBB14}](https://github.com/user-attachments/assets/6c5dfd63-b37e-4945-b49a-9d37b61eed72)
+![{4AE485EF-3F18-4A4D-B98E-58BF3CB9FEC4}](https://github.com/user-attachments/assets/5462e403-e94b-4d4f-9375-0b738cf5fac1)
 
-![{9241C119-B853-46AF-B3AA-7A31EA9846D5}](https://github.com/user-attachments/assets/9e64c723-3ee2-4119-897b-ec7e3c023d64)
+![{AB9D2CBE-9FBA-473B-B66A-C91864615902}](https://github.com/user-attachments/assets/6649733d-2d12-42fa-892b-9b714393b97f)
 
-![{225C6CFC-05B3-4905-9AD9-72B08E5B0060}](https://github.com/user-attachments/assets/744e32e8-06da-46d9-b137-b879d04e12f7)
+![{4E7906E7-22A0-4F30-9773-4E3C6B5D7229}](https://github.com/user-attachments/assets/8a94ad0f-3575-466d-b5c5-ea4cda4e4026)
 
-![{61D5185A-1516-40D3-A75C-02E3E338E71C}](https://github.com/user-attachments/assets/537efb7c-0f65-4e45-b99a-ad4231ada12e)
+![{4740CC97-06A2-414E-9AF7-3E03E52070E1}](https://github.com/user-attachments/assets/17a2bdd9-5539-4e4d-9f8e-75c292d2738c)
 
-![{CC5EF9C3-E156-41EB-AB8B-39D9A0ACF33A}](https://github.com/user-attachments/assets/5d86e224-b553-40be-b43b-17b923263c86)
+![{945AD6F0-5FC8-47C6-911E-1AF9E4C2CE49}](https://github.com/user-attachments/assets/527c745b-7c64-4423-b0c0-b1a3c14bba4a)
 
-![{CB903D0C-EA16-4D3D-B9EF-718504E4DDF7}](https://github.com/user-attachments/assets/d99298bc-3368-463b-86c2-e18c08b02e6b)
+![{8D36D252-9A44-42DA-9E30-46CF02694DFB}](https://github.com/user-attachments/assets/5d72a84d-6585-404f-8cf6-deb3b8b935ec)
 
-![{FFB936B1-3829-411C-91DE-AB930DB09F18}](https://github.com/user-attachments/assets/09cddb9b-3b8e-409e-bfb1-092b34677398)
+![{C5267861-37A5-49F4-8619-86942B0323DA}](https://github.com/user-attachments/assets/8b783328-f6dc-4e23-8b11-9dc404a24764)
