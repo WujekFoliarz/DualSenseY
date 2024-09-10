@@ -4,9 +4,7 @@ using NAudio.Wave;
 using Nefarius.Drivers.HidHide;
 using Nefarius.Utilities.DeviceManagement.PnP;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -39,6 +37,8 @@ namespace DualSenseY
         private int audioG = 0;
         private int audioB = 0;
         private bool VigemAndHidHidePresent = true;
+        private string[] customHotkey = new string[5];
+        private int[] customHotkeyIndex = new int[20];
 
         private bool firstTimeCmbSelect = true;
         private HidHideControlService hidHide = new HidHideControlService();
@@ -80,7 +80,7 @@ namespace DualSenseY
             {
                 ConnectToController();
             }
-           
+
             controlPanelText.Text = $"DualSense Control Panel -- Version {version.CurrentVersion}";
             version.RemoveOldFiles();
             if (version.IsOutdated())
@@ -126,8 +126,10 @@ namespace DualSenseY
 
         private void WatchBatteryStatus()
         {
-            while (true) {
-                this.Dispatcher.Invoke(() => {
+            while (true)
+            {
+                this.Dispatcher.Invoke(() =>
+                {
                     if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
                     {
                         batteryStatusText.Visibility = Visibility.Visible;
@@ -165,7 +167,7 @@ namespace DualSenseY
                 MMDevice newDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
                 if (newDevice.ID != device.ID)
                 {
-                    if(!newDevice.FriendlyName.Contains("Wireless Controller"))
+                    if (!newDevice.FriendlyName.Contains("Wireless Controller"))
                     {
                         device = newDevice;
                         watchSystemAudio = false;
@@ -181,7 +183,7 @@ namespace DualSenseY
                     {
                         this.Dispatcher.Invoke(() =>
                         {
-                            if(audioToHapticsBtn.IsChecked == true)
+                            if (audioToHapticsBtn.IsChecked == true)
                             {
                                 audioToHapticsBtn.IsChecked = false;
                                 System.Windows.MessageBox.Show("You can't use audio passthrough if the DualSense Wireless Controller is set as the default output device.", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -206,7 +208,7 @@ namespace DualSenseY
 
         private void Window_StateChanged(object sender, EventArgs e)
         {
-            if(this.WindowState == WindowState.Minimized && minimizeToTrayBox.IsChecked == true)
+            if (this.WindowState == WindowState.Minimized && minimizeToTrayBox.IsChecked == true)
             {
                 this.ShowInTaskbar = false;
                 MyNotifyIcon.Visible = true;
@@ -215,18 +217,18 @@ namespace DualSenseY
 
         private bool micOff = false;
         private Stopwatch screenshotCooldown = new Stopwatch();
-        private void HandleHotkey(int selectedIndex)
+        private void HandleHotkey(int selectedIndex, int boxIndex)
         {
             switch (selectedIndex)
             {
                 case 0: // Screenshot
                     {
-                        if(screenshotCooldown.ElapsedMilliseconds > 500)
+                        if (screenshotCooldown.ElapsedMilliseconds > 500)
                         {
                             Utils.ScreenshotToClipboard();
                             screenshotCooldown.Restart();
                             dualsense[currentControllerNumber].PlayHaptics("screenshot.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
-                        }                        
+                        }
                         break;
                     }
                 case 1: // X360 Controller emu
@@ -247,7 +249,7 @@ namespace DualSenseY
                         {
                             ds4Emu();
                         }
-                        else if(VigemAndHidHidePresent && emuStatusForConfig == 2)
+                        else if (VigemAndHidHidePresent && emuStatusForConfig == 2)
                         {
                             stopEmu();
                         }
@@ -268,6 +270,21 @@ namespace DualSenseY
                         }
                         break;
                     }
+                case 4:
+                    {
+                        try
+                        {
+                            if (customHotkey[boxIndex] != null && customHotkey[boxIndex] != string.Empty)
+                            {
+                                System.Windows.Forms.SendKeys.SendWait(customHotkey[boxIndex]);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            MessageBox.Show(e.Message, "There was an error with your hotkey", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        break;
+                    }
             }
         }
 
@@ -284,32 +301,33 @@ namespace DualSenseY
                 Thread.Sleep(100);
                 try
                 {
-                    this.Dispatcher.Invoke(() => {
+                    this.Dispatcher.Invoke(() =>
+                    {
                         if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                         {
                             if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton && !lastUp && !lastLeft && !lastRight && !lastDown)
                             {
-                                HandleHotkey(hotkeyBoxMic.SelectedIndex); // MIC BUTTON
+                                HandleHotkey(hotkeyBoxMic.SelectedIndex, 0); // MIC BUTTON
                             }
                             else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
                             && !dualsense[currentControllerNumber].ButtonState.DpadUp && lastUp)
                             {
-                                HandleHotkey(hotkeyBoxMicPlusUp.SelectedIndex);
+                                HandleHotkey(hotkeyBoxMicPlusUp.SelectedIndex, 1);
                             }
                             else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
                             && !dualsense[currentControllerNumber].ButtonState.DpadLeft && lastLeft)
                             {
-                                HandleHotkey(hotkeyBoxMicPlusLeft.SelectedIndex);
+                                HandleHotkey(hotkeyBoxMicPlusLeft.SelectedIndex, 3);
                             }
                             else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
                             && !dualsense[currentControllerNumber].ButtonState.DpadRight && lastRight)
                             {
-                                HandleHotkey(hotkeyBoxMicPlusRight.SelectedIndex);
+                                HandleHotkey(hotkeyBoxMicPlusRight.SelectedIndex, 2);
                             }
                             else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
                             && !dualsense[currentControllerNumber].ButtonState.DpadDown && lastDown)
                             {
-                                HandleHotkey(hotkeyBoxMicPlusDown.SelectedIndex);
+                                HandleHotkey(hotkeyBoxMicPlusDown.SelectedIndex, 4);
                             }
 
                             lastMicButton = dualsense[currentControllerNumber].ButtonState.micBtn;
@@ -815,7 +833,7 @@ namespace DualSenseY
                         case UDP.InstructionType.HapticFeedback:
                             dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                             this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
-                            dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));                         
+                            dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));
                             break;
                         case UDP.InstructionType.RGBTransitionUpdate:
                             dualsense[currentControllerNumber].SetLightbarTransition(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]), Convert.ToInt32(instruction.parameters[4]), Convert.ToInt32(instruction.parameters[5]));
@@ -1185,7 +1203,7 @@ namespace DualSenseY
         }
 
         private void Connection_ControllerDisconnected(object? sender, ConnectionStatus.Controller e)
-        {           
+        {
             if (isHiding)
             {
                 dualsense[e.ControllerNumber].Dispose();
@@ -1723,7 +1741,7 @@ namespace DualSenseY
 
             foreach (Dualsense ds in dualsense)
             {
-                if(ds != null)
+                if (ds != null)
                 {
                     RestoreController(true, ds, true);
                 }
@@ -1842,6 +1860,8 @@ namespace DualSenseY
                 profile.HotKey3 = hotkeyBoxMicPlusRight.SelectedIndex;
                 profile.HotKey4 = hotkeyBoxMicPlusLeft.SelectedIndex;
                 profile.HotKey5 = hotkeyBoxMicPlusDown.SelectedIndex;
+                profile.customHotkey = this.customHotkey;
+                profile.customHotkeyIndex = this.customHotkeyIndex;
 
                 if (controllerEmulation != null)
                 {
@@ -1874,7 +1894,7 @@ namespace DualSenseY
                     {
                         settings.SaveProfileToFile(dialog.FileName, profile);
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         MessageBox.Show("Config creation failed!\n" + ex.Message, "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
@@ -1963,6 +1983,8 @@ namespace DualSenseY
             hotkeyBoxMicPlusRight.SelectedIndex = profile.HotKey3;
             hotkeyBoxMicPlusLeft.SelectedIndex = profile.HotKey4;
             hotkeyBoxMicPlusDown.SelectedIndex = profile.HotKey5;
+            customHotkey = profile.customHotkey;
+            customHotkeyIndex = profile.customHotkeyIndex;
 
             try
             {
@@ -2331,7 +2353,7 @@ namespace DualSenseY
                     hidHide.IsActive = false;
                 }
             }
-            catch (Nefarius.Drivers.HidHide.Exceptions.HidHideDriverNotFoundException){}
+            catch (Nefarius.Drivers.HidHide.Exceptions.HidHideDriverNotFoundException) { }
         }
 
         private void sensitivitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -2385,7 +2407,7 @@ namespace DualSenseY
         }
 
         private void loadConfigOnStartupBtn_Click(object sender, RoutedEventArgs e)
-        {
+        {        
             var dialog = new Microsoft.Win32.OpenFileDialog();
 
             if (!Directory.Exists(Settings.Path))
@@ -2412,6 +2434,13 @@ namespace DualSenseY
                     loadConfigOnStartupBtn.Content = Path.GetFileNameWithoutExtension(path);
                 }
             }
+        }
+
+        private void loadConfigOnStartupBtn_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            Properties.Settings.Default.defaultConfigPath = string.Empty;
+            Properties.Settings.Default.Save();
+            loadConfigOnStartupBtn.Content = "None";
         }
 
         private void minimizeToTrayBox_Checked(object sender, RoutedEventArgs e)
@@ -2474,6 +2503,228 @@ namespace DualSenseY
         private void githubBtn_Click(object sender, RoutedEventArgs e)
         {
             Process.Start("explorer", "https://github.com/WujekFoliarz/DualSenseY/issues");
+        }
+
+        private void editBindMic_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = (Button)sender;
+            int i = 0;
+            int index1 = 0;
+            int index2 = 0;
+            int index3 = 0;
+            int index4 = 0;
+
+            switch (btn.Name)
+            {
+                case "editBindMic":
+                    {
+                        i = 0;
+                        index1 = customHotkeyIndex[0];
+                        index2 = customHotkeyIndex[1];
+                        index3 = customHotkeyIndex[2];
+                        index4 = customHotkeyIndex[3];
+                        break;
+                    }
+                case "editBindMic2":
+                    {
+                        i = 1;
+                        index1 = customHotkeyIndex[4];
+                        index2 = customHotkeyIndex[5];
+                        index3 = customHotkeyIndex[6];
+                        index4 = customHotkeyIndex[7];
+                        break;
+                    }
+                case "editBindMic3":
+                    {
+                        i = 2;
+                        index1 = customHotkeyIndex[8];
+                        index2 = customHotkeyIndex[9];
+                        index3 = customHotkeyIndex[10];
+                        index4 = customHotkeyIndex[11];
+                        break;
+                    }
+                case "editBindMic4":
+                    {
+                        i = 3;
+                        index1 = customHotkeyIndex[12];
+                        index2 = customHotkeyIndex[13];
+                        index3 = customHotkeyIndex[14];
+                        index4 = customHotkeyIndex[15];
+                        break;
+                    }
+                case "editBindMic5":
+                    {
+                        i = 4;
+                        index1 = customHotkeyIndex[16];
+                        index2 = customHotkeyIndex[17];
+                        index3 = customHotkeyIndex[18];
+                        index4 = customHotkeyIndex[19];
+                        break;
+                    }
+            }
+
+            var dialog = new HotkeyEdit(index1, index2, index3, index4);
+
+            if (dialog.ShowDialog() == true)
+            {
+                customHotkey[i] = string.Empty;
+
+                if (dialog.firstKey != "[EMPTY]")
+                {
+                    switch (dialog.firstKey)
+                    {
+                        case "Control":
+                            customHotkey[i] += "^";
+                            break;
+                        case "Alt":
+                            customHotkey[i] += "!";
+                            break;
+                        case "Shift":
+                            customHotkey[i] += "+";
+                            break;
+                        default:
+                            if (dialog.firstKey.Length < 2)
+                                customHotkey[i] += dialog.firstKey.ToUpper();
+                            else
+                                customHotkey[i] += "{" + dialog.firstKey.ToUpper() + "}";
+                            break;
+                    }
+                }
+
+                if (dialog.secondKey != "[EMPTY]")
+                {
+                    switch (dialog.secondKey)
+                    {
+                        case "Control":
+                            customHotkey[i] += "^";
+                            break;
+                        case "Alt":
+                            customHotkey[i] += "!";
+                            break;
+                        case "Shift":
+                            customHotkey[i] += "+";
+                            break;
+                        default:
+                            if (dialog.secondKey.Length < 2)
+                                customHotkey[i] += dialog.secondKey.ToUpper();
+                            else
+                                customHotkey[i] += "{" + dialog.secondKey.ToUpper() + "}";
+                            break;
+                    }
+                }
+
+                if (dialog.thirdKey != "[EMPTY]")
+                {
+                    switch (dialog.thirdKey)
+                    {
+                        case "Control":
+                            customHotkey[i] += "^";
+                            break;
+                        case "Alt":
+                            customHotkey[i] += "!";
+                            break;
+                        case "Shift":
+                            customHotkey[i] += "+";
+                            break;
+                        default:
+                            if (dialog.thirdKey.Length < 2)
+                                customHotkey[i] += dialog.thirdKey.ToUpper();
+                            else
+                                customHotkey[i] += "{" + dialog.thirdKey.ToUpper() + "}";
+                            break;
+                    }
+                }
+
+                if (dialog.fourthKey != "[EMPTY]")
+                {
+                    switch (dialog.fourthKey)
+                    {
+                        case "Control":
+                            customHotkey[i] += "^";
+                            break;
+                        case "Alt":
+                            customHotkey[i] += "!";
+                            break;
+                        case "Shift":
+                            customHotkey[i] += "+";
+                            break;
+                        default:
+                            if (dialog.fourthKey.Length < 2)
+                                customHotkey[i] += dialog.fourthKey.ToUpper();
+                            else
+                                customHotkey[i] += "{" + dialog.fourthKey.ToUpper() + "}";
+                            break;
+                    }
+                }
+
+                customHotkeyIndex[(i + 1) * 4 - 4] = dialog.firstIndex;
+                customHotkeyIndex[(i + 1) * 4 - 3] = dialog.secondIndex;
+                customHotkeyIndex[(i + 1) * 4 - 2] = dialog.thirdIndex;
+                customHotkeyIndex[(i + 1) * 4 - 1] = dialog.fourthIndex;
+            }
+        }
+
+        private void hotkeyBoxMic_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (this.IsInitialized)
+            {
+                ComboBox box = (ComboBox)sender;
+                switch (box.Name)
+                {
+                    case "hotkeyBoxMic":
+                        if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
+                        {
+                            editBindMic.Visibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            editBindMic.Visibility = Visibility.Hidden;
+                        }
+                        break;
+                    case "hotkeyBoxMicPlusUp":
+                        if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
+                        {
+                            editBindMic2.Visibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            editBindMic2.Visibility = Visibility.Hidden;
+                        }
+                        break;
+                    case "hotkeyBoxMicPlusRight":
+                        if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
+                        {
+                            editBindMic3.Visibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            editBindMic3.Visibility = Visibility.Hidden;
+                        }
+                        break;
+                    case "hotkeyBoxMicPlusLeft":
+                        if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
+                        {
+                            editBindMic4.Visibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            editBindMic4.Visibility = Visibility.Hidden;
+                        }
+                        break;
+                    case "hotkeyBoxMicPlusDown":
+                        if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
+                        {
+                            editBindMic5.Visibility = Visibility.Visible;
+                        }
+                        else
+                        {
+                            editBindMic5.Visibility = Visibility.Hidden;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 }

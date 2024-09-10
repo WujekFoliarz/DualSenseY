@@ -49,6 +49,8 @@ namespace DualSenseY
             public int HotKey3 { get; set; }
             public int HotKey4 { get; set; }
             public int HotKey5 { get; set; }
+            public string[] customHotkey = new string[5];
+            public int[] customHotkeyIndex = new int[20];
             public bool UseHeadset { get; set; }
             public LED.PlayerLED playerLED { get; set; }
             public LED.MicrophoneLED microphoneLED { get; set; }

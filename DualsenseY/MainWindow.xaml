@@ -301,57 +301,67 @@
 
                     <StackPanel Grid.Row="0">
                         <TextBlock FontSize="15" Text="Mic button" Margin="0,5,0,0"/>
-                        <ComboBox x:Name="hotkeyBoxMic" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="4">
+                        <ComboBox x:Name="hotkeyBoxMic" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5" SelectionChanged="hotkeyBoxMic_SelectionChanged">
                             <ComboBoxItem Content="Screenshot"/>
                             <ComboBoxItem Content="X360 Controller Emulation"/>
                             <ComboBoxItem Content="DS4 Emulation"/>
                             <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="Custom hotkey"/>
                             <ComboBoxItem Content="None"/>
                         </ComboBox>
+                        <Button x:Name="editBindMic" Margin="270,-20,0,0" Height="20" Width="50" Content="Edit" Click="editBindMic_Click" Visibility="Hidden"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="1">
                         <TextBlock FontSize="15" Text="Mic button + DUP" Margin="0,5,0,0"/>
-                        <ComboBox x:Name="hotkeyBoxMicPlusUp" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="4">
+                        <ComboBox x:Name="hotkeyBoxMicPlusUp" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5" SelectionChanged="hotkeyBoxMic_SelectionChanged">
                             <ComboBoxItem Content="Screenshot"/>
                             <ComboBoxItem Content="X360 Controller Emulation"/>
                             <ComboBoxItem Content="DS4 Emulation"/>
                             <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="Custom hotkey"/>
                             <ComboBoxItem Content="None"/>
                         </ComboBox>
+                        <Button x:Name="editBindMic2" Margin="270,-20,0,0" Height="20" Width="50" Content="Edit" Click="editBindMic_Click" Visibility="Hidden"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="2">
                         <TextBlock FontSize="15" Text="Mic button + DRIGHT" Margin="0,5,0,0"/>
-                        <ComboBox x:Name="hotkeyBoxMicPlusRight" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="4">
+                        <ComboBox x:Name="hotkeyBoxMicPlusRight" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5" SelectionChanged="hotkeyBoxMic_SelectionChanged">
                             <ComboBoxItem Content="Screenshot"/>
                             <ComboBoxItem Content="X360 Controller Emulation"/>
                             <ComboBoxItem Content="DS4 Emulation"/>
                             <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="Custom hotkey"/>
                             <ComboBoxItem Content="None"/>
                         </ComboBox>
+                        <Button x:Name="editBindMic3" Margin="270,-20,0,0" Height="20" Width="50" Content="Edit" Click="editBindMic_Click" Visibility="Hidden"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="3">
                         <TextBlock FontSize="15" Text="Mic button + DLEFT" Margin="0,5,0,0"/>
-                        <ComboBox x:Name="hotkeyBoxMicPlusLeft" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="4">
+                        <ComboBox x:Name="hotkeyBoxMicPlusLeft" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5" SelectionChanged="hotkeyBoxMic_SelectionChanged">
                             <ComboBoxItem Content="Screenshot"/>
                             <ComboBoxItem Content="X360 Controller Emulation"/>
                             <ComboBoxItem Content="DS4 Emulation"/>
                             <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="Custom hotkey"/>
                             <ComboBoxItem Content="None"/>
                         </ComboBox>
+                        <Button x:Name="editBindMic4" Margin="270,-20,0,0" Height="20" Width="50" Content="Edit" Click="editBindMic_Click" Visibility="Hidden"/>
                     </StackPanel>
 
                     <StackPanel Grid.Row="4">
                         <TextBlock FontSize="15" Text="Mic button + DDOWN" Margin="0,5,0,0"/>
-                        <ComboBox x:Name="hotkeyBoxMicPlusDown" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="4">
+                        <ComboBox x:Name="hotkeyBoxMicPlusDown" Width="160" Height="20" Margin="50,-19,0,0" SelectedIndex="5" SelectionChanged="hotkeyBoxMic_SelectionChanged">
                             <ComboBoxItem Content="Screenshot"/>
                             <ComboBoxItem Content="X360 Controller Emulation"/>
                             <ComboBoxItem Content="DS4 Emulation"/>
                             <ComboBoxItem Content="Audio Passthrough"/>
+                            <ComboBoxItem Content="Custom hotkey"/>
                             <ComboBoxItem Content="None"/>
                         </ComboBox>
+                        <Button x:Name="editBindMic5" Margin="270,-20,0,0" Height="20" Width="50" Content="Edit" Click="editBindMic_Click" Visibility="Hidden"/>
                         <TextBlock Text="Note: Please hold a few seconds to activate" VerticalAlignment="Bottom" Margin="10,5,0,0"/>
                     </StackPanel>
                 </Grid>
@@ -361,7 +371,7 @@
                 <Grid Margin="5">
                     <StackPanel>
                         <TextBlock Width="129" HorizontalAlignment="Left" Text="Load config on startup:"/>
-                        <Button x:Name="loadConfigOnStartupBtn" Content="None" Width="150" Margin="-15,-16,0,0" Click="loadConfigOnStartupBtn_Click"></Button>
+                        <Button x:Name="loadConfigOnStartupBtn" Content="None" Width="150" Margin="-15,-16,0,0" Click="loadConfigOnStartupBtn_Click" MouseRightButtonUp="loadConfigOnStartupBtn_MouseRightButtonUp"></Button>
                         <TextBlock Text="Minimize to tray:"/>
                         <CheckBox x:Name="minimizeToTrayBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="minimizeToTrayBox_Checked" Unchecked="minimizeToTrayBox_Unchecked"/>
                         <TextBlock Text="Connect on startup:"/>

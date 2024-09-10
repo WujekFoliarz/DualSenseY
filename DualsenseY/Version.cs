@@ -2,13 +2,12 @@
 using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Windows;
 
 namespace DualSenseY
 {
     public class Version
     {
-        public double CurrentVersion = 4.0;
+        public double CurrentVersion = 4.1;
 
         public void Update()
         {
