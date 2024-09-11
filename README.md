@@ -42,6 +42,7 @@ Simply send this json (this can be easily done in existing DSX mods)
 - Use touchpad as mouse
 - Use system audio as haptic feedback
 - Display audio volume on your controller (LED)
+- Bind keyboard keys to the mic button
 
 ![{4AE485EF-3F18-4A4D-B98E-58BF3CB9FEC4}](https://github.com/user-attachments/assets/5462e403-e94b-4d4f-9375-0b738cf5fac1)
 
