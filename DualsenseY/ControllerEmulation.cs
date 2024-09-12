@@ -3,6 +3,9 @@ using Nefarius.ViGEm.Client.Exceptions;
 using Nefarius.ViGEm.Client.Targets;
 using Nefarius.ViGEm.Client.Targets.DualShock4;
 using Nefarius.ViGEm.Client.Targets.Xbox360;
+using Newtonsoft.Json.Linq;
+using System.Diagnostics;
+using System.Windows;
 using Wujek_Dualsense_API;
 
 namespace DualSenseY
@@ -124,7 +127,7 @@ namespace DualSenseY
                 dualsense.SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
                 dualsense.SetStandardRumble(e.LargeMotor, e.SmallMotor);
             }
-
+            
             if (!IgnoreDS4Lightbar)
             {
                 if (e.LightbarColor.Red != 0 || e.LightbarColor.Green != 0 || e.LightbarColor.Blue != 0)
@@ -136,6 +139,10 @@ namespace DualSenseY
 
         private void Emulate()
         {
+            byte[] rawDS4 = new byte[63];
+            int timestamp = 0;
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
             while (Emulating)
             {
                 if (isEmulating360)
@@ -176,45 +183,135 @@ namespace DualSenseY
                 }
                 else
                 {
-                    dualshock4.SetButtonState(DualShock4Button.Cross, dualsense.ButtonState.cross);
-                    dualshock4.SetButtonState(DualShock4Button.Circle, dualsense.ButtonState.circle);
-                    dualshock4.SetButtonState(DualShock4Button.Triangle, dualsense.ButtonState.triangle);
-                    dualshock4.SetButtonState(DualShock4Button.Square, dualsense.ButtonState.square);
+                    rawDS4[0] = (byte)dualsense.ButtonState.LX;
+                    rawDS4[1] = (byte)dualsense.ButtonState.LY;
+                    rawDS4[2] = (byte)dualsense.ButtonState.RX;
+                    rawDS4[3] = (byte)dualsense.ButtonState.RY;
 
-                    DualShock4DPadDirection direction = DualShock4DPadDirection.None;
-                    if (dualsense.ButtonState.DpadDown) { direction = DualShock4DPadDirection.South; }
-                    else if (dualsense.ButtonState.DpadUp) { direction = DualShock4DPadDirection.North; }
-                    else if (dualsense.ButtonState.DpadLeft) { direction = DualShock4DPadDirection.West; }
-                    else if (dualsense.ButtonState.DpadRight) { direction = DualShock4DPadDirection.East; }
-                    dualshock4.SetDPadDirection(direction);
+                    byte xoState = 0x0;
+                    xoState = (byte)(dualsense.ButtonState.triangle ? xoState | (byte)DualShock4Buttons.Tringle : xoState);
+                    xoState = (byte)(dualsense.ButtonState.circle ? xoState | (byte)DualShock4Buttons.Circle : xoState);
+                    xoState = (byte)(dualsense.ButtonState.cross ? xoState | (byte)DualShock4Buttons.Cross : xoState);
+                    xoState = (byte)(dualsense.ButtonState.square ? xoState | (byte)DualShock4Buttons.Square : xoState);
 
-                    dualshock4.SetAxisValue(DualShock4Axis.LeftThumbX, (byte)dualsense.ButtonState.LX);
-                    dualshock4.SetAxisValue(DualShock4Axis.LeftThumbY, (byte)dualsense.ButtonState.LY);
-                    dualshock4.SetAxisValue(DualShock4Axis.RightThumbX, (byte)dualsense.ButtonState.RX);
-                    dualshock4.SetAxisValue(DualShock4Axis.RightThumbY, (byte)dualsense.ButtonState.RY);
-                    dualshock4.SetButtonState(DualShock4Button.ThumbLeft, dualsense.ButtonState.L3);
-                    dualshock4.SetButtonState(DualShock4Button.ThumbRight, dualsense.ButtonState.R3);
+                    if (dualsense.ButtonState.DpadUp && dualsense.ButtonState.DpadLeft)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_NorthWest);
 
-                    if ((byte)dualsense.ButtonState.L2 >= leftTriggerThreshold)
-                        dualshock4.LeftTrigger = (byte)dualsense.ButtonState.L2;
-                    else
-                        dualshock4.LeftTrigger = (byte)0;
+                    if (dualsense.ButtonState.DpadDown && dualsense.ButtonState.DpadLeft)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_SouthWest);
+                    else if (dualsense.ButtonState.DpadDown && dualsense.ButtonState.DpadRight)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_SouthEast);
+                    else if (dualsense.ButtonState.DpadUp && dualsense.ButtonState.DpadRight)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_NorthEast);
+                    else if (dualsense.ButtonState.DpadLeft)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_West);
+                    else if (dualsense.ButtonState.DpadDown)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_South);
+                    else if (dualsense.ButtonState.DpadRight)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_East);
+                    else if (dualsense.ButtonState.DpadUp)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_North);
+                    else if (!dualsense.ButtonState.DpadUp && !dualsense.ButtonState.DpadDown && !dualsense.ButtonState.DpadLeft && !dualsense.ButtonState.DpadRight)
+                        xoState = (byte)(xoState | (byte)DualShock4Buttons.Dpad_Neutral);
+                    rawDS4[4] = xoState;
 
-                    if ((byte)dualsense.ButtonState.R2 >= rightTriggerThreshold)
-                        dualshock4.RightTrigger = (byte)dualsense.ButtonState.R2;
-                    else
-                        dualshock4.RightTrigger = (byte)0;
+                    byte lState = 0x0;
+                    lState = (byte)(dualsense.ButtonState.R3 ? lState | (byte)DualShock4Buttons.R3 : lState);
+                    lState = (byte)(dualsense.ButtonState.L3 ? lState | (byte)DualShock4Buttons.L3 : lState);
+                    lState = (byte)(dualsense.ButtonState.options ? lState | (byte)DualShock4Buttons.Options : lState);
+                    lState = (byte)(dualsense.ButtonState.share ? lState | (byte)DualShock4Buttons.Share : lState);
+                    lState = (byte)(dualsense.ButtonState.R1 ? lState | (byte)DualShock4Buttons.R1 : lState);
+                    lState = (byte)(dualsense.ButtonState.L1 ? lState | (byte)DualShock4Buttons.L1 : lState);
+                    rawDS4[5] = lState;
 
-                    dualshock4.SetButtonState(DualShock4SpecialButton.Touchpad, dualsense.ButtonState.touchBtn);
-                    dualshock4.SetButtonState(DualShock4Button.Share, dualsense.ButtonState.share);
-                    dualshock4.SetButtonState(DualShock4Button.Options, dualsense.ButtonState.options);
-                    dualshock4.SetButtonState(DualShock4Button.ShoulderLeft, dualsense.ButtonState.L1);
-                    dualshock4.SetButtonState(DualShock4Button.ShoulderRight, dualsense.ButtonState.R1);
-                    dualshock4.SetButtonState(DualShock4SpecialButton.Ps, dualsense.ButtonState.ps);
+                    byte tState = 0x0;
+                    tState = (byte)(dualsense.ButtonState.touchBtn ? tState |  (byte)DualShock4Buttons.TPAD_Click : tState);
+                    tState = (byte)(dualsense.ButtonState.ps ? tState | (byte)DualShock4Buttons.PS : tState);
+                    rawDS4[6] = tState;
+
+                    rawDS4[7] = (byte)dualsense.ButtonState.L2;
+                    rawDS4[8] = (byte)dualsense.ButtonState.R2;
+
+                    timestamp = (byte)192;
+                    rawDS4[9] = (byte)(timestamp & 0xFF);
+                    rawDS4[10] = (byte)((timestamp >> 8) & 0xFF);
+                    
+                    rawDS4[11] = (byte)dualsense.Battery.Level;
+
+                    rawDS4[12] = (byte)((byte)dualsense.ButtonState.accelerometer.X & 0xFF);
+                    rawDS4[13] = (byte)((byte)(dualsense.ButtonState.accelerometer.X >> 8) & 0xFF);
+
+                    rawDS4[14] = (byte)((byte)dualsense.ButtonState.accelerometer.Y & 0xFF);
+                    rawDS4[15] = (byte)((byte)(dualsense.ButtonState.accelerometer.Y >> 8) & 0xFF);
+
+                    rawDS4[16] = (byte)((byte)dualsense.ButtonState.accelerometer.Z & 0xFF);
+                    rawDS4[17] = (byte)((byte)(dualsense.ButtonState.accelerometer.Z >> 8) & 0xFF);
+
+                    rawDS4[18] = (byte)((byte)dualsense.ButtonState.gyro.Pitch & 0xFF);
+                    rawDS4[19] = (byte)((byte)(dualsense.ButtonState.gyro.Pitch >> 8) & 0xFF);
+
+                    rawDS4[20] = (byte)((byte)dualsense.ButtonState.gyro.Roll & 0xFF);
+                    rawDS4[21] = (byte)((byte)(dualsense.ButtonState.gyro.Roll >> 8) & 0xFF);
+
+                    rawDS4[22] = (byte)((byte)dualsense.ButtonState.gyro.Yaw & 0xFF);
+                    rawDS4[23] = (byte)((byte)(dualsense.ButtonState.gyro.Yaw >> 8) & 0xFF);
+
+                    rawDS4[32] = 1;
+                    rawDS4[33] = (byte)dualsense.ButtonState.TouchPacketNum;
+                    rawDS4[34] = (byte)dualsense.ButtonState.trackPadTouch0.RawTrackingNum;
+                    rawDS4[35] = (byte)(dualsense.ButtonState.trackPadTouch0.X & 0xFF);
+                    rawDS4[36] = (byte)((byte)(dualsense.ButtonState.trackPadTouch0.X >> 8) & 0x0F | (dualsense.ButtonState.trackPadTouch0.Y << 4) & 0xF0);
+                    rawDS4[37] = (byte)(dualsense.ButtonState.trackPadTouch0.Y >> 4);
+
+                    rawDS4[38] = (byte)dualsense.ButtonState.trackPadTouch1.RawTrackingNum;
+                    rawDS4[39] = (byte)(dualsense.ButtonState.trackPadTouch1.X & 0xFF);
+                    rawDS4[40] = (byte)((byte)(dualsense.ButtonState.trackPadTouch1.X >> 8) & 0x0F | (dualsense.ButtonState.trackPadTouch1.Y << 4) & 0xF0);
+                    rawDS4[41] = (byte)(dualsense.ButtonState.trackPadTouch1.Y >> 4);
+
+
+                    dualshock4.SubmitRawReport(rawDS4);
                 }
 
                 Thread.Sleep(1);
             }
+        }
+
+        public byte[] EncodeCoordinates(int x, int y)
+        {
+            x &= 0xFFF;
+            y &= 0xFFF;
+
+            ushort combined = (ushort)((y << 12) | x);
+
+            return new byte[] { (byte)(combined & 0xFF), (byte)((combined >> 8) & 0xFF) };
+        }
+
+        private enum DualShock4Buttons
+        {
+            Tringle = 1 << 7,
+            Circle = 1 << 6,
+            Cross = 1 << 5,
+            Square = 1 << 4,
+
+            R3 = 1 << 7,
+            L3 = 1 << 6,
+            Options = 1 << 5,
+            Share = 1 << 4,
+            R1 = 1 << 1,
+            L1 = 1 << 0,
+
+            TPAD_Click = 1 << 1,
+            PS = 1 << 0,
+
+            Dpad_Neutral = 0b_1000,
+            Dpad_NorthWest = 0b_0111,
+            Dpad_West = 0b_0110,
+            Dpad_SouthWest = 0b_0101,
+            Dpad_South = 0b_0100,
+            Dpad_SouthEast = 0b_0011,
+            Dpad_East = 0b_0010,
+            Dpad_NorthEast = 0b_0001,
+            Dpad_North = 0b_0000
         }
 
         private int ConvertRange(int value, int oldMin, int oldMax, int newMin, int newMax)

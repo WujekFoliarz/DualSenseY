@@ -159,6 +159,10 @@ namespace DualSenseY
                     two.IsEnabled = true;
                 else
                 {
+                    two.SelectedIndex = 0;
+                    three.SelectedIndex = 0;
+                    four.SelectedIndex = 0;
+
                     two.IsEnabled = false;
                     three.IsEnabled = false;
                     four.IsEnabled = false;
@@ -174,6 +178,9 @@ namespace DualSenseY
                     three.IsEnabled = true;
                 else
                 {
+                    three.SelectedIndex = 0;
+                    four.SelectedIndex = 0;
+
                     three.IsEnabled = false;
                     four.IsEnabled = false;
                 }
@@ -188,6 +195,8 @@ namespace DualSenseY
                     four.IsEnabled = true;
                 else
                 {
+                    four.SelectedIndex = 0;
+
                     four.IsEnabled = false;
                 }
             }
