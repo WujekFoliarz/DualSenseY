@@ -140,8 +140,6 @@ namespace DualSenseY
         private void Emulate()
         {
             byte[] rawDS4 = new byte[63];
-            int timestamp = 0;
-            Stopwatch stopwatch = Stopwatch.StartNew();
 
             while (Emulating)
             {
@@ -232,29 +230,27 @@ namespace DualSenseY
                     rawDS4[7] = (byte)dualsense.ButtonState.L2;
                     rawDS4[8] = (byte)dualsense.ButtonState.R2;
 
-                    timestamp = (byte)192;
+                    int timestamp = 192;
                     rawDS4[9] = (byte)(timestamp & 0xFF);
                     rawDS4[10] = (byte)((timestamp >> 8) & 0xFF);
-                    
-                    rawDS4[11] = (byte)dualsense.Battery.Level;
 
-                    rawDS4[12] = (byte)((byte)dualsense.ButtonState.accelerometer.X & 0xFF);
-                    rawDS4[13] = (byte)((byte)(dualsense.ButtonState.accelerometer.X >> 8) & 0xFF);
+                    rawDS4[12] = (byte)(dualsense.ButtonState.accelerometer.X & 0xFF);
+                    rawDS4[13] = (byte)((dualsense.ButtonState.accelerometer.X >> 8) & 0xFF);
 
-                    rawDS4[14] = (byte)((byte)dualsense.ButtonState.accelerometer.Y & 0xFF);
-                    rawDS4[15] = (byte)((byte)(dualsense.ButtonState.accelerometer.Y >> 8) & 0xFF);
+                    rawDS4[14] = (byte)(dualsense.ButtonState.accelerometer.Y & 0xFF);
+                    rawDS4[15] = (byte)((dualsense.ButtonState.accelerometer.Y >> 8) & 0xFF);
 
-                    rawDS4[16] = (byte)((byte)dualsense.ButtonState.accelerometer.Z & 0xFF);
-                    rawDS4[17] = (byte)((byte)(dualsense.ButtonState.accelerometer.Z >> 8) & 0xFF);
+                    rawDS4[16] = (byte)(dualsense.ButtonState.accelerometer.Z & 0xFF);
+                    rawDS4[17] = (byte)((dualsense.ButtonState.accelerometer.Z >> 8) & 0xFF);
 
-                    rawDS4[18] = (byte)((byte)dualsense.ButtonState.gyro.Pitch & 0xFF);
-                    rawDS4[19] = (byte)((byte)(dualsense.ButtonState.gyro.Pitch >> 8) & 0xFF);
+                    rawDS4[18] = (byte)(dualsense.ButtonState.gyro.Pitch & 0xFF);
+                    rawDS4[19] = (byte)((dualsense.ButtonState.gyro.Pitch >> 8) & 0xFF);
 
-                    rawDS4[20] = (byte)((byte)dualsense.ButtonState.gyro.Roll & 0xFF);
-                    rawDS4[21] = (byte)((byte)(dualsense.ButtonState.gyro.Roll >> 8) & 0xFF);
+                    rawDS4[20] = (byte)(dualsense.ButtonState.gyro.Yaw & 0xFF);
+                    rawDS4[21] = (byte)((dualsense.ButtonState.gyro.Yaw >> 8) & 0xFF);
 
-                    rawDS4[22] = (byte)((byte)dualsense.ButtonState.gyro.Yaw & 0xFF);
-                    rawDS4[23] = (byte)((byte)(dualsense.ButtonState.gyro.Yaw >> 8) & 0xFF);
+                    rawDS4[22] = (byte)(dualsense.ButtonState.gyro.Roll & 0xFF);
+                    rawDS4[23] = (byte)((dualsense.ButtonState.gyro.Roll >> 8) & 0xFF);
 
                     rawDS4[32] = 1;
                     rawDS4[33] = (byte)dualsense.ButtonState.TouchPacketNum;
