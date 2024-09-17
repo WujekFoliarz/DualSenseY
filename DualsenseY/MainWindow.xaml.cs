@@ -858,7 +858,7 @@ namespace DualSenseY
             while (watchSystemAudio)
             {
 
-                if (UDPtime.ElapsedMilliseconds >= 1000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                if (UDPtime.ElapsedMilliseconds >= 8000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
                 {
                     var AMI = defaultAudio.AudioMeterInformation;
                     float value = AMI.PeakValues[0] * 300;
@@ -1052,13 +1052,23 @@ namespace DualSenseY
         bool wereSettingsReset = false;
         private async void WatchUDPUpdates()
         {
-            Thread.Sleep(1500); // wait a sec before starting
+            this.Dispatcher.Invoke(() => {
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && connectedToController)
+                {
+                    controlPanel.Visibility = Visibility.Visible;
+                    ledTab.IsEnabled = true;
+                    triggersTab.IsEnabled = true;
+                    loadConfigBtn.Visibility = Visibility.Visible;
+                    saveConfigBtn.Visibility = Visibility.Visible;
+                }
+            });
+            Thread.Sleep(8500); // wait a sec before starting
 
             while (udp.serverOn)
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    if (UDPtime.ElapsedMilliseconds >= 1000)
+                    if (UDPtime.ElapsedMilliseconds >= 8000)
                     {
                         if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && connectedToController)
                         {
