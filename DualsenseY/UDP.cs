@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -69,6 +70,15 @@ namespace DualSenseY
             catch { }
 
         }
+
+        public static void StartFakeDSXProcess()
+        {
+            if (File.Exists("DSX.exe"))
+            {
+                Process.Start("DSX.exe"); // fake process, required for some mods
+            }
+        }
+    
 
         public void Dispose()
         {

@@ -46,6 +46,8 @@ namespace DualSenseY
 
         public MainWindow()
         {
+            UDP.StartFakeDSXProcess();
+
             try
             {
                 InitializeComponent();
