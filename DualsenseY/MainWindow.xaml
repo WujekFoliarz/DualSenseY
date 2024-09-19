@@ -100,19 +100,19 @@
                             <ComboBoxItem Content="Player 5"/>
                         </ComboBox>
                     </StackPanel>
-                    <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,10,0,0">
+
+
+                    <StackPanel Grid.Row="7" Margin="0,10,0,0" Orientation="Vertical">
                         <TextBlock Text="Microphone LED: "/>
-                        <CheckBox x:Name="micLEDcheckbox" Checked="micLEDcheckbox_Checked" Unchecked="micLEDcheckbox_Unchecked"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,10,0,0">
+                        <CheckBox Margin="-205,-15,0,0" x:Name="micLEDcheckbox" Checked="micLEDcheckbox_Checked" Unchecked="micLEDcheckbox_Unchecked" Width="15"/>
                         <TextBlock Text="Sound to LED: "/>
-                        <CheckBox x:Name="soundLEDcheckbox" Checked="soundLEDcheckbox_Checked" Unchecked="soundLEDcheckbox_Unchecked"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="7" Margin="0,10,0,0">
+                        <CheckBox Margin="-235,-15,0,0" x:Name="soundLEDcheckbox" Checked="soundLEDcheckbox_Checked" Unchecked="soundLEDcheckbox_Unchecked" Height="16" Width="16"/>
                         <TextBlock Text="Ignore DS4 lightbar:"/>
-                        <CheckBox Margin="-180,-15,0,0" Width="15" x:Name="ds4LightbarIgnoreBox" Checked="ds4LightbarIgnoreBox_Checked" Unchecked="ds4LightbarIgnoreBox_Unchecked"/>
+                        <CheckBox Margin="-175,-15,0,0" Width="15" x:Name="ds4LightbarIgnoreBox" Checked="ds4LightbarIgnoreBox_Checked" Unchecked="ds4LightbarIgnoreBox_Unchecked"/>
+                        <TextBlock Text="Disco Mode:"/>
+                        <CheckBox Margin="-255,-15,0,0" Width="15" x:Name="discoBox" Checked="discoBox_Checked" Unchecked="discoBox_Unchecked"/>
+                        <Slider Margin="-20,-17,0,0" x:Name="discoSpeedSlider" Width="217" Minimum="1" Maximum="20" Value="10" ValueChanged="discoSpeedSlider_ValueChanged"/>
+                        <TextBlock x:Name="discoSpeedText" Margin="230,-19,0,0" Text="Speed" Width="33"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

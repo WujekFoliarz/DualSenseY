@@ -51,6 +51,9 @@ namespace DualSenseY
             public int HotKey5 { get; set; }
             public string[] customHotkey = new string[5];
             public int[] customHotkeyIndex = new int[20];
+
+            public bool DiscoMode { get; set; }
+            public int DiscoSpeed { get; set; }
             public bool UseHeadset { get; set; }
             public LED.PlayerLED playerLED { get; set; }
             public LED.MicrophoneLED microphoneLED { get; set; }

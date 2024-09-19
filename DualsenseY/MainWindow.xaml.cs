@@ -63,6 +63,8 @@ namespace DualSenseY
             iconStream.Dispose();
             this.ShowInTaskbar = true;
 
+            discoSpeedSlider.Visibility = Visibility.Hidden;
+            discoSpeedText.Visibility = Visibility.Hidden;
             connectionTypeBTicon.Visibility = Visibility.Hidden;
             connectionTypeUSBicon.Visibility = Visibility.Hidden;
 
@@ -1889,6 +1891,9 @@ namespace DualSenseY
                 profile.RightActuatorVolume = (float)rightActuatorSlider.Value;
                 profile.UseHeadset = (bool)outputHeadsetBox.IsChecked;
 
+                profile.DiscoMode = (bool)discoBox.IsChecked;
+                profile.DiscoSpeed = (int)discoSpeedSlider.Value;
+
                 var dialog = new Microsoft.Win32.SaveFileDialog();
 
                 if (!Directory.Exists(Settings.Path))
@@ -1989,6 +1994,8 @@ namespace DualSenseY
             rightActuatorSlider.Value = profile.RightActuatorVolume;
             outputHeadsetBox.IsChecked = profile.UseHeadset;
             sliderMicVolume.Value = profile.MicrophoneVolume;
+            discoBox.IsChecked = profile.DiscoMode;
+            discoSpeedSlider.Value = profile.DiscoSpeed;
 
             hotkeyBoxMic.SelectedIndex = profile.HotKey1;
             hotkeyBoxMicPlusUp.SelectedIndex = profile.HotKey2;
@@ -2737,6 +2744,90 @@ namespace DualSenseY
                         break;
                 }
             }
+        }
+
+        bool isDiscoOn = false;
+        int discoSpeed = 10;
+        private void StartDisco()
+        {
+            byte[] led = new byte[3]; 
+            int step = 5; // Color transition step size (higher values = faster transitions)
+
+            led[0] = 255; 
+            led[1] = 0;
+            led[2] = 0;
+
+            int colorState = 0; // 0 = red to yellow, 1 = yellow to green, 2 = green to cyan, etc.
+
+            while (isDiscoOn)
+            {
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                {
+                    dualsense[currentControllerNumber].SetLightbar(led[0], led[1], led[2]);
+
+                    switch (colorState)
+                    {
+                        case 0:
+                            led[1] += (byte)step;
+                            if (led[1] >= 255) colorState = 1;
+                            break;
+                        case 1:
+                            led[0] -= (byte)step;
+                            if (led[0] <= 0) colorState = 2;
+                            break;
+                        case 2:
+                            led[2] += (byte)step;
+                            if (led[2] >= 255) colorState = 3;
+                            break;
+                        case 3:
+                            led[1] -= (byte)step;
+                            if (led[1] <= 0) colorState = 4;
+                            break;
+                        case 4:
+                            led[0] += (byte)step;
+                            if (led[0] >= 255) colorState = 5;
+                            break;
+                        case 5:
+                            led[2] -= (byte)step;
+                            if (led[2] <= 0) colorState = 0;
+                            break;
+                    }
+
+                    Thread.Sleep(20-discoSpeed+1);
+                }
+            }
+        }
+
+        private void discoBox_Checked(object sender, RoutedEventArgs e)
+        {
+            discoSpeedSlider.Visibility = Visibility.Visible;
+            discoSpeedText.Visibility = Visibility.Visible;
+            sliderRed.IsEnabled = false;
+            sliderGreen.IsEnabled = false;
+            sliderBlue.IsEnabled = false;
+            soundLEDcheckbox.IsEnabled = false;
+            isDiscoOn = true;
+            new Thread(() => StartDisco()).Start();
+        }
+
+        private void discoBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            discoSpeedSlider.Visibility = Visibility.Hidden;
+            discoSpeedText.Visibility = Visibility.Hidden;
+            sliderRed.IsEnabled = true;
+            sliderGreen.IsEnabled = true;
+            sliderBlue.IsEnabled = true;
+            soundLEDcheckbox.IsEnabled = true;
+            isDiscoOn = false;
+            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            {
+                dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 10, 50);
+            }
+        }
+
+        private void discoSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            discoSpeed = (int)e.NewValue;
         }
     }
 }
