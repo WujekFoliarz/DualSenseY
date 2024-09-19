@@ -122,6 +122,7 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; WatchHotkeys(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchBatteryStatus(); }).Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; StartDisco(); }).Start();
             Thread t = new Thread(() => { WatchAudioDefaultDevice(); });
             t.SetApartmentState(ApartmentState.STA);
             t.IsBackground = true;
@@ -1128,6 +1129,7 @@ namespace DualSenseY
         {
             if (btnConnect.Content == "Disconnect Controller")
             {
+                isDiscoOn = false;
                 stopEmu();
                 RestoreController(true, dualsense[currentControllerNumber], true);
                 isHiding = false;
@@ -1453,6 +1455,15 @@ namespace DualSenseY
                         dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.HEADSET);
                     else
                         dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.SPEAKER);
+
+                    if(discoBox.IsChecked == true && connected)
+                    {
+                        isDiscoOn = true;
+                    }
+                    else
+                    {
+                        isDiscoOn = false;
+                    }
 
                     dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, leftTriggerForces[0], leftTriggerForces[1], leftTriggerForces[2], leftTriggerForces[3], leftTriggerForces[4], leftTriggerForces[5], leftTriggerForces[6]);
                     dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, rightTriggerForces[0], rightTriggerForces[1], rightTriggerForces[2], rightTriggerForces[3], rightTriggerForces[4], rightTriggerForces[5], rightTriggerForces[6]);
@@ -1892,7 +1903,7 @@ namespace DualSenseY
                 profile.UseHeadset = (bool)outputHeadsetBox.IsChecked;
 
                 profile.DiscoMode = (bool)discoBox.IsChecked;
-                profile.DiscoSpeed = (int)discoSpeedSlider.Value;
+                profile.DiscoSpeed = discoSpeed;
 
                 var dialog = new Microsoft.Win32.SaveFileDialog();
 
@@ -1996,6 +2007,7 @@ namespace DualSenseY
             sliderMicVolume.Value = profile.MicrophoneVolume;
             discoBox.IsChecked = profile.DiscoMode;
             discoSpeedSlider.Value = profile.DiscoSpeed;
+            discoSpeed = profile.DiscoSpeed;
 
             hotkeyBoxMic.SelectedIndex = profile.HotKey1;
             hotkeyBoxMicPlusUp.SelectedIndex = profile.HotKey2;
@@ -2747,9 +2759,11 @@ namespace DualSenseY
         }
 
         bool isDiscoOn = false;
-        int discoSpeed = 10;
+        int discoSpeed = 1;
         private void StartDisco()
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
             byte[] led = new byte[3]; 
             int step = 5; // Color transition step size (higher values = faster transitions)
 
@@ -2759,9 +2773,9 @@ namespace DualSenseY
 
             int colorState = 0; // 0 = red to yellow, 1 = yellow to green, 2 = green to cyan, etc.
 
-            while (isDiscoOn)
+            while (true)
             {
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && isDiscoOn && stopwatch.ElapsedMilliseconds >= 20 - discoSpeed)
                 {
                     dualsense[currentControllerNumber].SetLightbar(led[0], led[1], led[2]);
 
@@ -2793,7 +2807,7 @@ namespace DualSenseY
                             break;
                     }
 
-                    Thread.Sleep(20-discoSpeed+1);
+                    stopwatch.Restart();
                 }
             }
         }
@@ -2807,7 +2821,7 @@ namespace DualSenseY
             sliderBlue.IsEnabled = false;
             soundLEDcheckbox.IsEnabled = false;
             isDiscoOn = true;
-            new Thread(() => StartDisco()).Start();
+            discoSpeed = (int)discoSpeedSlider.Value;
         }
 
         private void discoBox_Unchecked(object sender, RoutedEventArgs e)
@@ -2827,7 +2841,7 @@ namespace DualSenseY
 
         private void discoSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            discoSpeed = (int)e.NewValue;
+            discoSpeed = (int)discoSpeedSlider.Value;
         }
     }
 }
