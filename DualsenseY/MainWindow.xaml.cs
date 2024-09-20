@@ -2193,6 +2193,8 @@ namespace DualSenseY
             sliderGreen.IsEnabled = false;
             sliderBlue.IsEnabled = false;
             LEDbox.IsEnabled = false;
+            discoBox.IsEnabled = false;
+            discoSpeedSlider.Visibility = Visibility.Hidden;
         }
 
         private void soundLEDcheckbox_Unchecked(object sender, RoutedEventArgs e)
@@ -2228,6 +2230,9 @@ namespace DualSenseY
                         break;
                 }
             }
+
+            discoBox.IsEnabled = true;
+            discoSpeedSlider.Visibility = Visibility.Visible;
         }
 
         private void speakerSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

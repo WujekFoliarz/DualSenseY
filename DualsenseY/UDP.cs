@@ -75,7 +75,17 @@ namespace DualSenseY
         {
             if (File.Exists("DSX.exe"))
             {
-                Process.Start("DSX.exe"); // fake process, required for some mods
+                Process proc = new Process();
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.CreateNoWindow = true;
+                proc.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                proc.StartInfo.FileName = "DSX.exe";
+                proc.StartInfo.Arguments = string.Empty;
+                proc.StartInfo.RedirectStandardError = false;
+                proc.StartInfo.RedirectStandardOutput = false;
+                proc.StartInfo.UseShellExecute = false;
+                proc.StartInfo.CreateNoWindow = true;
+                proc.Start();
             }
         }
     

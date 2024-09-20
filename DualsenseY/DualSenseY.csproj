@@ -10,6 +10,7 @@
     <Platforms>AnyCPU;x64</Platforms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Title>DualSenseY</Title>
   </PropertyGroup>
 
   <ItemGroup>
