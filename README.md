@@ -11,6 +11,11 @@
 
 ### If you need any help, add me on discord - wujek_foliarz
 
+## My mod says DSX is not running!
+This can happen because there is no DSX.exe running in the background, to fix this download [this](https://raw.githubusercontent.com/WujekFoliarz/DualSenseY/refs/heads/master/DSX/DSX.exe) and place it right next to DualSenseY.exe
+
+I had to separate this file from main release ZIP because windows defender is being pissy about it.
+
 ## Using Haptic Feedback via UDP (for mods)
 Simply send this json (this can be easily done in existing DSX mods)
 ```
