@@ -8,6 +8,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using Wujek_Dualsense_API;
 
 namespace DualSenseY
@@ -47,10 +48,10 @@ namespace DualSenseY
         public MainWindow()
         {
             UDP.StartFakeDSXProcess();
-
+        
             try
             {
-                InitializeComponent();
+                InitializeComponent();            
             }
             catch
             {
@@ -123,10 +124,40 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.IsBackground = true; WatchHotkeys(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchBatteryStatus(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; StartDisco(); }).Start();
-            Thread t = new Thread(() => { WatchAudioDefaultDevice(); });
-            t.SetApartmentState(ApartmentState.STA);
-            t.IsBackground = true;
-            t.Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchMotion(); }).Start();
+            new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchAudioDefaultDevice(); }).Start();
+        }
+
+        private void WatchMotion()
+        {
+            while (true)
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                    {
+                        AcceXtext.Text = $"Accelerometer X      {dualsense[currentControllerNumber].ButtonState.accelerometer.X}";
+                        AcceX.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.X;
+
+                        AcceYtext.Text = $"Accelerometer Y      {dualsense[currentControllerNumber].ButtonState.accelerometer.Y}";
+                        AcceY.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Y;
+
+                        AcceZtext.Text = $"Accelerometer Z      {dualsense[currentControllerNumber].ButtonState.accelerometer.Z}";
+                        AcceZ.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Z;
+
+                        GyroXtext.Text = $"Gyroscope X      {dualsense[currentControllerNumber].ButtonState.gyro.X}";
+                        GyroX.Value = dualsense[currentControllerNumber].ButtonState.gyro.X;
+
+                        GyroYtext.Text = $"Gyroscope Y      {dualsense[currentControllerNumber].ButtonState.gyro.Y}";
+                        GyroY.Value = dualsense[currentControllerNumber].ButtonState.gyro.Y;
+
+                        GyroZtext.Text = $"Gyroscope Z        {dualsense[currentControllerNumber].ButtonState.gyro.Z}";
+                        GyroZ.Value = dualsense[currentControllerNumber].ButtonState.gyro.Z;
+                    }
+                });
+
+                Thread.Sleep(50);
+            }
         }
 
         private void WatchBatteryStatus()
@@ -2814,6 +2845,8 @@ namespace DualSenseY
 
                     stopwatch.Restart();
                 }
+
+                Thread.Sleep(1);
             }
         }
 

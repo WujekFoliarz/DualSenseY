@@ -57,7 +57,7 @@
     <PackageReference Include="Nefarius.Drivers.HidHide" Version="2.2.0" />
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Wujek_Dualsense_API" Version="1.4.7" />
+    <PackageReference Include="Wujek_Dualsense_API" Version="1.4.9" />
   </ItemGroup>
 
   <ItemGroup>

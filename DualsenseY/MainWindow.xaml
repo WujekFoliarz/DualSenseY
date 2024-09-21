@@ -367,6 +367,32 @@
                 </Grid>
             </TabItem>
 
+            <TabItem Header="Motion">
+                <Grid Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Vertical" Margin="0" Grid.Row="0">
+                        <TextBlock x:Name="AcceXtext" Text="Accelerometer X"/>
+                        <Slider x:Name="AcceX" Margin="1" Minimum="-10000" Value="0" Maximum="10000"/>
+                        <TextBlock x:Name="AcceYtext" Text="Accelerometer Y"/>
+                        <Slider x:Name="AcceY" Margin="1" Minimum="-10000" Value="0" Maximum="10000"/>
+                        <TextBlock x:Name="AcceZtext" Text="Accelerometer Z"/>
+                        <Slider x:Name="AcceZ" Margin="1" Minimum="-10000" Value="0" Maximum="10000"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" Margin="0,5,0,0" Grid.Row="1">
+                        <TextBlock x:Name="GyroXtext" Text="Gyroscope X"/>
+                        <Slider x:Name="GyroX" Margin="1" Minimum="-10000" Value="0" Maximum="10000"/>
+                        <TextBlock x:Name="GyroYtext" Text="Gyroscope Y"/>
+                        <Slider x:Name="GyroY" Margin="1" Minimum="-10000" Value="0" Maximum="10000"/>
+                        <TextBlock x:Name="GyroZtext" Text="Gyroscope Z"/>
+                        <Slider x:Name="GyroZ" Margin="1" Minimum="-10000" Value="0" Maximum="10000"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="Settings">
                 <Grid Margin="5">
                     <StackPanel>
