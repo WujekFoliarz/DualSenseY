@@ -577,8 +577,8 @@ namespace DualSenseY
                                     }
                                     break;
                                 case UDP.TriggerMode.Resistance:
-                                    byte start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                    byte force = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    byte start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
+                                    byte force = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
 
                                     if (start > 9)
                                     {
@@ -611,10 +611,10 @@ namespace DualSenseY
                                     }
                                     break;
                                 case UDP.TriggerMode.Bow:
-                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                    byte end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                    force = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-                                    byte snapForce = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
+                                    start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
+                                    byte end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
+                                    force = instruction.parameters[5] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[5])) : (byte)0;
+                                    byte snapForce = instruction.parameters[6] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[6])) : (byte)0;
 
                                     if (start > 8)
                                     {
@@ -652,11 +652,11 @@ namespace DualSenseY
                                     }
                                     break;
                                 case UDP.TriggerMode.Galloping:
-                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                    end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                    byte firstFoot = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-                                    byte secondFoot = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
-                                    byte frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[7]));
+                                    start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
+                                    end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
+                                    byte firstFoot = instruction.parameters[5] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[5])) : (byte)0;
+                                    byte secondFoot = instruction.parameters[6] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[6])) : (byte)0;
+                                    byte frequency = instruction.parameters[7] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[7])) : (byte)0;
 
                                     if (start > 8)
                                     {
@@ -697,9 +697,9 @@ namespace DualSenseY
                                     }
                                     break;
                                 case UDP.TriggerMode.SemiAutomaticGun:
-                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                    end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                    force = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
+                                    start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
+                                    end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
+                                    force = instruction.parameters[5] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[5])) : (byte)0;
 
                                     if (start > 7 || start < 2)
                                     {
@@ -732,9 +732,9 @@ namespace DualSenseY
                                     }
                                     break;
                                 case UDP.TriggerMode.AutomaticGun:
-                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                    byte strength = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                    frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
+                                    start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
+                                    byte strength = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
+                                    frequency = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
 
                                     if (start > 9)
                                     {
@@ -766,12 +766,14 @@ namespace DualSenseY
                                     }
                                     break;
                                 case UDP.TriggerMode.Machine:
-                                    start = Convert.ToByte(Convert.ToInt32(instruction.parameters[3]));
-                                    end = Convert.ToByte(Convert.ToInt32(instruction.parameters[4]));
-                                    byte strengthA = Convert.ToByte(Convert.ToInt32(instruction.parameters[5]));
-                                    byte strengthB = Convert.ToByte(Convert.ToInt32(instruction.parameters[6]));
-                                    frequency = Convert.ToByte(Convert.ToInt32(instruction.parameters[7]));
-                                    byte period = Convert.ToByte(Convert.ToInt32(instruction.parameters[8]));
+
+                                    start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
+                                    end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
+                                    byte strengthA = instruction.parameters[5] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[5])) : (byte)0;
+                                    byte strengthB = instruction.parameters[6] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[6])) : (byte)0;
+                                    frequency = instruction.parameters[7] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[7])) : (byte)0;
+                                    byte period = instruction.parameters[8] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[8])) : (byte)0;
+
 
                                     if (start > 8)
                                     {
@@ -1128,6 +1130,7 @@ namespace DualSenseY
                             controlPanel.Visibility = Visibility.Hidden;
                         ledTab.IsEnabled = false;
                         triggersTab.IsEnabled = false;
+                        discoBox.IsChecked = false;
                         loadConfigBtn.Visibility = Visibility.Hidden;
                         saveConfigBtn.Visibility = Visibility.Hidden;
                         wereSettingsReset = false;

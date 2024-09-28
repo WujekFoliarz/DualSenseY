@@ -47,9 +47,11 @@ namespace DualSenseY
 
         private void Listen()
         {
-            try
+            string string_json = string.Empty;
+
+            while (serverOn)
             {
-                while (serverOn)
+                try
                 {
                     newPacket = false;
                     byte[] bytes = client.Receive(ref ipendPoint);
@@ -62,13 +64,12 @@ namespace DualSenseY
                     string s = JsonConvert.SerializeObject(response);
                     byte[] bytes2 = Encoding.ASCII.GetBytes(s);
                     client.Send(bytes2, bytes2.Length, ipendPoint);
-                    string string_json = Encoding.ASCII.GetString(bytes);
+                    string_json = Encoding.ASCII.GetString(bytes);
                     currentPacket = JsonConvert.DeserializeObject<Packet>(string_json);
                     Events.OnNewPacket(currentPacket);
                 }
+                catch { continue; } // Ignore bad packets
             }
-            catch { }
-
         }
 
         public static void StartFakeDSXProcess()
@@ -88,7 +89,6 @@ namespace DualSenseY
                 proc.Start();
             }
         }
-    
 
         public void Dispose()
         {
@@ -164,6 +164,7 @@ namespace DualSenseY
             Five = 4, // Five is Also All On
             AllOff = 5
         }
+
         public enum MicLEDMode
         {
             On = 0,
