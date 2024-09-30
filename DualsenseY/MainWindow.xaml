@@ -36,7 +36,7 @@
             <TextBlock x:Name="txtStatus" Text="Status: Disconnected" Margin="0,0,0,10"/>
             <Image x:Name="connectionTypeBTicon" Margin="-330,-34,0,0" Width="20" Height="20" Source="Resources/bt.png"></Image>
             <Image x:Name="connectionTypeUSBicon" Margin="-330,-34,0,0" Width="20" Height="20" Source="Resources/usb.png"></Image>
-            <TextBlock x:Name="batteryStatusText" Margin="-100,-34,0,0" Width="200" Height="15" Text="Battery Status: DISCHARGING | 100%"/>
+            <TextBlock x:Name="batteryStatusText" Margin="-100,-34,0,0" Width="200" Height="15" Text="Battery Status: UNKNOWN | ?%"/>
             <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-95,0,0" Grid.Column="1"/>
             <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-95,0,0" Grid.Column="1"/>
         </StackPanel>
@@ -420,6 +420,9 @@
                 </Grid>
             </TabItem>
 
+            <TabItem Header="Changelog">
+                <TextBox x:Name="changelogText" IsReadOnly="true" TextWrapping="Wrap" Margin="5"/>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>

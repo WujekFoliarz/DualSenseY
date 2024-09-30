@@ -16,6 +16,7 @@ namespace DualSenseY
         public bool newPacket = false;
         public Packet currentPacket;
         public Events Events = new Events();
+        public int Battery = 100;
 
         public UDP()
         {
@@ -60,7 +61,7 @@ namespace DualSenseY
                     response.Status = "DSX Received UDP Instructions";
                     response.TimeReceived = string.Format("{0}", DateTime.Now);
                     response.isControllerConnected = true;
-                    response.BatteryLevel = 100; // doesn't matter
+                    response.BatteryLevel = Battery; // doesn't matter
                     string s = JsonConvert.SerializeObject(response);
                     byte[] bytes2 = Encoding.ASCII.GetBytes(s);
                     client.Send(bytes2, bytes2.Length, ipendPoint);

@@ -47,8 +47,9 @@ namespace DualSenseY
 
         public MainWindow()
         {
+            this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
             UDP.StartFakeDSXProcess();
-        
+            
             try
             {
                 InitializeComponent();            
@@ -57,6 +58,9 @@ namespace DualSenseY
             {
                 MessageBox.Show("error");
             }
+
+            changelogText.Text = Constants.Changelog;
+
             MyNotifyIcon = new System.Windows.Forms.NotifyIcon();
             Stream iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Resources/dualsenseyicon.ico")).Stream;
             MyNotifyIcon.Icon = new System.Drawing.Icon(iconStream);
@@ -68,6 +72,7 @@ namespace DualSenseY
             discoSpeedText.Visibility = Visibility.Hidden;
             connectionTypeBTicon.Visibility = Visibility.Hidden;
             connectionTypeUSBicon.Visibility = Visibility.Hidden;
+            batteryStatusText.Visibility = Visibility.Hidden;
 
             minimizeToTrayBox.IsChecked = DualSenseY.Properties.Settings.Default.minimizeToTray;
             launchMinimizedBox.IsChecked = DualSenseY.Properties.Settings.Default.launchMinimized;
@@ -114,9 +119,6 @@ namespace DualSenseY
             rightTriggerForces[5] = 0;
             rightTriggerForces[6] = 0;
 
-            udp = new UDP();
-            udp.Events.NewPacket += Events_NewPacket;
-            UDPtime.Start();
             screenshotCooldown.Start();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
@@ -126,35 +128,48 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; StartDisco(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchMotion(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchAudioDefaultDevice(); }).Start();
+
+            udp = new UDP();
+            udp.Events.NewPacket += Events_NewPacket;
+            UDPtime.Start();
+        }
+
+        private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+        {
+            MessageBox.Show("Unhandled exception occurred, contact developer: \n" + e.Exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         private void WatchMotion()
         {
             while (true)
             {
-                this.Dispatcher.Invoke(() =>
+                try
                 {
-                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                    this.Dispatcher.Invoke(() =>
                     {
-                        AcceXtext.Text = $"Accelerometer X      {dualsense[currentControllerNumber].ButtonState.accelerometer.X}";
-                        AcceX.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.X;
+                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                        {
+                            AcceXtext.Text = $"Accelerometer X      {dualsense[currentControllerNumber].ButtonState.accelerometer.X}";
+                            AcceX.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.X;
 
-                        AcceYtext.Text = $"Accelerometer Y      {dualsense[currentControllerNumber].ButtonState.accelerometer.Y}";
-                        AcceY.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Y;
+                            AcceYtext.Text = $"Accelerometer Y      {dualsense[currentControllerNumber].ButtonState.accelerometer.Y}";
+                            AcceY.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Y;
 
-                        AcceZtext.Text = $"Accelerometer Z      {dualsense[currentControllerNumber].ButtonState.accelerometer.Z}";
-                        AcceZ.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Z;
+                            AcceZtext.Text = $"Accelerometer Z      {dualsense[currentControllerNumber].ButtonState.accelerometer.Z}";
+                            AcceZ.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Z;
 
-                        GyroXtext.Text = $"Gyroscope X      {dualsense[currentControllerNumber].ButtonState.gyro.X}";
-                        GyroX.Value = dualsense[currentControllerNumber].ButtonState.gyro.X;
+                            GyroXtext.Text = $"Gyroscope X      {dualsense[currentControllerNumber].ButtonState.gyro.X}";
+                            GyroX.Value = dualsense[currentControllerNumber].ButtonState.gyro.X;
 
-                        GyroYtext.Text = $"Gyroscope Y      {dualsense[currentControllerNumber].ButtonState.gyro.Y}";
-                        GyroY.Value = dualsense[currentControllerNumber].ButtonState.gyro.Y;
+                            GyroYtext.Text = $"Gyroscope Y      {dualsense[currentControllerNumber].ButtonState.gyro.Y}";
+                            GyroY.Value = dualsense[currentControllerNumber].ButtonState.gyro.Y;
 
-                        GyroZtext.Text = $"Gyroscope Z        {dualsense[currentControllerNumber].ButtonState.gyro.Z}";
-                        GyroZ.Value = dualsense[currentControllerNumber].ButtonState.gyro.Z;
-                    }
-                });
+                            GyroZtext.Text = $"Gyroscope Z        {dualsense[currentControllerNumber].ButtonState.gyro.Z}";
+                            GyroZ.Value = dualsense[currentControllerNumber].ButtonState.gyro.Z;
+                        }
+                    });
+                }
+                catch (TaskCanceledException) { }
 
                 Thread.Sleep(50);
             }
@@ -166,8 +181,13 @@ namespace DualSenseY
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                     {
+                        if(udp != null && udp.serverOn)
+                        {
+                            udp.Battery = dualsense[currentControllerNumber].Battery.Level;
+                        }
+
                         batteryStatusText.Visibility = Visibility.Visible;
 
                         switch (dualsense[currentControllerNumber].Battery.State)
@@ -182,10 +202,6 @@ namespace DualSenseY
                                 batteryStatusText.Text = $"Battery Status: UNKNOWN | {dualsense[currentControllerNumber].Battery.Level}%";
                                 break;
                         }
-                    }
-                    else
-                    {
-                        batteryStatusText.Visibility = Visibility.Hidden;
                     }
                 });
 
@@ -1349,6 +1365,7 @@ namespace DualSenseY
                     cmbControllerSelect.Visibility = Visibility.Hidden;
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
+                    batteryStatusText.Visibility = Visibility.Visible;
 
                     ds4EmuButton.IsEnabled = true;
                     x360EmuButton.IsEnabled = true;
@@ -1444,6 +1461,7 @@ namespace DualSenseY
                     connectionTypeBTicon.Visibility = Visibility.Hidden;
                     connectionTypeUSBicon.Visibility = Visibility.Hidden;
                     controlPanel.SelectedIndex = 0;
+                    batteryStatusText.Visibility = Visibility.Hidden;
                 }
             });
         }
@@ -1865,9 +1883,13 @@ namespace DualSenseY
         {
             if (this.IsInitialized)
             {
-                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
-                AudioTestCooldown.Restart();
-                dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
+                try
+                {
+                    dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                    AudioTestCooldown.Restart();
+                    dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
+                }
+                catch (Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
             }
         }
 
@@ -2290,52 +2312,60 @@ namespace DualSenseY
         private int emuStatusForConfig = 0;
         private void ds4Emu()
         {
-            emuStatusForConfig = 2;
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            try
             {
-                controllerEmulation.StopEmulation();
-                HideController();
-                ds4EmuButton.IsEnabled = false;
-                x360EmuButton.IsEnabled = true;
-                stopEmuBtn.Visibility = Visibility.Visible;
-                controllerEmulation.StartDS4Emulation();
+                emuStatusForConfig = 2;
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                {
+                    controllerEmulation.StopEmulation();
+                    HideController();
+                    ds4EmuButton.IsEnabled = false;
+                    x360EmuButton.IsEnabled = true;
+                    stopEmuBtn.Visibility = Visibility.Visible;
+                    controllerEmulation.StartDS4Emulation();
 
-                if (controllerEmulation.Emulating && !controllerEmulation.isEmulating360)
-                {
-                    textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
-                    crnEmulatingText.Text = "Currently emulating: DualShock 4";
-                }
-                else
-                {
-                    crnEmulatingText.Text = string.Empty;
+                    if (controllerEmulation.Emulating && !controllerEmulation.isEmulating360)
+                    {
+                        textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
+                        crnEmulatingText.Text = "Currently emulating: DualShock 4";
+                    }
+                    else
+                    {
+                        crnEmulatingText.Text = string.Empty;
+                    }
                 }
             }
+            catch (Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message + "\n\nStackTrace:\n" + ex.StackTrace, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
         private void x360Emu()
         {
-            emuStatusForConfig = 1;
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            try
             {
-                controllerEmulation.StopEmulation();
-                HideController();
-                x360EmuButton.IsEnabled = false;
-                ds4EmuButton.IsEnabled = true;
-                stopEmuBtn.Visibility = Visibility.Visible;
-                controllerEmulation.StartX360Emulation();
-
-                if (controllerEmulation.Emulating && controllerEmulation.isEmulating360)
+                emuStatusForConfig = 1;
+                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
                 {
-                    textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
-                    crnEmulatingText.Text = "Currently emulating: Xbox 360 controller";
-                }
-                else
-                {
-                    crnEmulatingText.Text = string.Empty;
-                }
+                    controllerEmulation.StopEmulation();
+                    HideController();
+                    x360EmuButton.IsEnabled = false;
+                    ds4EmuButton.IsEnabled = true;
+                    stopEmuBtn.Visibility = Visibility.Visible;
+                    controllerEmulation.StartX360Emulation();
 
-                ReadCurrentValues();
+                    if (controllerEmulation.Emulating && controllerEmulation.isEmulating360)
+                    {
+                        textUnderControllerEmuButtons.Visibility = Visibility.Hidden;
+                        crnEmulatingText.Text = "Currently emulating: Xbox 360 controller";
+                    }
+                    else
+                    {
+                        crnEmulatingText.Text = string.Empty;
+                    }
+
+                    ReadCurrentValues();
+                }
             }
+            catch(Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message + "\n\nStackTrace:\n" + ex.StackTrace, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
         private void stopEmu()
@@ -2848,8 +2878,10 @@ namespace DualSenseY
 
                     stopwatch.Restart();
                 }
-
-                Thread.Sleep(1);
+                else
+                {
+                    Thread.Sleep(1);
+                }
             }
         }
 
