@@ -17,7 +17,7 @@ namespace DualSenseY
     {
         private UDP udp;
         private Version version = new Version();
-        public Dualsense[] dualsense = new Dualsense[4];
+        public Dualsense dualsense;
         private string controllerInstanceID = string.Empty;
         public int currentControllerNumber = 0;
         private int[] leftTriggerForces = new int[7];
@@ -40,6 +40,8 @@ namespace DualSenseY
         private bool VigemAndHidHidePresent = true;
         private string[] customHotkey = new string[5];
         private int[] customHotkeyIndex = new int[20];
+        private string currentControllerID = string.Empty;
+        private string currentControllerPath = string.Empty;
 
         private bool firstTimeCmbSelect = true;
         private HidHideControlService hidHide = new HidHideControlService();
@@ -49,15 +51,18 @@ namespace DualSenseY
         {
             this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
             UDP.StartFakeDSXProcess();
-            
+
             try
             {
-                InitializeComponent();            
+                InitializeComponent();
             }
             catch
             {
                 MessageBox.Show("error");
             }
+
+            EnumerateControllers();
+            txtStatus.Text = "Right click the dropdown box to refresh controller list, avoid connecting one controller multiple times.";
 
             changelogText.Text = Constants.Changelog;
 
@@ -68,11 +73,13 @@ namespace DualSenseY
             iconStream.Dispose();
             this.ShowInTaskbar = true;
 
+            connectedTo.Visibility = Visibility.Hidden;
             discoSpeedSlider.Visibility = Visibility.Hidden;
             discoSpeedText.Visibility = Visibility.Hidden;
             connectionTypeBTicon.Visibility = Visibility.Hidden;
             connectionTypeUSBicon.Visibility = Visibility.Hidden;
             batteryStatusText.Visibility = Visibility.Hidden;
+            edgeIcon.Visibility = Visibility.Hidden;
 
             minimizeToTrayBox.IsChecked = DualSenseY.Properties.Settings.Default.minimizeToTray;
             launchMinimizedBox.IsChecked = DualSenseY.Properties.Settings.Default.launchMinimized;
@@ -86,7 +93,7 @@ namespace DualSenseY
                 MyNotifyIcon.Visible = true;
             }
 
-            if (DualSenseY.Properties.Settings.Default.connectOnStartup)
+            if (DualSenseY.Properties.Settings.Default.connectOnStartup && DualsenseUtils.GetControllerIDs().Count != 0 && Process.GetProcessesByName("DualSenseY").Count() == 1)
             {
                 ConnectToController();
             }
@@ -120,6 +127,9 @@ namespace DualSenseY
             rightTriggerForces[6] = 0;
 
             screenshotCooldown.Start();
+            udp = new UDP();
+            udp.Events.NewPacket += Events_NewPacket;
+            UDPtime.Start();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
@@ -128,15 +138,11 @@ namespace DualSenseY
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; StartDisco(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchMotion(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchAudioDefaultDevice(); }).Start();
-
-            udp = new UDP();
-            udp.Events.NewPacket += Events_NewPacket;
-            UDPtime.Start();
         }
 
         private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox.Show("Unhandled exception occurred, contact developer: \n" + e.Exception.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show("Unhandled exception occurred, contact developer: \n" + e.Exception.Message + "\n\nStacktrace: \n" + e.Exception.StackTrace, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
 
         private void WatchMotion()
@@ -147,25 +153,25 @@ namespace DualSenseY
                 {
                     this.Dispatcher.Invoke(() =>
                     {
-                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                        if (dualsense != null && dualsense.Working)
                         {
-                            AcceXtext.Text = $"Accelerometer X      {dualsense[currentControllerNumber].ButtonState.accelerometer.X}";
-                            AcceX.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.X;
+                            AcceXtext.Text = $"Accelerometer X      {dualsense.ButtonState.accelerometer.X}";
+                            AcceX.Value = dualsense.ButtonState.accelerometer.X;
 
-                            AcceYtext.Text = $"Accelerometer Y      {dualsense[currentControllerNumber].ButtonState.accelerometer.Y}";
-                            AcceY.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Y;
+                            AcceYtext.Text = $"Accelerometer Y      {dualsense.ButtonState.accelerometer.Y}";
+                            AcceY.Value = dualsense.ButtonState.accelerometer.Y;
 
-                            AcceZtext.Text = $"Accelerometer Z      {dualsense[currentControllerNumber].ButtonState.accelerometer.Z}";
-                            AcceZ.Value = dualsense[currentControllerNumber].ButtonState.accelerometer.Z;
+                            AcceZtext.Text = $"Accelerometer Z      {dualsense.ButtonState.accelerometer.Z}";
+                            AcceZ.Value = dualsense.ButtonState.accelerometer.Z;
 
-                            GyroXtext.Text = $"Gyroscope X      {dualsense[currentControllerNumber].ButtonState.gyro.X}";
-                            GyroX.Value = dualsense[currentControllerNumber].ButtonState.gyro.X;
+                            GyroXtext.Text = $"Gyroscope X      {dualsense.ButtonState.gyro.X}";
+                            GyroX.Value = dualsense.ButtonState.gyro.X;
 
-                            GyroYtext.Text = $"Gyroscope Y      {dualsense[currentControllerNumber].ButtonState.gyro.Y}";
-                            GyroY.Value = dualsense[currentControllerNumber].ButtonState.gyro.Y;
+                            GyroYtext.Text = $"Gyroscope Y      {dualsense.ButtonState.gyro.Y}";
+                            GyroY.Value = dualsense.ButtonState.gyro.Y;
 
-                            GyroZtext.Text = $"Gyroscope Z        {dualsense[currentControllerNumber].ButtonState.gyro.Z}";
-                            GyroZ.Value = dualsense[currentControllerNumber].ButtonState.gyro.Z;
+                            GyroZtext.Text = $"Gyroscope Z        {dualsense.ButtonState.gyro.Z}";
+                            GyroZ.Value = dualsense.ButtonState.gyro.Z;
                         }
                     });
                 }
@@ -181,25 +187,25 @@ namespace DualSenseY
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                    if (dualsense != null && dualsense.Working)
                     {
-                        if(udp != null && udp.serverOn)
+                        if (udp != null && udp.serverOn)
                         {
-                            udp.Battery = dualsense[currentControllerNumber].Battery.Level;
+                            udp.Battery = dualsense.Battery.Level;
                         }
 
-                        batteryStatusText.Visibility = Visibility.Visible;
-
-                        switch (dualsense[currentControllerNumber].Battery.State)
+                        switch (dualsense.Battery.State)
                         {
                             case BatteryState.State.POWER_SUPPLY_STATUS_DISCHARGING:
-                                batteryStatusText.Text = $"Battery Status: DISCHARGING | {dualsense[currentControllerNumber].Battery.Level}%";
+                                batteryStatusText.Text = $"Battery Status: DISCHARGING | {dualsense.Battery.Level}%";
                                 break;
+
                             case BatteryState.State.POWER_SUPPLY_STATUS_CHARGING:
-                                batteryStatusText.Text = $"Battery Status: CHARGING | {dualsense[currentControllerNumber].Battery.Level}%";
+                                batteryStatusText.Text = $"Battery Status: CHARGING | {dualsense.Battery.Level}%";
                                 break;
+
                             default:
-                                batteryStatusText.Text = $"Battery Status: UNKNOWN | {dualsense[currentControllerNumber].Battery.Level}%";
+                                batteryStatusText.Text = $"Battery Status: UNKNOWN | {dualsense.Battery.Level}%";
                                 break;
                         }
                     }
@@ -226,9 +232,9 @@ namespace DualSenseY
                         Thread.Sleep(1000);
                         watchSystemAudio = true;
                         new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
-                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && newDevice.State == DeviceState.Active)
+                        if (dualsense != null && dualsense.Working && newDevice.State == DeviceState.Active)
                         {
-                            dualsense[currentControllerNumber].ReinitializeHapticFeedback();
+                            dualsense.ReinitializeHapticFeedback();
                         }
                     }
                     else
@@ -269,6 +275,7 @@ namespace DualSenseY
 
         private bool micOff = false;
         private Stopwatch screenshotCooldown = new Stopwatch();
+
         private void HandleHotkey(int selectedIndex, int boxIndex)
         {
             switch (selectedIndex)
@@ -279,7 +286,7 @@ namespace DualSenseY
                         {
                             Utils.ScreenshotToClipboard();
                             screenshotCooldown.Restart();
-                            dualsense[currentControllerNumber].PlayHaptics("screenshot.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
+                            dualsense.PlayHaptics("screenshot.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
                         }
                         break;
                     }
@@ -309,7 +316,7 @@ namespace DualSenseY
                     }
                 case 3: // Audio passthrough
                     {
-                        if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                        if (dualsense.ConnectionType == ConnectionType.USB)
                         {
                             if (audioToHapticsBtn.IsChecked == false)
                             {
@@ -355,38 +362,38 @@ namespace DualSenseY
                 {
                     this.Dispatcher.Invoke(() =>
                     {
-                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                        if (dualsense != null && dualsense.Working)
                         {
-                            if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton && !lastUp && !lastLeft && !lastRight && !lastDown)
+                            if (!dualsense.ButtonState.micBtn && lastMicButton && !lastUp && !lastLeft && !lastRight && !lastDown)
                             {
                                 HandleHotkey(hotkeyBoxMic.SelectedIndex, 0); // MIC BUTTON
                             }
-                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
-                            && !dualsense[currentControllerNumber].ButtonState.DpadUp && lastUp)
+                            else if (!dualsense.ButtonState.micBtn && lastMicButton
+                            && !dualsense.ButtonState.DpadUp && lastUp)
                             {
                                 HandleHotkey(hotkeyBoxMicPlusUp.SelectedIndex, 1);
                             }
-                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
-                            && !dualsense[currentControllerNumber].ButtonState.DpadLeft && lastLeft)
+                            else if (!dualsense.ButtonState.micBtn && lastMicButton
+                            && !dualsense.ButtonState.DpadLeft && lastLeft)
                             {
                                 HandleHotkey(hotkeyBoxMicPlusLeft.SelectedIndex, 3);
                             }
-                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
-                            && !dualsense[currentControllerNumber].ButtonState.DpadRight && lastRight)
+                            else if (!dualsense.ButtonState.micBtn && lastMicButton
+                            && !dualsense.ButtonState.DpadRight && lastRight)
                             {
                                 HandleHotkey(hotkeyBoxMicPlusRight.SelectedIndex, 2);
                             }
-                            else if (!dualsense[currentControllerNumber].ButtonState.micBtn && lastMicButton
-                            && !dualsense[currentControllerNumber].ButtonState.DpadDown && lastDown)
+                            else if (!dualsense.ButtonState.micBtn && lastMicButton
+                            && !dualsense.ButtonState.DpadDown && lastDown)
                             {
                                 HandleHotkey(hotkeyBoxMicPlusDown.SelectedIndex, 4);
                             }
 
-                            lastMicButton = dualsense[currentControllerNumber].ButtonState.micBtn;
-                            lastUp = dualsense[currentControllerNumber].ButtonState.DpadUp;
-                            lastLeft = dualsense[currentControllerNumber].ButtonState.DpadLeft;
-                            lastRight = dualsense[currentControllerNumber].ButtonState.DpadRight;
-                            lastDown = dualsense[currentControllerNumber].ButtonState.DpadDown;
+                            lastMicButton = dualsense.ButtonState.micBtn;
+                            lastUp = dualsense.ButtonState.DpadUp;
+                            lastLeft = dualsense.ButtonState.DpadLeft;
+                            lastRight = dualsense.ButtonState.DpadRight;
+                            lastDown = dualsense.ButtonState.DpadDown;
                         }
                     });
                 }
@@ -397,7 +404,7 @@ namespace DualSenseY
         private void Events_NewPacket(object? sender, Events.PacketEvent e)
         {
             UDPtime.Restart();
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working && connected)
             {
                 foreach (UDP.Instruction instruction in e.packet.instructions)
                 {
@@ -407,16 +414,19 @@ namespace DualSenseY
                             switch ((UDP.MicLEDMode)Convert.ToInt32(instruction.parameters[1]))
                             {
                                 case UDP.MicLEDMode.Pulse:
-                                    dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                                    dualsense.SetMicrophoneLED(LED.MicrophoneLED.ON);
                                     break;
+
                                 case UDP.MicLEDMode.On:
-                                    dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                                    dualsense.SetMicrophoneLED(LED.MicrophoneLED.ON);
                                     break;
+
                                 case UDP.MicLEDMode.Off:
-                                    dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+                                    dualsense.SetMicrophoneLED(LED.MicrophoneLED.OFF);
                                     break;
                             }
                             break;
+
                         case UDP.InstructionType.TriggerUpdate:
 
                             int[] triggerForces = { 0, 0, 0, 0, 0, 0, 0 };
@@ -434,6 +444,7 @@ namespace DualSenseY
                                     triggerForces[5] = 0;
                                     triggerForces[6] = 0;
                                     break;
+
                                 case UDP.TriggerMode.GameCube:
                                     triggerType = TriggerType.TriggerModes.Pulse;
                                     triggerForces[0] = 144;
@@ -444,6 +455,7 @@ namespace DualSenseY
                                     triggerForces[5] = 0;
                                     triggerForces[6] = 0;
                                     break;
+
                                 case UDP.TriggerMode.VerySoft:
                                     long VerySoftTrigger = -6258686;
                                     triggerType = TriggerType.TriggerModes.Rigid_A;
@@ -455,6 +467,7 @@ namespace DualSenseY
                                     triggerForces[5] = BitConverter.GetBytes(VerySoftTrigger)[6];
                                     triggerForces[6] = BitConverter.GetBytes(VerySoftTrigger)[7];
                                     break;
+
                                 case UDP.TriggerMode.Soft:
                                     long SoftTrigger = -6273790;
                                     triggerType = TriggerType.TriggerModes.Rigid_A;
@@ -466,6 +479,7 @@ namespace DualSenseY
                                     triggerForces[5] = BitConverter.GetBytes(SoftTrigger)[6];
                                     triggerForces[6] = BitConverter.GetBytes(SoftTrigger)[7];
                                     break;
+
                                 case UDP.TriggerMode.Hard:
                                     long HardTrigger = -6283262;
                                     triggerType = TriggerType.TriggerModes.Rigid_A;
@@ -477,6 +491,7 @@ namespace DualSenseY
                                     triggerForces[5] = BitConverter.GetBytes(HardTrigger)[6];
                                     triggerForces[6] = BitConverter.GetBytes(HardTrigger)[7];
                                     break;
+
                                 case UDP.TriggerMode.VeryHard:
                                     long VeryHardTrigger = -6287358;
                                     triggerType = TriggerType.TriggerModes.Rigid_A;
@@ -488,6 +503,7 @@ namespace DualSenseY
                                     triggerForces[5] = BitConverter.GetBytes(VeryHardTrigger)[6];
                                     triggerForces[6] = BitConverter.GetBytes(VeryHardTrigger)[7];
                                     break;
+
                                 case UDP.TriggerMode.Hardest:
                                     long HardestTrigger = -65534;
                                     triggerType = TriggerType.TriggerModes.Rigid_A;
@@ -499,6 +515,7 @@ namespace DualSenseY
                                     triggerForces[5] = BitConverter.GetBytes(HardestTrigger)[6];
                                     triggerForces[6] = BitConverter.GetBytes(HardestTrigger)[7];
                                     break;
+
                                 case UDP.TriggerMode.Rigid:
                                     long RigidTrigger = 16711682L;
                                     triggerType = TriggerType.TriggerModes.Rigid;
@@ -510,6 +527,7 @@ namespace DualSenseY
                                     triggerForces[5] = BitConverter.GetBytes(RigidTrigger)[6];
                                     triggerForces[6] = BitConverter.GetBytes(RigidTrigger)[7];
                                     break;
+
                                 case UDP.TriggerMode.VibrateTrigger:
                                     triggerType = TriggerType.TriggerModes.Pulse_AB;
                                     triggerForces[0] = 37;
@@ -520,6 +538,7 @@ namespace DualSenseY
                                     triggerForces[5] = 35;
                                     triggerForces[6] = 34;
                                     break;
+
                                 case UDP.TriggerMode.Choppy:
                                     triggerType = TriggerType.TriggerModes.Rigid_A;
                                     triggerForces[0] = 2;
@@ -530,6 +549,7 @@ namespace DualSenseY
                                     triggerForces[5] = 2;
                                     triggerForces[6] = 0;
                                     break;
+
                                 case UDP.TriggerMode.Medium:
                                     triggerType = TriggerType.TriggerModes.Pulse_A;
                                     triggerForces[0] = 2;
@@ -540,6 +560,7 @@ namespace DualSenseY
                                     triggerForces[5] = 1;
                                     triggerForces[6] = 33;
                                     break;
+
                                 case UDP.TriggerMode.VibrateTriggerPulse:
                                     triggerType = TriggerType.TriggerModes.Pulse_AB;
                                     triggerForces[0] = 37;
@@ -550,33 +571,42 @@ namespace DualSenseY
                                     triggerForces[5] = 35;
                                     triggerForces[6] = 34;
                                     break;
+
                                 case UDP.TriggerMode.CustomTriggerValue:
                                     switch ((UDP.CustomTriggerValueMode)Convert.ToInt32(instruction.parameters[3]))
                                     {
                                         case UDP.CustomTriggerValueMode.OFF:
                                             triggerType = TriggerType.TriggerModes.Off;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.Pulse:
                                             triggerType = TriggerType.TriggerModes.Pulse;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.PulseA:
                                             triggerType = TriggerType.TriggerModes.Pulse_A;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.PulseB:
                                             triggerType = TriggerType.TriggerModes.Pulse_B;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.PulseAB:
                                             triggerType = TriggerType.TriggerModes.Pulse_AB;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.Rigid:
                                             triggerType = TriggerType.TriggerModes.Rigid;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.RigidA:
                                             triggerType = TriggerType.TriggerModes.Rigid_A;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.RigidB:
                                             triggerType = TriggerType.TriggerModes.Rigid_B;
                                             break;
+
                                         case UDP.CustomTriggerValueMode.RigidAB:
                                             triggerType = TriggerType.TriggerModes.Rigid_AB;
                                             break;
@@ -592,6 +622,7 @@ namespace DualSenseY
                                         }
                                     }
                                     break;
+
                                 case UDP.TriggerMode.Resistance:
                                     byte start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
                                     byte force = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
@@ -626,6 +657,7 @@ namespace DualSenseY
                                         triggerForces[6] = 0;
                                     }
                                     break;
+
                                 case UDP.TriggerMode.Bow:
                                     start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
                                     byte end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
@@ -667,6 +699,7 @@ namespace DualSenseY
                                         triggerForces[6] = 0;
                                     }
                                     break;
+
                                 case UDP.TriggerMode.Galloping:
                                     start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
                                     end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
@@ -712,6 +745,7 @@ namespace DualSenseY
                                         triggerForces[6] = 0;
                                     }
                                     break;
+
                                 case UDP.TriggerMode.SemiAutomaticGun:
                                     start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
                                     end = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
@@ -747,6 +781,7 @@ namespace DualSenseY
                                         triggerForces[6] = 0;
                                     }
                                     break;
+
                                 case UDP.TriggerMode.AutomaticGun:
                                     start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
                                     byte strength = instruction.parameters[4] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[4])) : (byte)0;
@@ -781,6 +816,7 @@ namespace DualSenseY
                                         triggerForces[6] = (byte)(num >> 24 & 255U);
                                     }
                                     break;
+
                                 case UDP.TriggerMode.Machine:
 
                                     start = instruction.parameters[3] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[3])) : (byte)0;
@@ -789,7 +825,6 @@ namespace DualSenseY
                                     byte strengthB = instruction.parameters[6] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[6])) : (byte)0;
                                     frequency = instruction.parameters[7] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[7])) : (byte)0;
                                     byte period = instruction.parameters[8] != null ? Convert.ToByte(Convert.ToInt32(instruction.parameters[8])) : (byte)0;
-
 
                                     if (start > 8)
                                     {
@@ -823,9 +858,9 @@ namespace DualSenseY
                                         triggerForces[4] = (byte)(num2 & 255U);
                                         triggerForces[5] = 0;
                                         triggerForces[6] = 0;
-
                                     }
                                     break;
+
                                 default:
                                     triggerForces[0] = 0;
                                     triggerForces[1] = 0;
@@ -841,19 +876,21 @@ namespace DualSenseY
                             switch ((UDP.Trigger)Convert.ToInt32(instruction.parameters[1]))
                             {
                                 case UDP.Trigger.Left:
-                                    dualsense[currentControllerNumber].SetLeftTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
-                                    break;
-                                case UDP.Trigger.Right:
-                                    dualsense[currentControllerNumber].SetRightTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
+                                    dualsense.SetLeftTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
                                     break;
 
+                                case UDP.Trigger.Right:
+                                    dualsense.SetRightTrigger(triggerType, triggerForces[0], triggerForces[1], triggerForces[2], triggerForces[3], triggerForces[4], triggerForces[5], triggerForces[6]);
+                                    break;
                             }
 
                             break;
+
                         case UDP.InstructionType.RGBUpdate:
                             if (Convert.ToInt32(instruction.parameters[1]) >= 0 && Convert.ToInt32(instruction.parameters[2]) >= 0 && Convert.ToInt32(instruction.parameters[3]) >= 0)
-                                dualsense[currentControllerNumber].SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
+                                dualsense.SetLightbar(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]));
                             break;
+
                         case UDP.InstructionType.TriggerThreshold:
                             if (controllerEmulation != null)
                             {
@@ -861,56 +898,62 @@ namespace DualSenseY
                                 controllerEmulation.rightTriggerThreshold = Convert.ToInt32(instruction.parameters[2]);
                             }
                             break;
+
                         case UDP.InstructionType.PlayerLEDNewRevision:
                             switch ((UDP.PlayerLEDNewRevision)Convert.ToInt32(instruction.parameters[1]))
                             {
                                 case UDP.PlayerLEDNewRevision.AllOff:
-                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                                    dualsense.SetPlayerLED(LED.PlayerLED.OFF);
                                     break;
+
                                 case UDP.PlayerLEDNewRevision.One:
-                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                                    dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
                                     break;
+
                                 case UDP.PlayerLEDNewRevision.Two:
-                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                                    dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
                                     break;
+
                                 case UDP.PlayerLEDNewRevision.Three:
-                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                                    dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
                                     break;
+
                                 case UDP.PlayerLEDNewRevision.Four:
-                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                                    dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                                     break;
+
                                 case UDP.PlayerLEDNewRevision.Five:
-                                    dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                                    dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                                     break;
                             }
                             break;
+
                         case UDP.InstructionType.HapticFeedback:
-                            dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                            dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                             this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
-                            dualsense[currentControllerNumber].PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));
+                            dualsense.PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));
                             break;
+
                         case UDP.InstructionType.RGBTransitionUpdate:
-                            dualsense[currentControllerNumber].SetLightbarTransition(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]), Convert.ToInt32(instruction.parameters[4]), Convert.ToInt32(instruction.parameters[5]));
+                            dualsense.SetLightbarTransition(Convert.ToInt32(instruction.parameters[1]), Convert.ToInt32(instruction.parameters[2]), Convert.ToInt32(instruction.parameters[3]), Convert.ToInt32(instruction.parameters[4]), Convert.ToInt32(instruction.parameters[5]));
                             break;
                     }
                 }
             }
-
-
         }
 
         private MMDeviceEnumerator MDE = new MMDeviceEnumerator();
         private MMDevice[] MD = new MMDevice[4];
         private WaveInEvent waveInStream = new WaveInEvent();
         private bool watchSystemAudio = true;
+
         private void WatchSystemAudioLevel()
         {
             MMDevice defaultAudio = MDE.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
 
             while (watchSystemAudio)
             {
-
-                if (UDPtime.ElapsedMilliseconds >= 8000 && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && dualsense[currentControllerNumber].ConnectionType == ConnectionType.USB)
+                if (UDPtime.ElapsedMilliseconds >= 8000 && dualsense != null && dualsense.Working && dualsense.ConnectionType == ConnectionType.USB)
                 {
                     var AMI = defaultAudio.AudioMeterInformation;
                     float value = AMI.PeakValues[0] * 300;
@@ -920,28 +963,28 @@ namespace DualSenseY
                     {
                         if (value <= 255)
                         {
-                            dualsense[currentControllerNumber].SetLightbar((int)value, (int)value, (int)value);
+                            dualsense.SetLightbar((int)value, (int)value, (int)value);
                         }
 
                         if (value2 < 25)
                         {
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                            dualsense.SetPlayerLED(LED.PlayerLED.OFF);
                         }
                         else if (value2 > 25 && value2 < 50)
                         {
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                            dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
                         }
                         else if (value2 > 50 && value2 < 75)
                         {
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                            dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
                         }
                         else if (value2 > 75 && value < 95)
                         {
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                            dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
                         }
                         else if (value2 > 95)
                         {
-                            dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                            dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                         }
                     }
                 }
@@ -951,8 +994,9 @@ namespace DualSenseY
 
         private const int maxX = 1919;
         private const int maxY = 1079;
+
         [System.Runtime.InteropServices.DllImport("user32.dll")]
-        static extern void mouse_event(int dwFlags, int dx, int dy,
+        private static extern void mouse_event(int dwFlags, int dx, int dy,
                       int dwData, int dwExtraInfo);
 
         [Flags]
@@ -983,7 +1027,8 @@ namespace DualSenseY
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool GetCursorPos(out POINT lpPoint);
 
-        int sensitivity = 3;
+        private int sensitivity = 3;
+
         private void ReadTouchpad()
         {
             GetCursorPos(out POINT posfirst);
@@ -997,24 +1042,23 @@ namespace DualSenseY
             while (true)
             {
                 GetCursorPos(out POINT pos);
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                if (dualsense != null && dualsense.Working)
                 {
                     try
                     {
                         this.Dispatcher.Invoke(() =>
                         {
-                            if (!dualsense[currentControllerNumber].ButtonState.touchBtn && wasClicked && useTouchpadAsMouse)
+                            if (!dualsense.ButtonState.touchBtn && wasClicked && useTouchpadAsMouse)
                             {
                                 mouse_event((int)(MouseEventFlags.LEFTUP), 0, 0, 0, 0);
                             }
 
-                            if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.IsActive)
+                            if (dualsense.ButtonState.trackPadTouch0.IsActive)
                             {
-
                                 if (wasHeld && useTouchpadAsMouse)
                                 {
-                                    swipeX = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X - lastTouchPad.X;
-                                    swipeY = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y - lastTouchPad.Y;
+                                    swipeX = dualsense.ButtonState.trackPadTouch0.X - lastTouchPad.X;
+                                    swipeY = dualsense.ButtonState.trackPadTouch0.Y - lastTouchPad.Y;
                                     SetCursorPos(pos.X + swipeX / 5 * sensitivity, pos.Y + swipeY / 5 * sensitivity);
                                 }
                                 else
@@ -1024,15 +1068,15 @@ namespace DualSenseY
                                 }
 
                                 touchLeftDot.Visibility = Visibility.Visible;
-                                touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}";
+                                touchPadText.Text = $"Track Touch 1: X={dualsense.ButtonState.trackPadTouch0.X}, Y={dualsense.ButtonState.trackPadTouch0.Y}";
 
-                                touchLeftDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y, maxY, 135), 0, 0);
+                                touchLeftDot.Margin = new Thickness(ScaleToMax(dualsense.ButtonState.trackPadTouch0.X, maxX, 285), ScaleToMax(dualsense.ButtonState.trackPadTouch0.Y, maxY, 135), 0, 0);
 
-                                if (dualsense[currentControllerNumber].ButtonState.touchBtn)
+                                if (dualsense.ButtonState.touchBtn)
                                 {
                                     if (useTouchpadAsMouse)
                                     {
-                                        if (dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X > 1100)
+                                        if (dualsense.ButtonState.trackPadTouch0.X > 1100)
                                         {
                                             if (!wasClicked)
                                             {
@@ -1055,11 +1099,11 @@ namespace DualSenseY
                                     touchPadBorder.BorderBrush = new SolidColorBrush(Colors.Black);
                                 }
 
-                                if (dualsense[currentControllerNumber].ButtonState.trackPadTouch1.IsActive)
+                                if (dualsense.ButtonState.trackPadTouch1.IsActive)
                                 {
-                                    touchPadText.Text = $"Track Touch 1: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y}\nTrack Touch 2: X={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X}, Y={dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y}";
+                                    touchPadText.Text = $"Track Touch 1: X={dualsense.ButtonState.trackPadTouch0.X}, Y={dualsense.ButtonState.trackPadTouch0.Y}\nTrack Touch 2: X={dualsense.ButtonState.trackPadTouch1.X}, Y={dualsense.ButtonState.trackPadTouch1.Y}";
                                     touchRightDot.Visibility = Visibility.Visible;
-                                    touchRightDot.Margin = new Thickness(ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.X, maxX, 285), ScaleToMax(dualsense[currentControllerNumber].ButtonState.trackPadTouch1.Y, maxY, 135), 0, 0);
+                                    touchRightDot.Margin = new Thickness(ScaleToMax(dualsense.ButtonState.trackPadTouch1.X, maxX, 285), ScaleToMax(dualsense.ButtonState.trackPadTouch1.Y, maxY, 135), 0, 0);
                                 }
                                 else
                                     touchRightDot.Visibility = Visibility.Hidden;
@@ -1077,14 +1121,13 @@ namespace DualSenseY
                             }
                         });
 
-                        lastTouchPad.X = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.X;
-                        lastTouchPad.Y = dualsense[currentControllerNumber].ButtonState.trackPadTouch0.Y;
+                        lastTouchPad.X = dualsense.ButtonState.trackPadTouch0.X;
+                        lastTouchPad.Y = dualsense.ButtonState.trackPadTouch0.Y;
                     }
                     catch
                     {
                         continue;
                     }
-
                 }
 
                 lastCursorPos = pos;
@@ -1100,12 +1143,14 @@ namespace DualSenseY
             return value * scaleFactor;
         }
 
-        bool connectedToController = false;
-        bool wereSettingsReset = false;
+        private bool connectedToController = false;
+        private bool wereSettingsReset = false;
+
         private async void WatchUDPUpdates()
         {
-            this.Dispatcher.Invoke(() => {
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && connectedToController)
+            this.Dispatcher.Invoke(() =>
+            {
+                if (dualsense != null && dualsense.Working && connectedToController)
                 {
                     controlPanel.Visibility = Visibility.Visible;
                     ledTab.IsEnabled = true;
@@ -1122,7 +1167,7 @@ namespace DualSenseY
                 {
                     if (UDPtime.ElapsedMilliseconds >= 8000)
                     {
-                        if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && connectedToController)
+                        if (dualsense != null && dualsense.Working && connectedToController)
                         {
                             if (!wereSettingsReset)
                             {
@@ -1137,8 +1182,16 @@ namespace DualSenseY
                             saveConfigBtn.Visibility = Visibility.Visible;
                         }
 
-                        udpStatus.Text = "UDP: Inactive";
-                        udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
+                        if (udp == null || udp.unavailable)
+                        {
+                            udpStatus.Text = "UDP: Unavailable";
+                            udpStatusDot.Fill = new SolidColorBrush(Colors.Gray);
+                        }
+                        else
+                        {
+                            udpStatus.Text = "UDP: Inactive";
+                            udpStatusDot.Fill = new SolidColorBrush(Colors.Red);
+                        }
                     }
                     else
                     {
@@ -1161,6 +1214,15 @@ namespace DualSenseY
 
                 Thread.Sleep(125);
             }
+
+            this.Dispatcher.Invoke(() =>
+            {
+                if (udp == null || udp.unavailable)
+                {
+                    udpStatus.Text = "UDP: Unavailable";
+                    udpStatusDot.Fill = new SolidColorBrush(Colors.Gray);
+                }
+            });
         }
 
         private static int ScaleTo255(int number)
@@ -1174,16 +1236,15 @@ namespace DualSenseY
             return (int)((number / 8.0) * 255);
         }
 
-
         private void btnConnect_Click(object sender, RoutedEventArgs e)
         {
             if (btnConnect.Content == "Disconnect Controller")
             {
                 isDiscoOn = false;
                 stopEmu();
-                RestoreController(true, dualsense[currentControllerNumber], true);
+                RestoreController(true, dualsense, true);
                 isHiding = false;
-                dualsense[currentControllerNumber].Dispose();
+                dualsense.Dispose();
                 UpdateConnectionStatus();
                 connected = false;
             }
@@ -1193,57 +1254,45 @@ namespace DualSenseY
             }
         }
 
+        private void EnumerateControllers()
+        {
+            cmbControllerSelect.Items.Clear();
+
+            foreach (string controller in DualsenseUtils.GetControllerIDs())
+            {
+                cmbControllerSelect.Items.Add(controller.Split("&")[3]);
+            }
+        }
+
         private void ConnectToController()
         {
             try
             {
-                switch (cmbControllerSelect.SelectedIndex)
+                batteryStatusText.Text = "Battery Status: UNKNOWN | ?%";
+                if (dualsense != null && dualsense.Working)
                 {
-                    case 0:
-                        if (dualsense[0] == null || !dualsense[0].Working)
-                        {
-                            dualsense[0] = new Dualsense(0);
-                            dualsense[0].Start();
-                            dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                            currentControllerNumber = 0;
-                            controllerEmulation = new ControllerEmulation();
-                            controllerEmulation.dualsense = dualsense[0];
-                        }
-                        break;
-                    case 1:
-                        if (dualsense[1] == null || !dualsense[1].Working)
-                        {
-                            dualsense[1] = new Dualsense(1);
-                            dualsense[1].Start();
-                            dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                            currentControllerNumber = 1;
-                            controllerEmulation = new ControllerEmulation();
-                            controllerEmulation.dualsense = dualsense[1];
-                        }
-                        break;
-                    case 2:
-                        if (dualsense[2] == null || !dualsense[2].Working)
-                        {
-                            dualsense[2] = new Dualsense(2);
-                            dualsense[2].Start();
-                            dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                            currentControllerNumber = 2;
-                            controllerEmulation = new ControllerEmulation();
-                            controllerEmulation.dualsense = dualsense[2];
-                        }
-                        break;
-                    case 3:
-                        if (dualsense[3] == null || !dualsense[3].Working)
-                        {
-                            dualsense[3] = new Dualsense(3);
-                            dualsense[3].Start();
-                            dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                            currentControllerNumber = 3;
-                            controllerEmulation = new ControllerEmulation();
-                            controllerEmulation.dualsense = dualsense[3];
-                        }
-                        break;
+                    dualsense.Dispose();
                 }
+
+                string devicePath = string.Empty;
+
+                try
+                {
+                    devicePath = DualsenseUtils.GetControllerIDs().Where(x => x.Contains(cmbControllerSelect.SelectedValue.ToString())).FirstOrDefault();
+                }
+                catch
+                {
+                    MessageBox.Show("Something went wrong, try refreshing the controller list by right clicking the dropdown box", "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                dualsense = new Dualsense(devicePath);
+                dualsense.Start();
+                dualsense.Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                currentControllerNumber = 0;
+                currentControllerID = cmbControllerSelect.SelectedValue.ToString();
+                currentControllerPath = dualsense.DeviceID;
+                controllerEmulation = new ControllerEmulation();
+                controllerEmulation.dualsense = dualsense;
 
                 connected = true;
                 ReadCurrentValues();
@@ -1259,7 +1308,7 @@ namespace DualSenseY
             {
                 if (error.Message.Contains("Couldn't"))
                 {
-                    MessageBox.Show($"Controller {currentControllerNumber + 1} is not plugged in");
+                    MessageBox.Show($"Controller is not plugged in");
                 }
                 else
                 {
@@ -1272,56 +1321,21 @@ namespace DualSenseY
         {
             if (isHiding)
             {
-                dualsense[e.ControllerNumber].Dispose();
+                dualsense.Dispose();
                 this.Dispatcher.Invoke(() =>
                 {
-                    switch (cmbControllerSelect.SelectedIndex)
+                    if (dualsense == null || !dualsense.Working)
                     {
-                        case 0:
-                            if (dualsense[0] == null || !dualsense[0].Working)
-                            {
-                                dualsense[0] = new Dualsense(0);
-                                dualsense[0].Start();
-                                dualsense[0].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 0;
-                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
-                            }
-                            break;
-                        case 1:
-                            if (dualsense[1] == null || !dualsense[1].Working)
-                            {
-                                dualsense[1] = new Dualsense(1);
-                                dualsense[1].Start();
-                                dualsense[1].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 1;
-                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
-                            }
-                            break;
-                        case 2:
-                            if (dualsense[2] == null || !dualsense[2].Working)
-                            {
-                                dualsense[2] = new Dualsense(2);
-                                dualsense[2].Start();
-                                dualsense[2].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 2;
-                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
-                            }
-                            break;
-                        case 3:
-                            if (dualsense[3] == null || !dualsense[3].Working)
-                            {
-                                dualsense[3] = new Dualsense(3);
-                                dualsense[3].Start();
-                                dualsense[3].Connection.ControllerDisconnected += Connection_ControllerDisconnected;
-                                currentControllerNumber = 3;
-                                controllerEmulation.dualsense = dualsense[currentControllerNumber];
-                            }
-                            break;
+                        dualsense = new Dualsense(currentControllerPath);
+                        dualsense.Start();
+                        dualsense.Connection.ControllerDisconnected += Connection_ControllerDisconnected;
+                        currentControllerNumber = 0;
+                        controllerEmulation.dualsense = dualsense;
                     }
 
-                    if (emuStatusForConfig == 2 && dualsense[currentControllerNumber] != null && audioToHapticsBtn.IsChecked == false)
+                    if (emuStatusForConfig == 2 && dualsense != null && audioToHapticsBtn.IsChecked == false)
                     {
-                        dualsense[currentControllerNumber].PlayHaptics("blip.wav", 1, 0, 0, true);
+                        dualsense.PlayHaptics("blip.wav", 1, 0, 0, true);
                     }
                     ReadCurrentValues();
                 });
@@ -1330,35 +1344,35 @@ namespace DualSenseY
             }
             else
             {
-                RestoreController(false, dualsense[e.ControllerNumber], false);
+                RestoreController(false, dualsense, false);
                 UpdateConnectionStatus();
-                dualsense[e.ControllerNumber].Dispose();
+                dualsense.Dispose();
                 controllerEmulation.Dispose();
-                MessageBox.Show($"Controller number {e.ControllerNumber + 1} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Controller {currentControllerID} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
         private void cmbControllerSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (firstTimeCmbSelect)
-            {
-                currentControllerNumber = cmbControllerSelect.SelectedIndex;
-                firstTimeCmbSelect = false;
-            }
-            else
-            {
-                currentControllerNumber = cmbControllerSelect.SelectedIndex;
-                UpdateConnectionStatus();
-            }
         }
 
         private void UpdateConnectionStatus()
         {
             this.Dispatcher.Invoke(() =>
             {
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                if (dualsense != null && dualsense.Working)
                 {
                     connectedToController = true;
+
+                    if (dualsense.DeviceType == DeviceType.DualSense_Edge)
+                    {
+                        edgeIcon.Visibility = Visibility.Visible;
+                    }
+                    else
+                    {
+                        edgeIcon.Visibility = Visibility.Hidden;
+                    }
+
                     txtStatus.Text = "Status: Connected";
                     btnConnect.Content = "Disconnect Controller";
                     controlPanel.Visibility = Visibility.Visible;
@@ -1366,6 +1380,8 @@ namespace DualSenseY
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
                     batteryStatusText.Visibility = Visibility.Visible;
+                    connectedTo.Visibility = Visibility.Visible;
+                    connectedTo.Text = "Connected to " + currentControllerID;
 
                     ds4EmuButton.IsEnabled = true;
                     x360EmuButton.IsEnabled = true;
@@ -1415,7 +1431,7 @@ namespace DualSenseY
                         textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
                     }
 
-                    if (dualsense[currentControllerNumber].ConnectionType == ConnectionType.BT)
+                    if (dualsense.ConnectionType == ConnectionType.BT)
                     {
                         micTab.IsEnabled = false;
                         speakerTab.IsEnabled = false;
@@ -1447,11 +1463,11 @@ namespace DualSenseY
                         connectionTypeBTicon.Visibility = Visibility.Hidden;
                         connectionTypeUSBicon.Visibility = Visibility.Visible;
                     }
-
                 }
-                else if (dualsense[currentControllerNumber] == null || !dualsense[currentControllerNumber].Working)
+                else if (dualsense == null || !dualsense.Working)
                 {
                     connectedToController = false;
+                    edgeIcon.Visibility = Visibility.Hidden;
                     txtStatus.Text = "Status: Disconnected";
                     btnConnect.Content = "Connect Controller";
                     controlPanel.Visibility = Visibility.Hidden;
@@ -1462,53 +1478,60 @@ namespace DualSenseY
                     connectionTypeUSBicon.Visibility = Visibility.Hidden;
                     controlPanel.SelectedIndex = 0;
                     batteryStatusText.Visibility = Visibility.Hidden;
+                    connectedTo.Visibility = Visibility.Hidden;
+                    connectedTo.Text = "Connected to ???";
                 }
             });
         }
 
         private void ReadCurrentValues()
         {
-            if (this.IsInitialized && dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (this.IsInitialized && dualsense != null && dualsense.Working)
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
+                    dualsense.SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
                     if (!audioToLED && connected)
                     {
-                        dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
+                        dualsense.SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
                         switch (LEDbox.SelectedIndex)
                         {
                             case 0:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                                dualsense.SetPlayerLED(LED.PlayerLED.OFF);
                                 break;
+
                             case 1:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
                                 break;
+
                             case 2:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
                                 break;
+
                             case 3:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
                                 break;
+
                             case 4:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                                 break;
+
                             case 5:
-                                dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
+                                dualsense.SetPlayerLED(LED.PlayerLED.ALL);
                                 break;
                         }
                     }
                     if (micLEDcheckbox.IsChecked == true && connected)
-                        dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                        dualsense.SetMicrophoneLED(LED.MicrophoneLED.ON);
                     else
-                        dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+                        dualsense.SetMicrophoneLED(LED.MicrophoneLED.OFF);
 
                     if (outputHeadsetBox.IsChecked == true && connected)
-                        dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.HEADSET);
+                        dualsense.SetAudioOutput(AudioOutput.HEADSET);
                     else
-                        dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.SPEAKER);
+                        dualsense.SetAudioOutput(AudioOutput.SPEAKER);
 
-                    if(discoBox.IsChecked == true && connected)
+                    if (discoBox.IsChecked == true && connected)
                     {
                         isDiscoOn = true;
                     }
@@ -1517,40 +1540,37 @@ namespace DualSenseY
                         isDiscoOn = false;
                     }
 
-                    dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, leftTriggerForces[0], leftTriggerForces[1], leftTriggerForces[2], leftTriggerForces[3], leftTriggerForces[4], leftTriggerForces[5], leftTriggerForces[6]);
-                    dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, rightTriggerForces[0], rightTriggerForces[1], rightTriggerForces[2], rightTriggerForces[3], rightTriggerForces[4], rightTriggerForces[5], rightTriggerForces[6]);
+                    dualsense.SetLeftTrigger(currentLeftTrigger, leftTriggerForces[0], leftTriggerForces[1], leftTriggerForces[2], leftTriggerForces[3], leftTriggerForces[4], leftTriggerForces[5], leftTriggerForces[6]);
+                    dualsense.SetRightTrigger(currentRightTrigger, rightTriggerForces[0], rightTriggerForces[1], rightTriggerForces[2], rightTriggerForces[3], rightTriggerForces[4], rightTriggerForces[5], rightTriggerForces[6]);
                 });
             }
         }
 
-
         private void sliderLeftMotor_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-
         }
 
         private void sliderRightMotor_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-
         }
 
         private void btnTestVibration_Click(object sender, RoutedEventArgs e)
         {
             if ((byte)sliderLeftMotor.Value == 0 && (byte)sliderRightMotor.Value == 0)
             {
-                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
-                dualsense[currentControllerNumber].SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
+                dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                dualsense.SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
             }
             else
             {
-                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
-                dualsense[currentControllerNumber].SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
+                dualsense.SetVibrationType(Vibrations.VibrationType.Standard_Rumble);
+                dualsense.SetStandardRumble((byte)sliderLeftMotor.Value, (byte)sliderRightMotor.Value);
             }
         }
 
         private void sliderLED_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+            dualsense.SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
             LEDlabel.Text = $"LED Color: ({(byte)sliderRed.Value},{(byte)sliderGreen.Value},{(byte)sliderBlue.Value})";
         }
 
@@ -1572,12 +1592,12 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[0] = Convert.ToByte(sliderForce1.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[0] = Convert.ToByte(sliderForce1.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
         }
 
@@ -1587,12 +1607,12 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[1] = Convert.ToByte(sliderForce2.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[1] = Convert.ToByte(sliderForce2.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
         }
 
@@ -1602,12 +1622,12 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[2] = Convert.ToByte(sliderForce3.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[2] = Convert.ToByte(sliderForce3.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
         }
 
@@ -1617,12 +1637,12 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[3] = Convert.ToByte(sliderForce4.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[3] = Convert.ToByte(sliderForce4.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
         }
 
@@ -1632,12 +1652,12 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[4] = Convert.ToByte(sliderForce5.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[4] = Convert.ToByte(sliderForce5.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
         }
 
@@ -1647,12 +1667,12 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[5] = Convert.ToByte(sliderForce6.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[5] = Convert.ToByte(sliderForce6.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
         }
 
@@ -1662,14 +1682,13 @@ namespace DualSenseY
             if (leftTrigger)
             {
                 leftTriggerForces[6] = Convert.ToByte(sliderForce7.Value);
-                dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
             else
             {
                 rightTriggerForces[6] = Convert.ToByte(sliderForce7.Value);
-                dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
             }
-
         }
 
         private void ComboBoxTrigger_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1732,36 +1751,45 @@ namespace DualSenseY
                         case 0:
                             currentLeftTrigger = TriggerType.TriggerModes.Off;
                             break;
+
                         case 1:
                             currentLeftTrigger = TriggerType.TriggerModes.Rigid;
                             break;
+
                         case 2:
                             currentLeftTrigger = TriggerType.TriggerModes.Pulse;
                             break;
+
                         case 3:
                             currentLeftTrigger = TriggerType.TriggerModes.Rigid_A;
                             break;
+
                         case 4:
                             currentLeftTrigger = TriggerType.TriggerModes.Rigid_B;
                             break;
+
                         case 5:
                             currentLeftTrigger = TriggerType.TriggerModes.Pulse_AB;
                             break;
+
                         case 6:
                             currentLeftTrigger = TriggerType.TriggerModes.Pulse_A;
                             break;
+
                         case 7:
                             currentLeftTrigger = TriggerType.TriggerModes.Pulse_B;
                             break;
+
                         case 8:
                             currentLeftTrigger = TriggerType.TriggerModes.Pulse_AB;
                             break;
+
                         case 9:
                             currentLeftTrigger = TriggerType.TriggerModes.Calibration;
                             break;
                     }
 
-                    dualsense[currentControllerNumber].SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                    dualsense.SetLeftTrigger(currentLeftTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
                 }
                 else
                 {
@@ -1772,40 +1800,47 @@ namespace DualSenseY
                         case 0:
                             currentRightTrigger = TriggerType.TriggerModes.Off;
                             break;
+
                         case 1:
                             currentRightTrigger = TriggerType.TriggerModes.Rigid;
                             break;
+
                         case 2:
                             currentRightTrigger = TriggerType.TriggerModes.Pulse;
                             break;
+
                         case 3:
                             currentRightTrigger = TriggerType.TriggerModes.Rigid_A;
                             break;
+
                         case 4:
                             currentRightTrigger = TriggerType.TriggerModes.Rigid_B;
                             break;
+
                         case 5:
                             currentRightTrigger = TriggerType.TriggerModes.Pulse_AB;
                             break;
+
                         case 6:
                             currentRightTrigger = TriggerType.TriggerModes.Pulse_A;
                             break;
+
                         case 7:
                             currentRightTrigger = TriggerType.TriggerModes.Pulse_B;
                             break;
+
                         case 8:
                             currentRightTrigger = TriggerType.TriggerModes.Pulse_AB;
                             break;
+
                         case 9:
                             currentRightTrigger = TriggerType.TriggerModes.Calibration;
                             break;
                     }
 
-                    dualsense[currentControllerNumber].SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
+                    dualsense.SetRightTrigger(currentRightTrigger, Convert.ToInt32(sliderForce1.Value), Convert.ToInt32(sliderForce2.Value), Convert.ToInt32(sliderForce3.Value), Convert.ToInt32(sliderForce4.Value), Convert.ToInt32(sliderForce5.Value), Convert.ToInt32(sliderForce6.Value), Convert.ToInt32(sliderForce7.Value));
                 }
             }
-
-
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -1814,16 +1849,12 @@ namespace DualSenseY
             if (controllerEmulation != null)
                 controllerEmulation.Dispose();
 
-            udp.Dispose();
-
-            foreach (Dualsense ds in dualsense)
+            if (udp != null)
             {
-                if (ds != null)
-                {
-                    RestoreController(true, ds, true);
-                }
+                udp.Dispose();
             }
 
+            RestoreController(true, dualsense, true);
         }
 
         private void LEDbox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1833,22 +1864,27 @@ namespace DualSenseY
                 switch (LEDbox.SelectedIndex)
                 {
                     case 0:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                        dualsense.SetPlayerLED(LED.PlayerLED.OFF);
                         break;
+
                     case 1:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
                         break;
+
                     case 2:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
                         break;
+
                     case 3:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
                         break;
+
                     case 4:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                         break;
+
                     case 5:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
+                        dualsense.SetPlayerLED(LED.PlayerLED.ALL);
                         break;
                 }
             }
@@ -1858,7 +1894,7 @@ namespace DualSenseY
         {
             if (this.IsInitialized)
             {
-                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.ON);
+                dualsense.SetMicrophoneLED(LED.MicrophoneLED.ON);
             }
         }
 
@@ -1866,7 +1902,7 @@ namespace DualSenseY
         {
             if (this.IsInitialized)
             {
-                dualsense[currentControllerNumber].SetMicrophoneLED(LED.MicrophoneLED.OFF);
+                dualsense.SetMicrophoneLED(LED.MicrophoneLED.OFF);
             }
         }
 
@@ -1874,7 +1910,7 @@ namespace DualSenseY
         {
             if (this.IsInitialized)
             {
-                dualsense[currentControllerNumber].SetMicrophoneVolume((int)sliderMicVolume.Value);
+                dualsense.SetMicrophoneVolume((int)sliderMicVolume.Value);
                 micVolumeText.Text = $"Microphone Volume: {(int)sliderMicVolume.Value}";
             }
         }
@@ -1885,9 +1921,9 @@ namespace DualSenseY
             {
                 try
                 {
-                    dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                    dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                     AudioTestCooldown.Restart();
-                    dualsense[currentControllerNumber].PlayHaptics("audiotest.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
+                    dualsense.PlayHaptics("audiotest.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
                 }
                 catch (Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
             }
@@ -1915,18 +1951,23 @@ namespace DualSenseY
                     case 0:
                         profile.playerLED = LED.PlayerLED.OFF;
                         break;
+
                     case 1:
                         profile.playerLED = LED.PlayerLED.PLAYER_1;
                         break;
+
                     case 2:
                         profile.playerLED = LED.PlayerLED.PLAYER_2;
                         break;
+
                     case 3:
                         profile.playerLED = LED.PlayerLED.PLAYER_3;
                         break;
+
                     case 4:
                         profile.playerLED = LED.PlayerLED.PLAYER_4;
                         break;
+
                     case 5:
                         profile.playerLED = LED.PlayerLED.ALL;
                         break;
@@ -1996,7 +2037,6 @@ namespace DualSenseY
         {
             if (controlPanel.SelectedIndex == 2)
             {
-
             }
         }
 
@@ -2040,11 +2080,11 @@ namespace DualSenseY
 
         private void ApplySettingsFromProfile(Settings.Profile profile)
         {
-            dualsense[currentControllerNumber].SetLightbarTransition(profile.R, profile.G, profile.B, 10, 10);
-            dualsense[currentControllerNumber].SetLeftTrigger(profile.leftTriggerMode, profile.leftTriggerForces[0], profile.leftTriggerForces[1], profile.leftTriggerForces[2], profile.leftTriggerForces[3], profile.leftTriggerForces[4], profile.leftTriggerForces[5], profile.leftTriggerForces[6]);
-            dualsense[currentControllerNumber].SetRightTrigger(profile.rightTriggerMode, profile.rightTriggerForces[0], profile.rightTriggerForces[1], profile.rightTriggerForces[2], profile.rightTriggerForces[3], profile.rightTriggerForces[4], profile.rightTriggerForces[5], profile.rightTriggerForces[6]);
-            dualsense[currentControllerNumber].SetMicrophoneLED(profile.microphoneLED);
-            dualsense[currentControllerNumber].SetPlayerLED(profile.playerLED);
+            dualsense.SetLightbarTransition(profile.R, profile.G, profile.B, 10, 10);
+            dualsense.SetLeftTrigger(profile.leftTriggerMode, profile.leftTriggerForces[0], profile.leftTriggerForces[1], profile.leftTriggerForces[2], profile.leftTriggerForces[3], profile.leftTriggerForces[4], profile.leftTriggerForces[5], profile.leftTriggerForces[6]);
+            dualsense.SetRightTrigger(profile.rightTriggerMode, profile.rightTriggerForces[0], profile.rightTriggerForces[1], profile.rightTriggerForces[2], profile.rightTriggerForces[3], profile.rightTriggerForces[4], profile.rightTriggerForces[5], profile.rightTriggerForces[6]);
+            dualsense.SetMicrophoneLED(profile.microphoneLED);
+            dualsense.SetPlayerLED(profile.playerLED);
 
             controlPanel.SelectedIndex = 0;
             triggerLeftOrRightBox.SelectedIndex = 0;
@@ -2082,9 +2122,11 @@ namespace DualSenseY
                         case 0:
                             stopEmu();
                             break;
+
                         case 1:
                             x360Emu();
                             break;
+
                         case 2:
                             ds4Emu();
                             break;
@@ -2093,24 +2135,28 @@ namespace DualSenseY
             }
             catch { }
 
-
             switch (profile.playerLED)
             {
                 case LED.PlayerLED.OFF:
                     LEDbox.SelectedIndex = 0;
                     break;
+
                 case LED.PlayerLED.PLAYER_1:
                     LEDbox.SelectedIndex = 1;
                     break;
+
                 case LED.PlayerLED.PLAYER_2:
                     LEDbox.SelectedIndex = 2;
                     break;
+
                 case LED.PlayerLED.PLAYER_3:
                     LEDbox.SelectedIndex = 3;
                     break;
+
                 case LED.PlayerLED.PLAYER_4:
                     LEDbox.SelectedIndex = 4;
                     break;
+
                 case LED.PlayerLED.ALL:
                     LEDbox.SelectedIndex = 5;
                     break;
@@ -2126,30 +2172,39 @@ namespace DualSenseY
                 case TriggerType.TriggerModes.Off:
                     leftTriggerModeIndex = 0;
                     break;
+
                 case TriggerType.TriggerModes.Rigid:
                     leftTriggerModeIndex = 1;
                     break;
+
                 case TriggerType.TriggerModes.Pulse:
                     leftTriggerModeIndex = 2;
                     break;
+
                 case TriggerType.TriggerModes.Rigid_A:
                     leftTriggerModeIndex = 3;
                     break;
+
                 case TriggerType.TriggerModes.Rigid_B:
                     leftTriggerModeIndex = 4;
                     break;
+
                 case TriggerType.TriggerModes.Rigid_AB:
                     leftTriggerModeIndex = 5;
                     break;
+
                 case TriggerType.TriggerModes.Pulse_A:
                     leftTriggerModeIndex = 6;
                     break;
+
                 case TriggerType.TriggerModes.Pulse_B:
                     leftTriggerModeIndex = 7;
                     break;
+
                 case TriggerType.TriggerModes.Pulse_AB:
                     leftTriggerModeIndex = 8;
                     break;
+
                 case TriggerType.TriggerModes.Calibration:
                     leftTriggerModeIndex = 9;
                     break;
@@ -2160,30 +2215,39 @@ namespace DualSenseY
                 case TriggerType.TriggerModes.Off:
                     rightTriggerModeIndex = 0;
                     break;
+
                 case TriggerType.TriggerModes.Rigid:
                     rightTriggerModeIndex = 1;
                     break;
+
                 case TriggerType.TriggerModes.Pulse:
                     rightTriggerModeIndex = 2;
                     break;
+
                 case TriggerType.TriggerModes.Rigid_A:
                     rightTriggerModeIndex = 3;
                     break;
+
                 case TriggerType.TriggerModes.Rigid_B:
                     rightTriggerModeIndex = 4;
                     break;
+
                 case TriggerType.TriggerModes.Rigid_AB:
                     rightTriggerModeIndex = 5;
                     break;
+
                 case TriggerType.TriggerModes.Pulse_A:
                     rightTriggerModeIndex = 6;
                     break;
+
                 case TriggerType.TriggerModes.Pulse_B:
                     rightTriggerModeIndex = 7;
                     break;
+
                 case TriggerType.TriggerModes.Pulse_AB:
                     rightTriggerModeIndex = 8;
                     break;
+
                 case TriggerType.TriggerModes.Calibration:
                     rightTriggerModeIndex = 9;
                     break;
@@ -2218,10 +2282,10 @@ namespace DualSenseY
             {
                 if (controllerEmulation != null)
                     controllerEmulation.ForceStopRumble = true;
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                if (dualsense != null && dualsense.Working)
                 {
-                    dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
-                    dualsense[currentControllerNumber].StartSystemAudioToHaptics();
+                    dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                    dualsense.StartSystemAudioToHaptics();
                 }
             }
             else
@@ -2235,10 +2299,10 @@ namespace DualSenseY
         {
             if (controllerEmulation != null)
                 controllerEmulation.ForceStopRumble = false;
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                dualsense[currentControllerNumber].SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
-                dualsense[currentControllerNumber].StopSystemAudioToHaptics();
+                dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
+                dualsense.StopSystemAudioToHaptics();
             }
         }
 
@@ -2261,28 +2325,33 @@ namespace DualSenseY
             sliderBlue.IsEnabled = true;
             LEDbox.IsEnabled = true;
 
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+                dualsense.SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
                 switch (LEDbox.SelectedIndex)
                 {
                     case 0:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.OFF);
+                        dualsense.SetPlayerLED(LED.PlayerLED.OFF);
                         break;
+
                     case 1:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
                         break;
+
                     case 2:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
                         break;
+
                     case 3:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
                         break;
+
                     case 4:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                        dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                         break;
+
                     case 5:
-                        dualsense[currentControllerNumber].SetPlayerLED(LED.PlayerLED.ALL);
+                        dualsense.SetPlayerLED(LED.PlayerLED.ALL);
                         break;
                 }
             }
@@ -2293,9 +2362,9 @@ namespace DualSenseY
 
         private void speakerSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                dualsense[currentControllerNumber].SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
+                dualsense.SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
             }
         }
 
@@ -2310,12 +2379,13 @@ namespace DualSenseY
         }
 
         private int emuStatusForConfig = 0;
+
         private void ds4Emu()
         {
             try
             {
                 emuStatusForConfig = 2;
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                if (dualsense != null && dualsense.Working)
                 {
                     controllerEmulation.StopEmulation();
                     HideController();
@@ -2343,7 +2413,7 @@ namespace DualSenseY
             try
             {
                 emuStatusForConfig = 1;
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+                if (dualsense != null && dualsense.Working)
                 {
                     controllerEmulation.StopEmulation();
                     HideController();
@@ -2365,13 +2435,13 @@ namespace DualSenseY
                     ReadCurrentValues();
                 }
             }
-            catch(Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message + "\n\nStackTrace:\n" + ex.StackTrace, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
+            catch (Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message + "\n\nStackTrace:\n" + ex.StackTrace, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
         }
 
         private void stopEmu()
         {
             emuStatusForConfig = 0;
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
                 stopEmuBtn.Visibility = Visibility.Hidden;
                 controllerEmulation.StopEmulation();
@@ -2379,7 +2449,7 @@ namespace DualSenseY
                 x360EmuButton.IsEnabled = true;
                 textUnderControllerEmuButtons.Visibility = Visibility.Visible;
                 crnEmulatingText.Text = "";
-                RestoreController(true, dualsense[currentControllerNumber], false);
+                RestoreController(true, dualsense, false);
             }
         }
 
@@ -2398,17 +2468,18 @@ namespace DualSenseY
             stopEmu();
         }
 
-        bool isHiding = false;
+        private bool isHiding = false;
+
         private void HideController()
         {
             string dirFullName = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            string instanceID = PnPDevice.GetInstanceIdFromInterfaceId(dualsense[currentControllerNumber].DeviceID).ToString();
+            string instanceID = PnPDevice.GetInstanceIdFromInterfaceId(dualsense.DeviceID).ToString();
             hidHide.AddApplicationPath(dirFullName.Replace(".dll", ".exe"));
             hidHide.AddBlockedInstanceId(instanceID);
             hidHide.IsAppListInverted = false;
             hidHide.IsActive = true;
             isHiding = true;
-            PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense[currentControllerNumber].DeviceID);
+            PnPDevice tempDevice = PnPDevice.GetDeviceByInterfaceId(dualsense.DeviceID);
             try
             {
                 tempDevice.Disable();
@@ -2469,9 +2540,9 @@ namespace DualSenseY
                 controllerEmulation.IgnoreDS4Lightbar = true;
             }
 
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+                dualsense.SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
             }
         }
 
@@ -2482,32 +2553,32 @@ namespace DualSenseY
                 controllerEmulation.IgnoreDS4Lightbar = false;
             }
 
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                dualsense[currentControllerNumber].SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
+                dualsense.SetLightbar((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value);
             }
         }
 
         private void outputHeadsetBox_Checked(object sender, RoutedEventArgs e)
         {
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
                 speakerLabel.Text = "Headset";
-                dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.HEADSET);
+                dualsense.SetAudioOutput(AudioOutput.HEADSET);
             }
         }
 
         private void outputHeadsetBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
                 speakerLabel.Text = "Speaker";
-                dualsense[currentControllerNumber].SetAudioOutput(AudioOutput.SPEAKER);
+                dualsense.SetAudioOutput(AudioOutput.SPEAKER);
             }
         }
 
         private void loadConfigOnStartupBtn_Click(object sender, RoutedEventArgs e)
-        {        
+        {
             var dialog = new Microsoft.Win32.OpenFileDialog();
 
             if (!Directory.Exists(Settings.Path))
@@ -2676,12 +2747,15 @@ namespace DualSenseY
                         case "Control":
                             customHotkey[i] += "^";
                             break;
+
                         case "Alt":
                             customHotkey[i] += "!";
                             break;
+
                         case "Shift":
                             customHotkey[i] += "+";
                             break;
+
                         default:
                             if (dialog.firstKey.Length < 2)
                                 customHotkey[i] += dialog.firstKey.ToUpper();
@@ -2698,12 +2772,15 @@ namespace DualSenseY
                         case "Control":
                             customHotkey[i] += "^";
                             break;
+
                         case "Alt":
                             customHotkey[i] += "!";
                             break;
+
                         case "Shift":
                             customHotkey[i] += "+";
                             break;
+
                         default:
                             if (dialog.secondKey.Length < 2)
                                 customHotkey[i] += dialog.secondKey.ToUpper();
@@ -2720,12 +2797,15 @@ namespace DualSenseY
                         case "Control":
                             customHotkey[i] += "^";
                             break;
+
                         case "Alt":
                             customHotkey[i] += "!";
                             break;
+
                         case "Shift":
                             customHotkey[i] += "+";
                             break;
+
                         default:
                             if (dialog.thirdKey.Length < 2)
                                 customHotkey[i] += dialog.thirdKey.ToUpper();
@@ -2742,12 +2822,15 @@ namespace DualSenseY
                         case "Control":
                             customHotkey[i] += "^";
                             break;
+
                         case "Alt":
                             customHotkey[i] += "!";
                             break;
+
                         case "Shift":
                             customHotkey[i] += "+";
                             break;
+
                         default:
                             if (dialog.fourthKey.Length < 2)
                                 customHotkey[i] += dialog.fourthKey.ToUpper();
@@ -2781,6 +2864,7 @@ namespace DualSenseY
                             editBindMic.Visibility = Visibility.Hidden;
                         }
                         break;
+
                     case "hotkeyBoxMicPlusUp":
                         if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
                         {
@@ -2791,6 +2875,7 @@ namespace DualSenseY
                             editBindMic2.Visibility = Visibility.Hidden;
                         }
                         break;
+
                     case "hotkeyBoxMicPlusRight":
                         if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
                         {
@@ -2801,6 +2886,7 @@ namespace DualSenseY
                             editBindMic3.Visibility = Visibility.Hidden;
                         }
                         break;
+
                     case "hotkeyBoxMicPlusLeft":
                         if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
                         {
@@ -2811,6 +2897,7 @@ namespace DualSenseY
                             editBindMic4.Visibility = Visibility.Hidden;
                         }
                         break;
+
                     case "hotkeyBoxMicPlusDown":
                         if (box.SelectedItem.ToString().Split(':')[1].Trim() == "Custom hotkey")
                         {
@@ -2821,22 +2908,24 @@ namespace DualSenseY
                             editBindMic5.Visibility = Visibility.Hidden;
                         }
                         break;
+
                     default:
                         break;
                 }
             }
         }
 
-        bool isDiscoOn = false;
-        int discoSpeed = 1;
+        private bool isDiscoOn = false;
+        private int discoSpeed = 1;
+
         private void StartDisco()
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            byte[] led = new byte[3]; 
+            byte[] led = new byte[3];
             int step = 5; // Color transition step size (higher values = faster transitions)
 
-            led[0] = 255; 
+            led[0] = 255;
             led[1] = 0;
             led[2] = 0;
 
@@ -2844,9 +2933,9 @@ namespace DualSenseY
 
             while (true)
             {
-                if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working && isDiscoOn && stopwatch.ElapsedMilliseconds >= 20 - discoSpeed)
+                if (dualsense != null && dualsense.Working && isDiscoOn && stopwatch.ElapsedMilliseconds >= 20 - discoSpeed)
                 {
-                    dualsense[currentControllerNumber].SetLightbar(led[0], led[1], led[2]);
+                    dualsense.SetLightbar(led[0], led[1], led[2]);
 
                     switch (colorState)
                     {
@@ -2854,22 +2943,27 @@ namespace DualSenseY
                             led[1] += (byte)step;
                             if (led[1] >= 255) colorState = 1;
                             break;
+
                         case 1:
                             led[0] -= (byte)step;
                             if (led[0] <= 0) colorState = 2;
                             break;
+
                         case 2:
                             led[2] += (byte)step;
                             if (led[2] >= 255) colorState = 3;
                             break;
+
                         case 3:
                             led[1] -= (byte)step;
                             if (led[1] <= 0) colorState = 4;
                             break;
+
                         case 4:
                             led[0] += (byte)step;
                             if (led[0] >= 255) colorState = 5;
                             break;
+
                         case 5:
                             led[2] -= (byte)step;
                             if (led[2] <= 0) colorState = 0;
@@ -2906,15 +3000,23 @@ namespace DualSenseY
             sliderBlue.IsEnabled = true;
             soundLEDcheckbox.IsEnabled = true;
             isDiscoOn = false;
-            if (dualsense[currentControllerNumber] != null && dualsense[currentControllerNumber].Working)
+            if (dualsense != null && dualsense.Working)
             {
-                dualsense[currentControllerNumber].SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 10, 50);
+                dualsense.SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 10, 50);
             }
         }
 
         private void discoSpeedSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             discoSpeed = (int)discoSpeedSlider.Value;
+        }
+
+        private void cmbControllerSelect_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if(e.RightButton == System.Windows.Input.MouseButtonState.Pressed)
+            {
+                EnumerateControllers();
+            }
         }
     }
 }

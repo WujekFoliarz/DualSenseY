@@ -27,6 +27,7 @@
     <None Remove="Resources\discordicon.jpg" />
     <None Remove="Resources\ds4.png" />
     <None Remove="Resources\dualsenseyicon.ico" />
+    <None Remove="Resources\edge_icon.png" />
     <None Remove="Resources\githubicon.jpg" />
     <None Remove="Resources\usb.png" />
     <None Remove="Resources\x360.png" />
@@ -57,12 +58,15 @@
     <PackageReference Include="Nefarius.Drivers.HidHide" Version="2.2.0" />
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Wujek_Dualsense_API" Version="1.5.0" />
+    <PackageReference Include="Wujek_Dualsense_API" Version="1.5.2" />
   </ItemGroup>
 
   <ItemGroup>
     <Resource Include="icon.png" />
     <Resource Include="Resources\dualsenseyicon.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\edge_icon.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Resources\githubicon.jpg">

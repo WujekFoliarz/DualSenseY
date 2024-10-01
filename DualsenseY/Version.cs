@@ -7,7 +7,7 @@ namespace DualSenseY
 {
     public class Version
     {
-        public double CurrentVersion = 5.0;
+        public double CurrentVersion = 5.1;
 
         public void Update()
         {
@@ -23,13 +23,16 @@ namespace DualSenseY
                     foreach (string file in Directory.GetFiles(Directory.GetCurrentDirectory()))
                     {
                         if (file.Contains(".dll") || file.Contains(".exe") || file.Contains(".wav") || file.Contains(".json") || file.Contains(".pdb"))
-                            File.Move(file, file + ".bak");
+                        {
+                            if(!file.Contains("DSX"))
+                            {
+                                File.Move(file, file + ".bak");
+                            }
+                        }
                     }
                     ZipFile.ExtractToDirectory("update.zip", Directory.GetCurrentDirectory());
-                    System.Diagnostics.Process.Start("DualSenseY.exe");
                     Environment.Exit(0);
                 }
-
             }
         }
 

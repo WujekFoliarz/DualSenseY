@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="DualSenseY" Height="450" Width="600" ResizeMode="CanMinimize"
         Closing="Window_Closing" StateChanged="Window_StateChanged" Icon="/icon.png">
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="156*"/>
@@ -18,12 +19,7 @@
             <TextBlock x:Name="controlPanelText" Text="DualSense Control Panel -- Version X.X" FontSize="24" FontWeight="Bold" Margin="0,0,0,10"/>
             <Button x:Name="updateBtn" Content="Install latest update" Margin="450,-40,0,0" Width="110" Height="25" Click="updateBtn_Click" Visibility="Hidden"/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <ComboBox x:Name="cmbControllerSelect" Width="100" Margin="0,0,10,0" SelectedIndex="0" SelectionChanged="cmbControllerSelect_SelectionChanged">
-                    <ComboBoxItem Content="Controller 1"/>
-                    <ComboBoxItem Content="Controller 2"/>
-                    <ComboBoxItem Content="Controller 3"/>
-                    <ComboBoxItem Content="Controller 4"/>
-                </ComboBox>
+                <ComboBox x:Name="cmbControllerSelect" Width="100" Margin="0,0,10,0" SelectedIndex="0" PreviewMouseDown="cmbControllerSelect_PreviewMouseDown"/>
                 <Button x:Name="btnConnect" Content="Connect Controller" Click="btnConnect_Click" Width="142"/>
                 <TextBlock x:Name="udpStatus" Text="UDP: Inactive" Margin="220,0,0,0"/>
                 <Ellipse x:Name="udpStatusDot"
@@ -33,14 +29,17 @@
                 Canvas.Left="10"
                 Canvas.Top="25" Margin="3,-2,0,0"/>
             </StackPanel>
+
             <TextBlock x:Name="txtStatus" Text="Status: Disconnected" Margin="0,0,0,10"/>
-            <Image x:Name="connectionTypeBTicon" Margin="-330,-34,0,0" Width="20" Height="20" Source="Resources/bt.png"></Image>
-            <Image x:Name="connectionTypeUSBicon" Margin="-330,-34,0,0" Width="20" Height="20" Source="Resources/usb.png"></Image>
+            <Image x:Name="connectionTypeBTicon" Margin="-330,-36,0,0" Width="20" Height="20" Source="Resources/bt.png"></Image>
+            <Image x:Name="connectionTypeUSBicon" Margin="-330,-36,0,0" Width="20" Height="20" Source="Resources/usb.png"></Image>
             <TextBlock x:Name="batteryStatusText" Margin="-100,-34,0,0" Width="200" Height="15" Text="Battery Status: UNKNOWN | ?%"/>
-            <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-95,0,0" Grid.Column="1"/>
-            <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-95,0,0" Grid.Column="1"/>
+            <Image x:Name="edgeIcon" Width="40" Margin="100,-32,0,0" Height="20" Source="Resources/edge_icon.png"/>
+            <TextBlock x:Name="connectedTo" Text="Connected to ???" Margin="0,-10,0,0"/>
+            <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-105,0,0" Grid.Column="1"/>
+            <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-105,0,0" Grid.Column="1"/>
         </StackPanel>
-        
+
 
         <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="3" SelectionChanged="controlPanel_SelectionChanged" TabStripPlacement="Left">
 

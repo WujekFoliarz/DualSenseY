@@ -17,6 +17,7 @@ namespace DualSenseY
         public Packet currentPacket;
         public Events Events = new Events();
         public int Battery = 100;
+        public bool unavailable = false;
 
         public UDP()
         {
@@ -41,8 +42,8 @@ namespace DualSenseY
             }
             catch
             {
-                MessageBox.Show("Something went wrong when starting UDP server, DualSenseY might already be running.");
-                Environment.Exit(0);
+                serverOn = false;
+                unavailable = true;
             }
         }
 
@@ -94,7 +95,10 @@ namespace DualSenseY
         public void Dispose()
         {
             serverOn = false;
-            client.Dispose();
+            if(client != null)
+            {
+                client.Dispose();
+            }
         }
 
         public class UDPResponse

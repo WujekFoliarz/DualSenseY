@@ -9,7 +9,8 @@ namespace DualSenseY
     // stupid resources wouldnt work
     public static class Constants
     {
-        public static string Changelog = "5.0\nAdded changelog tab\nApplication now correctly reports battery level to UDP mods\nError messagebox should now display on fatal crashes\n\n" +
+        public static string Changelog = "5.1\nAdded multi controller support\nAdded DualSense Edge indicator\n\n" +
+            "5.0\nAdded changelog tab\nApplication now correctly reports battery level to UDP mods\nError messagebox should now display on fatal crashes\n\n" +
             "4.9\nFixed \"Cyberpunk 2077 Enhanced DualSense Support\" mod crashing randomly\r\nDisco Mode will disable automatically on UDP connection\n\n" +
             "4.8\nAdded \"Motion\" tab\n\n" +
             "4.7\nMade it less likely that Windows Defender will incorrectly flag a fake DSX process as a Trojan (please report if this still happens)\r\nBlocked \"Disco Mode\" option while using \"Sound To LED\"\n\n" +
