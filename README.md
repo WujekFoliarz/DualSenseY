@@ -51,19 +51,20 @@ Simply send this json (this can be easily done in existing DSX mods)
 - Bind screenshot to the mic button
 
 
-![{480F85A0-B126-4AEC-B286-9477683F0636}](https://github.com/user-attachments/assets/5260e8d3-9a26-41d6-9608-c52d3b3af12e)
+![{33F06A2B-3E37-40DF-A64B-A86A57CB2D3E}](https://github.com/user-attachments/assets/ec74dcef-403d-4769-99ae-f1b15bd52c64)
 
-![{1D17BF59-2790-4FB1-86CF-C45E38CD6E7C}](https://github.com/user-attachments/assets/2d0fc599-26e7-4499-bade-0b62a5ad24e4)
+![{8A11242C-5635-4C79-8961-372BAB742B9E}](https://github.com/user-attachments/assets/93aaea5b-1dfd-4276-91c7-ab14df3f2455)
 
-![{8C85D261-C275-4D2D-8D8B-DC1C21A7B84C}](https://github.com/user-attachments/assets/ecc1f0da-e325-4aef-ac7b-ff466b97ff34)
+![{BC304887-EAB2-4AE7-8316-BA6F01E49AD4}](https://github.com/user-attachments/assets/e1f56fdd-71ae-4c9d-b9ee-3689cfab5123)
 
-![{F06116C3-9AFD-49F2-957A-E4B1DA391DA5}](https://github.com/user-attachments/assets/22b5a0e7-f7ec-4cc9-bac7-bbc06834eeed)
+![{6FBF441D-8D02-4DE9-9BEE-23F6DCE74A85}](https://github.com/user-attachments/assets/0de75993-b78d-462c-bf5c-fcd5cb697df6)
 
-![{EE532344-B7B7-4E07-8117-A3DD7B56C395}](https://github.com/user-attachments/assets/4cb1c032-3fed-482d-837b-5599bc71562c)
+![{6DA1B3BD-5888-4098-8F5C-EC7FABF05EA0}](https://github.com/user-attachments/assets/8f745832-6d37-45fc-8efc-17c00d795a75)
 
-![{ADE2B376-CFA7-470B-9E77-8E7B6BAF325A}](https://github.com/user-attachments/assets/6a3532f3-2ec1-4bd6-9d8f-2abe76a7ae72)
+![{D70AEB80-B88A-43F2-94E4-A9EC373B5F79}](https://github.com/user-attachments/assets/38831a6d-6933-4abe-bf51-321103e1806e)
 
-![{324736FB-13BC-400F-98D3-FDDA350EF502}](https://github.com/user-attachments/assets/39ced5a2-f9f2-4d91-b9cd-7e3f57d98fa7)
+![{A00ACE89-CD49-45B9-B8DE-D789CCE44A9F}](https://github.com/user-attachments/assets/01c129e3-d6ff-4718-b424-45d4a96c45fb)
 
-![{998D3CF1-7CA4-493E-9F77-2EE192FF58BF}](https://github.com/user-attachments/assets/b2912a6b-9c5f-4693-a1e6-85090ba70c1c)
+
+
 
