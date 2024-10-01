@@ -40,7 +40,7 @@
             <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-105,0,0" Grid.Column="1"/>
         </StackPanel>
 
-
+        
         <TabControl x:Name="controlPanel" Grid.Row="1" Margin="10,10,10,10" Grid.ColumnSpan="3" SelectionChanged="controlPanel_SelectionChanged" TabStripPlacement="Left">
 
             <TabItem Header="Vibration" x:Name="vibrationTab">
@@ -395,14 +395,30 @@
             <TabItem Header="Settings">
                 <Grid Margin="5">
                     <StackPanel>
-                        <TextBlock Width="129" HorizontalAlignment="Left" Text="Load config on startup:"/>
-                        <Button x:Name="loadConfigOnStartupBtn" Content="None" Width="150" Margin="-15,-16,0,0" Click="loadConfigOnStartupBtn_Click" MouseRightButtonUp="loadConfigOnStartupBtn_MouseRightButtonUp"></Button>
                         <TextBlock Text="Minimize to tray:"/>
                         <CheckBox x:Name="minimizeToTrayBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="minimizeToTrayBox_Checked" Unchecked="minimizeToTrayBox_Unchecked"/>
                         <TextBlock Text="Connect on startup:"/>
                         <CheckBox x:Name="connectOnStartupBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="connectOnStartupBox_Checked" Unchecked="connectOnStartupBox_Unchecked"/>
                         <TextBlock Text="Launch minimized:"/>
                         <CheckBox x:Name="launchMinimizedBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="launchMinimizedBox_Checked" Unchecked="launchMinimizedBox_Unchecked"/>
+
+                        <TextBlock Text="Per port config assignment - right click to erase" Margin="5"/>
+
+                        <Button x:Name="port1" Content="Click to assign port" Margin="5" HorizontalAlignment="Left" Width="150" Height="20" Click="port1_Click" MouseRightButtonDown="port1_MouseRightButtonDown"/>
+                        <TextBlock Margin="-84,-36,0,0" Width="10" Height="10" Text="--"/>
+                        <Button x:Name="configport1" Margin="90,-31,0,0" Content="None"  Width="150" Height="20" Click="configport1_Click" MouseRightButtonDown="configport1_MouseRightButtonDown"/>
+
+                        <Button x:Name="port2" Content="Click to assign port" Margin="5" HorizontalAlignment="Left" Width="150" Height="20" Click="port2_Click" MouseRightButtonDown="port2_MouseRightButtonDown"/>
+                        <TextBlock Margin="-84,-36,0,0" Width="10" Height="10" Text="--"/>
+                        <Button x:Name="configport2" Margin="90,-31,0,0" Content="None"  Width="150" Height="20" Click="configport2_Click" MouseRightButtonDown="configport2_MouseRightButtonDown"/>
+
+                        <Button x:Name="port3" Content="Click to assign port" Margin="5" HorizontalAlignment="Left" Width="150" Height="20" Click="port3_Click" MouseRightButtonDown="port3_MouseRightButtonDown"/>
+                        <TextBlock Margin="-84,-36,0,0" Width="10" Height="10" Text="--"/>
+                        <Button x:Name="configport3" Margin="90,-31,0,0" Content="None"  Width="150" Height="20" Click="configport3_Click" MouseRightButtonDown="configport3_MouseRightButtonDown"/>
+
+                        <Button x:Name="port4" Content="Click to assign port" Margin="5" HorizontalAlignment="Left" Width="150" Height="20" Click="port4_Click" MouseRightButtonDown="port4_MouseRightButtonDown"/>
+                        <TextBlock Margin="-84,-36,0,0" Width="10" Height="10" Text="--"/>
+                        <Button x:Name="configport4" Margin="90,-31,0,0" Content="None"  Width="150" Height="20" Click="configport4_Click" MouseRightButtonDown="configport4_MouseRightButtonDown"/>
                     </StackPanel>
 
                 </Grid>

@@ -43,6 +43,9 @@ namespace DualSenseY
         private string currentControllerID = string.Empty;
         private string currentControllerPath = string.Empty;
 
+        private string[] ports = new string[4];
+        private string[] configs = new string[4];
+
         private bool firstTimeCmbSelect = true;
         private HidHideControlService hidHide = new HidHideControlService();
         private System.Windows.Forms.NotifyIcon MyNotifyIcon;
@@ -50,7 +53,11 @@ namespace DualSenseY
         public MainWindow()
         {
             this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
-            UDP.StartFakeDSXProcess();
+
+            if(Process.GetProcessesByName("DSX").Count() == 0)
+            {
+                UDP.StartFakeDSXProcess();
+            }
 
             try
             {
@@ -130,6 +137,7 @@ namespace DualSenseY
             udp = new UDP();
             udp.Events.NewPacket += Events_NewPacket;
             UDPtime.Start();
+            new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchConfigAssigment(); }).Start();
             new Thread(() => { Thread.CurrentThread.Priority = ThreadPriority.Lowest; Thread.CurrentThread.IsBackground = true; WatchUDPUpdates(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; ReadTouchpad(); }).Start();
             new Thread(() => { Thread.CurrentThread.IsBackground = true; Thread.CurrentThread.Priority = ThreadPriority.Lowest; WatchSystemAudioLevel(); }).Start();
@@ -143,6 +151,35 @@ namespace DualSenseY
         private void Dispatcher_UnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             MessageBox.Show("Unhandled exception occurred, contact developer: \n" + e.Exception.Message + "\n\nStacktrace: \n" + e.Exception.StackTrace, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        private void WatchConfigAssigment()
+        {
+            while (true)
+            {
+                try
+                {
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        Properties.Settings.Default.Reload();
+
+                        port1.Content = Properties.Settings.Default.port1 != string.Empty ? DualSenseY.Properties.Settings.Default.port1 : "Click to assign port";
+                        configport1.Content = Properties.Settings.Default.config1 != string.Empty ? Path.GetFileNameWithoutExtension(Properties.Settings.Default.config1) : "None";
+
+                        port2.Content = Properties.Settings.Default.port2 != string.Empty ? Properties.Settings.Default.port2 : "Click to assign port";
+                        configport2.Content = Properties.Settings.Default.config2 != string.Empty ? Path.GetFileNameWithoutExtension(Properties.Settings.Default.config2) : "None";
+
+                        port3.Content = Properties.Settings.Default.port3 != string.Empty ? DualSenseY.Properties.Settings.Default.port3 : "Click to assign port";
+                        configport3.Content = Properties.Settings.Default.config3 != string.Empty ? Path.GetFileNameWithoutExtension(Properties.Settings.Default.config3) : "None";
+
+                        port4.Content = Properties.Settings.Default.port4 != string.Empty ? Properties.Settings.Default.port4 : "Click to assign port";
+                        configport4.Content = Properties.Settings.Default.config4 != string.Empty ? Path.GetFileNameWithoutExtension(Properties.Settings.Default.config4) : "None";
+                    });
+                }
+                catch (TaskCanceledException) { }
+
+                Thread.Sleep(1000);
+            }
         }
 
         private void WatchMotion()
@@ -1298,11 +1335,24 @@ namespace DualSenseY
                 ReadCurrentValues();
                 UpdateConnectionStatus();
                 audioToHapticsBtn.IsChecked = false;
-                if (DualSenseY.Properties.Settings.Default.defaultConfigPath != string.Empty && File.Exists(DualSenseY.Properties.Settings.Default.defaultConfigPath))
+
+                if(Properties.Settings.Default.port1 == currentControllerID)
                 {
-                    loadConfigOnStartupBtn.Content = Path.GetFileNameWithoutExtension(DualSenseY.Properties.Settings.Default.defaultConfigPath);
-                    ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.defaultConfigPath));
+                    ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.config1));
                 }
+                else if (Properties.Settings.Default.port2 == currentControllerID)
+                {
+                    ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.config2));
+                }
+                else if (Properties.Settings.Default.port3 == currentControllerID)
+                {
+                    ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.config3));
+                }
+                else if (Properties.Settings.Default.port4 == currentControllerID)
+                {
+                    ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.config4));
+                }
+
             }
             catch (Exception error)
             {
@@ -2577,7 +2627,7 @@ namespace DualSenseY
             }
         }
 
-        private void loadConfigOnStartupBtn_Click(object sender, RoutedEventArgs e)
+        private string GetConfig()
         {
             var dialog = new Microsoft.Win32.OpenFileDialog();
 
@@ -2600,18 +2650,11 @@ namespace DualSenseY
 
                 if (File.Exists(path))
                 {
-                    Properties.Settings.Default.defaultConfigPath = path;
-                    Properties.Settings.Default.Save();
-                    loadConfigOnStartupBtn.Content = Path.GetFileNameWithoutExtension(path);
+                    return path;
                 }
             }
-        }
 
-        private void loadConfigOnStartupBtn_MouseRightButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            Properties.Settings.Default.defaultConfigPath = string.Empty;
-            Properties.Settings.Default.Save();
-            loadConfigOnStartupBtn.Content = "None";
+            return string.Empty;
         }
 
         private void minimizeToTrayBox_Checked(object sender, RoutedEventArgs e)
@@ -3017,6 +3060,138 @@ namespace DualSenseY
             {
                 EnumerateControllers();
             }
+        }
+
+        private void port1_Click(object sender, RoutedEventArgs e)
+        {          
+            port1.Content = currentControllerID;
+            ports[0] = currentControllerID;
+            Properties.Settings.Default.port1 = currentControllerID;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport1_Click(object sender, RoutedEventArgs e)
+        {
+            string config = GetConfig();
+            if(config != string.Empty)
+            {
+                configport1.Content = Path.GetFileNameWithoutExtension(config);
+                Properties.Settings.Default.config1 = config;
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        private void port2_Click(object sender, RoutedEventArgs e)
+        {
+            port2.Content = currentControllerID;
+            ports[1] = currentControllerID;
+            Properties.Settings.Default.port2 = currentControllerID;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport2_Click(object sender, RoutedEventArgs e)
+        {
+            string config = GetConfig();
+            if (config != string.Empty)
+            {
+                configport2.Content = Path.GetFileNameWithoutExtension(config);
+                Properties.Settings.Default.config2 = config;
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        private void port3_Click(object sender, RoutedEventArgs e)
+        {
+            port3.Content = currentControllerID;
+            ports[2] = currentControllerID;
+            Properties.Settings.Default.port3 = currentControllerID;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport3_Click(object sender, RoutedEventArgs e)
+        {
+            string config = GetConfig();
+            if (config != string.Empty)
+            {
+                configport3.Content = Path.GetFileNameWithoutExtension(config);
+                Properties.Settings.Default.config3 = config;
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        private void port4_Click(object sender, RoutedEventArgs e)
+        {           
+            port4.Content = currentControllerID;
+            ports[3] = currentControllerID;
+            Properties.Settings.Default.port4 = currentControllerID;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport4_Click(object sender, RoutedEventArgs e)
+        {
+            string config = GetConfig();
+            if (config != string.Empty)
+            {
+                configport4.Content = Path.GetFileNameWithoutExtension(config);
+                Properties.Settings.Default.config4 = config;
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        private void port1_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            port1.Content = "Click to assign port";
+            Properties.Settings.Default.port1 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void port2_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            port2.Content = "Click to assign port";
+            Properties.Settings.Default.port2 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void port3_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            port3.Content = "Click to assign port";
+            Properties.Settings.Default.port3 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void port4_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            port4.Content = "Click to assign port";
+            Properties.Settings.Default.port4 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport1_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            configport1.Content = "None";
+            Properties.Settings.Default.config1 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport2_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            configport2.Content = "None";
+            Properties.Settings.Default.config2 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport3_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            configport3.Content = "None";
+            Properties.Settings.Default.config3 = string.Empty;
+            Properties.Settings.Default.Save();
+        }
+
+        private void configport4_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            configport4.Content = "None";
+            Properties.Settings.Default.config4 = string.Empty;
+            Properties.Settings.Default.Save();
         }
     }
 }
