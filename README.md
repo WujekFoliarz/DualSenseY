@@ -3,6 +3,7 @@
 ##
 ### Download → https://github.com/WujekFoliarz/DualSenseY/releases
 ### Discord → https://discord.gg/AFYvxf282U
+### If you want to buy me a coffee → https://ko-fi.com/wujekfoliarz
 
 ## Notes
 - Bluetooth connection is recommended only for controller emulation and UDP protocol, use USB if possible.
