@@ -52,7 +52,7 @@ Simply send this json (this can be easily done in existing DSX mods)
 - Bind screenshot to the mic button
 
 
-![{33F06A2B-3E37-40DF-A64B-A86A57CB2D3E}](https://github.com/user-attachments/assets/ec74dcef-403d-4769-99ae-f1b15bd52c64)
+![{F1BB9B13-4546-4C2F-B267-DE6D1CB84BB7}](https://github.com/user-attachments/assets/79b770cd-65ee-42ea-a493-984c9363e575)
 
 ![{8A11242C-5635-4C79-8961-372BAB742B9E}](https://github.com/user-attachments/assets/93aaea5b-1dfd-4276-91c7-ab14df3f2455)
 
