@@ -3,6 +3,7 @@
 ##
 ### Download → https://github.com/WujekFoliarz/DualSenseY/releases
 ### Discord → https://discord.gg/AFYvxf282U
+### If you want to buy me a coffee → https://ko-fi.com/wujekfoliarz
 
 ## Notes
 - Bluetooth connection is recommended only for controller emulation and UDP protocol, use USB if possible.
@@ -65,6 +66,7 @@ Simply send this json (this can be easily done in existing DSX mods)
 
 ![{A00ACE89-CD49-45B9-B8DE-D789CCE44A9F}](https://github.com/user-attachments/assets/01c129e3-d6ff-4718-b424-45d4a96c45fb)
 
+![{2AFBA212-02F3-4040-A2D7-D97D6F39F063}](https://github.com/user-attachments/assets/dba35baa-264e-4df6-a102-b5c052bfadf4)
 
 
 
