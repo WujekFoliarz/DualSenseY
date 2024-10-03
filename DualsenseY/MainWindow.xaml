@@ -112,6 +112,10 @@
                         <CheckBox Margin="-255,-15,0,0" Width="15" x:Name="discoBox" Checked="discoBox_Checked" Unchecked="discoBox_Unchecked"/>
                         <Slider Margin="-20,-17,0,0" x:Name="discoSpeedSlider" Width="217" Minimum="1" Maximum="20" Value="10" ValueChanged="discoSpeedSlider_ValueChanged"/>
                         <TextBlock x:Name="discoSpeedText" Margin="230,-19,0,0" Text="Speed" Width="33"/>
+                        <TextBlock Text="Battery status (Lightbar):"/>
+                        <CheckBox x:Name="lightbarBattery" Margin="-130,-14,0,0" Width="16" Checked="lightbarBattery_Checked" Unchecked="lightbarBattery_Unchecked"/>
+                        <TextBlock Text="Battery status (Player LED):"/>
+                        <CheckBox x:Name="ledBattery" Margin="-110,-14,0,0" Width="16" Checked="ledBattery_Checked" Unchecked="ledBattery_Unchecked"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

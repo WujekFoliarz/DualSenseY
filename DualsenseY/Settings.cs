@@ -39,6 +39,8 @@ namespace DualSenseY
             public bool IgnoreDS4Lightbar { get; set; }
             public int ControllerEmulation { get; set; } // 0 = off, 1 = x360, 2 = ds4
             public bool UseTouchpadAsMouse { get; set; }
+            public bool LightbarBattery { get; set; }
+            public bool LEDBattery { get; set; }
             public int TouchpadSensitivity { get; set; }
             public int MicrophoneVolume { get; set; }
             public float SpeakerVolume { get; set; }

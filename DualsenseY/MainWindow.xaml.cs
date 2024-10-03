@@ -226,6 +226,47 @@ namespace DualSenseY
                 {
                     if (dualsense != null && dualsense.Working)
                     {
+                        dualsense.Battery.Level = 75;
+                        if(lightbarBattery.IsChecked == true)
+                        {
+                            if(dualsense.Battery.Level >= 75)
+                            {
+                                dualsense.SetLightbarTransition(0, 255, 0, 10, 100);
+                            }
+                            else if(dualsense.Battery.Level <= 50 && dualsense.Battery.Level >= 25)
+                            {
+                                dualsense.SetLightbarTransition(255, 255, 0, 10, 100);
+                            }
+                            else if (dualsense.Battery.Level <= 25 && dualsense.Battery.Level >= 10)
+                            {
+                                dualsense.SetLightbarTransition(255, 0, 0, 10, 100);
+                            }
+                            else if (dualsense.Battery.Level <= 10)
+                            {
+                                dualsense.SetLightbarTransition(10, 0, 0, 10, 100);
+                            }
+                        }
+
+                        if (ledBattery.IsChecked == true)
+                        {
+                            if (dualsense.Battery.Level >= 75)
+                            {
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
+                            }
+                            else if (dualsense.Battery.Level <= 50 && dualsense.Battery.Level >= 25)
+                            {
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
+                            }
+                            else if (dualsense.Battery.Level <= 25 && dualsense.Battery.Level >= 10)
+                            {
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
+                            }
+                            else if (dualsense.Battery.Level <= 10)
+                            {
+                                dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
+                            }
+                        }
+
                         if (udp != null && udp.serverOn)
                         {
                             udp.Battery = dualsense.Battery.Level;
@@ -990,7 +1031,7 @@ namespace DualSenseY
 
             while (watchSystemAudio)
             {
-                if (UDPtime.ElapsedMilliseconds >= 8000 && dualsense != null && dualsense.Working && dualsense.ConnectionType == ConnectionType.USB)
+                if (UDPtime.ElapsedMilliseconds >= 8000 && dualsense != null && dualsense.Working)
                 {
                     var AMI = defaultAudio.AudioMeterInformation;
                     float value = AMI.PeakValues[0] * 300;
@@ -1237,6 +1278,8 @@ namespace DualSenseY
                         ledTab.IsEnabled = false;
                         triggersTab.IsEnabled = false;
                         discoBox.IsChecked = false;
+                        lightbarBattery.IsChecked = false;
+                        ledBattery.IsChecked = false;
                         loadConfigBtn.Visibility = Visibility.Hidden;
                         saveConfigBtn.Visibility = Visibility.Hidden;
                         wereSettingsReset = false;
@@ -1485,7 +1528,6 @@ namespace DualSenseY
                     {
                         micTab.IsEnabled = false;
                         speakerTab.IsEnabled = false;
-                        soundLEDcheckbox.IsEnabled = false;
                         audioToHapticsBtn.IsEnabled = false;
                         connectionTypeBTicon.Visibility = Visibility.Visible;
                         connectionTypeUSBicon.Visibility = Visibility.Hidden;
@@ -1543,7 +1585,7 @@ namespace DualSenseY
                     dualsense.SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
                     if (!audioToLED && connected)
                     {
-                        dualsense.SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 10);
+                        dualsense.SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 50, 5);
                         switch (LEDbox.SelectedIndex)
                         {
                             case 0:
@@ -2052,6 +2094,9 @@ namespace DualSenseY
                 profile.DiscoMode = (bool)discoBox.IsChecked;
                 profile.DiscoSpeed = discoSpeed;
 
+                profile.LightbarBattery = (bool)lightbarBattery.IsChecked;
+                profile.LEDBattery = (bool)ledBattery.IsChecked;
+
                 var dialog = new Microsoft.Win32.SaveFileDialog();
 
                 if (!Directory.Exists(Settings.Path))
@@ -2154,6 +2199,8 @@ namespace DualSenseY
             discoBox.IsChecked = profile.DiscoMode;
             discoSpeedSlider.Value = profile.DiscoSpeed;
             discoSpeed = profile.DiscoSpeed;
+            lightbarBattery.IsChecked = profile.LightbarBattery;
+            ledBattery.IsChecked = profile.LEDBattery;
 
             hotkeyBoxMic.SelectedIndex = profile.HotKey1;
             hotkeyBoxMicPlusUp.SelectedIndex = profile.HotKey2;
@@ -2363,17 +2410,33 @@ namespace DualSenseY
             sliderGreen.IsEnabled = false;
             sliderBlue.IsEnabled = false;
             LEDbox.IsEnabled = false;
+            discoBox.IsChecked = false;
             discoBox.IsEnabled = false;
+            lightbarBattery.IsEnabled = false;
+            ledBattery.IsEnabled = false;
             discoSpeedSlider.Visibility = Visibility.Hidden;
         }
 
         private void soundLEDcheckbox_Unchecked(object sender, RoutedEventArgs e)
         {
-            audioToLED = false;
-            sliderRed.IsEnabled = true;
-            sliderGreen.IsEnabled = true;
-            sliderBlue.IsEnabled = true;
+            if(lightbarBattery.IsChecked == false)
+            {
+                audioToLED = false;
+                sliderRed.IsEnabled = true;
+                sliderGreen.IsEnabled = true;
+                sliderBlue.IsEnabled = true;
+            }
+
+            lightbarBattery.IsEnabled = true;
+            ledBattery.IsEnabled = true;
+
             LEDbox.IsEnabled = true;
+
+            if(lightbarBattery.IsChecked == false && ledBattery.IsChecked == false)
+            {
+                discoBox.IsEnabled = true;
+                discoSpeedSlider.Visibility = Visibility.Visible;
+            }
 
             if (dualsense != null && dualsense.Working)
             {
@@ -2406,8 +2469,6 @@ namespace DualSenseY
                 }
             }
 
-            discoBox.IsEnabled = true;
-            discoSpeedSlider.Visibility = Visibility.Visible;
         }
 
         private void speakerSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -3026,6 +3087,10 @@ namespace DualSenseY
         {
             discoSpeedSlider.Visibility = Visibility.Visible;
             discoSpeedText.Visibility = Visibility.Visible;
+            lightbarBattery.IsChecked = false;
+            ledBattery.IsChecked = false;
+            lightbarBattery.IsEnabled = false;
+            ledBattery.IsEnabled = false;
             sliderRed.IsEnabled = false;
             sliderGreen.IsEnabled = false;
             sliderBlue.IsEnabled = false;
@@ -3036,15 +3101,22 @@ namespace DualSenseY
 
         private void discoBox_Unchecked(object sender, RoutedEventArgs e)
         {
-            discoSpeedSlider.Visibility = Visibility.Hidden;
-            discoSpeedText.Visibility = Visibility.Hidden;
-            sliderRed.IsEnabled = true;
-            sliderGreen.IsEnabled = true;
-            sliderBlue.IsEnabled = true;
-            soundLEDcheckbox.IsEnabled = true;
-            isDiscoOn = false;
             if (dualsense != null && dualsense.Working)
             {
+                discoSpeedSlider.Visibility = Visibility.Hidden;
+                discoSpeedText.Visibility = Visibility.Hidden;
+
+                if(lightbarBattery.IsChecked == false && ledBattery.IsChecked == false)
+                {
+                    soundLEDcheckbox.IsEnabled = true;
+                }
+
+                isDiscoOn = false;
+                sliderRed.IsEnabled = true;
+                sliderGreen.IsEnabled = true;
+                sliderBlue.IsEnabled = true;
+                lightbarBattery.IsEnabled = true;
+                ledBattery.IsEnabled = true;
                 dualsense.SetLightbarTransition((byte)sliderRed.Value, (byte)sliderGreen.Value, (byte)sliderBlue.Value, 10, 50);
             }
         }
@@ -3192,6 +3264,49 @@ namespace DualSenseY
             configport4.Content = "None";
             Properties.Settings.Default.config4 = string.Empty;
             Properties.Settings.Default.Save();
+        }
+
+        private void lightbarBattery_Checked(object sender, RoutedEventArgs e)
+        {
+            
+            sliderRed.IsEnabled = false;
+            sliderGreen.IsEnabled = false;
+            sliderBlue.IsEnabled = false;
+            discoBox.IsEnabled = false;
+            discoBox.IsChecked = false;
+            soundLEDcheckbox.IsEnabled = false;
+            soundLEDcheckbox.IsChecked = false;
+        }
+
+        private void lightbarBattery_Unchecked(object sender, RoutedEventArgs e)
+        {
+            sliderRed.IsEnabled = true;
+            sliderGreen.IsEnabled = true;
+            sliderBlue.IsEnabled = true;
+
+            if(ledBattery.IsChecked == false)
+            {
+                discoBox.IsEnabled = true;
+                soundLEDcheckbox.IsEnabled = true;
+            }
+
+            ReadCurrentValues();
+        }
+
+        private void ledBattery_Checked(object sender, RoutedEventArgs e)
+        {
+            LEDbox.IsEnabled = false;
+        }
+
+        private void ledBattery_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (lightbarBattery.IsChecked == false)
+            {
+                discoBox.IsEnabled = true;
+                soundLEDcheckbox.IsEnabled = true;
+            }
+            LEDbox.IsEnabled = true;
+            ReadCurrentValues();
         }
     }
 }
