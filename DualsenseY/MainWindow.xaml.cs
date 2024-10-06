@@ -87,6 +87,7 @@ namespace DualSenseY
             connectionTypeUSBicon.Visibility = Visibility.Hidden;
             batteryStatusText.Visibility = Visibility.Hidden;
             edgeIcon.Visibility = Visibility.Hidden;
+            ds4Icon.Visibility = Visibility.Hidden;
 
             minimizeToTrayBox.IsChecked = DualSenseY.Properties.Settings.Default.minimizeToTray;
             launchMinimizedBox.IsChecked = DualSenseY.Properties.Settings.Default.launchMinimized;
@@ -226,22 +227,21 @@ namespace DualSenseY
                 {
                     if (dualsense != null && dualsense.Working)
                     {
-                        dualsense.Battery.Level = 75;
                         if(lightbarBattery.IsChecked == true)
                         {
                             if(dualsense.Battery.Level >= 75)
                             {
                                 dualsense.SetLightbarTransition(0, 255, 0, 10, 100);
                             }
-                            else if(dualsense.Battery.Level <= 50 && dualsense.Battery.Level >= 25)
+                            else if(dualsense.Battery.Level <= 75 && dualsense.Battery.Level >= 50)
                             {
                                 dualsense.SetLightbarTransition(255, 255, 0, 10, 100);
                             }
-                            else if (dualsense.Battery.Level <= 25 && dualsense.Battery.Level >= 10)
+                            else if (dualsense.Battery.Level <= 50 && dualsense.Battery.Level >= 35)
                             {
                                 dualsense.SetLightbarTransition(255, 0, 0, 10, 100);
                             }
-                            else if (dualsense.Battery.Level <= 10)
+                            else if (dualsense.Battery.Level <= 35)
                             {
                                 dualsense.SetLightbarTransition(10, 0, 0, 10, 100);
                             }
@@ -253,15 +253,15 @@ namespace DualSenseY
                             {
                                 dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_4);
                             }
-                            else if (dualsense.Battery.Level <= 50 && dualsense.Battery.Level >= 25)
+                            else if (dualsense.Battery.Level <= 75 && dualsense.Battery.Level >= 50)
                             {
                                 dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_3);
                             }
-                            else if (dualsense.Battery.Level <= 25 && dualsense.Battery.Level >= 10)
+                            else if (dualsense.Battery.Level <= 50 && dualsense.Battery.Level >= 35)
                             {
                                 dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_2);
                             }
-                            else if (dualsense.Battery.Level <= 10)
+                            else if (dualsense.Battery.Level <= 35)
                             {
                                 dualsense.SetPlayerLED(LED.PlayerLED.PLAYER_1);
                             }
@@ -1524,36 +1524,67 @@ namespace DualSenseY
                         textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
                     }
 
-                    if (dualsense.ConnectionType == ConnectionType.BT)
+                    if(dualsense.DeviceType == DeviceType.DualSense || dualsense.DeviceType == DeviceType.DualSense_Edge)
                     {
-                        micTab.IsEnabled = false;
-                        speakerTab.IsEnabled = false;
-                        audioToHapticsBtn.IsEnabled = false;
-                        connectionTypeBTicon.Visibility = Visibility.Visible;
-                        connectionTypeUSBicon.Visibility = Visibility.Hidden;
+                        ds4Icon.Visibility = Visibility.Hidden;
+                        if (dualsense.ConnectionType == ConnectionType.BT)
+                        {
+                            micTab.IsEnabled = false;
+                            speakerTab.IsEnabled = false;
+                            audioToHapticsBtn.IsEnabled = false;
+                            connectionTypeBTicon.Visibility = Visibility.Visible;
+                            connectionTypeUSBicon.Visibility = Visibility.Hidden;
+                            if (controllerEmulation != null)
+                            {
+                                controllerEmulation.ForceStopRumble = false;
+                            }
+                        }
+                        else
+                        {
+                            if (controllerEmulation != null && audioToHapticsBtn.IsChecked == true)
+                            {
+                                controllerEmulation.ForceStopRumble = true;
+                            }
+                            else if (controllerEmulation != null && audioToHapticsBtn.IsChecked == false)
+                            {
+                                controllerEmulation.ForceStopRumble = false;
+                            }
+
+                            micTab.IsEnabled = true;
+                            speakerTab.IsEnabled = true;
+                            soundLEDcheckbox.IsEnabled = true;
+                            audioToHapticsBtn.IsEnabled = true;
+                            touchpadTab.IsEnabled = true;
+                            connectionTypeBTicon.Visibility = Visibility.Hidden;
+                            connectionTypeUSBicon.Visibility = Visibility.Visible;
+                        }
+                    }
+                    else if (dualsense.DeviceType == DeviceType.DualShock4)
+                    {
+                        ds4Icon.Visibility = Visibility.Visible;
+                        if (dualsense.ConnectionType == ConnectionType.BT)
+                        {
+                            connectionTypeBTicon.Visibility = Visibility.Visible;
+                            connectionTypeUSBicon.Visibility = Visibility.Hidden;
+                        }
+                        else
+                        {
+                            connectionTypeBTicon.Visibility = Visibility.Hidden;
+                            connectionTypeUSBicon.Visibility = Visibility.Visible;
+                        }
+
                         if (controllerEmulation != null)
                         {
                             controllerEmulation.ForceStopRumble = false;
                         }
-                    }
-                    else
-                    {
-                        if (controllerEmulation != null && audioToHapticsBtn.IsChecked == true)
-                        {
-                            controllerEmulation.ForceStopRumble = true;
-                        }
-                        else if (controllerEmulation != null && audioToHapticsBtn.IsChecked == false)
-                        {
-                            controllerEmulation.ForceStopRumble = false;
-                        }
 
-                        micTab.IsEnabled = true;
-                        speakerTab.IsEnabled = true;
-                        soundLEDcheckbox.IsEnabled = true;
-                        audioToHapticsBtn.IsEnabled = true;
-                        touchpadTab.IsEnabled = true;
-                        connectionTypeBTicon.Visibility = Visibility.Hidden;
-                        connectionTypeUSBicon.Visibility = Visibility.Visible;
+                        micTab.IsEnabled = false;
+                        speakerTab.IsEnabled = false;
+                        audioToHapticsBtn.IsEnabled = false;
+                        triggersTab.IsEnabled = false;
+                        LEDbox.IsEnabled = false;
+                        micLEDcheckbox.IsEnabled = false;
+                        hotkeysTab.IsEnabled = false;
                     }
                 }
                 else if (dualsense == null || !dualsense.Working)

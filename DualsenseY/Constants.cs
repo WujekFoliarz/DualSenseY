@@ -9,7 +9,8 @@ namespace DualSenseY
     // stupid resources wouldnt work
     public static class Constants
     {
-        public static string Changelog = "5.3\nBluetooth connections are now more reliable\nSound to LED now works on bluetooth\nAdded LED battery status display option\n\n" +
+        public static string Changelog = "5.4\nAdded experimental DualShock 4 support\n\n" +
+            "5.3\nBluetooth connections are now more reliable\nSound to LED now works on bluetooth\nAdded LED battery status display option\n\n" +
             "5.2\nReplaced startup config with per port configuration\n\n" +
             "5.1\nAdded multi controller support\nAdded DualSense Edge indicator\n\n" +
             "5.0\nAdded changelog tab\nApplication now correctly reports battery level to UDP mods\nError messagebox should now display on fatal crashes\n\n" +

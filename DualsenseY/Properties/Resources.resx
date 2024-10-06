@@ -121,6 +121,9 @@
   <data name="ds4" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ds4.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ds4_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ds4_icon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="x360" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\x360.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
