@@ -56,10 +56,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nefarius.Drivers.HidHide" Version="2.2.0" />
+    <PackageReference Include="Nefarius.Drivers.HidHide" Version="2.4.1" />
     <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Wujek_Dualsense_API" Version="1.5.8" />
+    <PackageReference Include="Wujek_Dualsense_API" Version="1.6.1" />
   </ItemGroup>
 
   <ItemGroup>

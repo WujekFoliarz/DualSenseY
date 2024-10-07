@@ -221,6 +221,8 @@ namespace DualSenseY
 
         private void WatchBatteryStatus()
         {
+            bool blink = true;
+
             while (true)
             {
                 this.Dispatcher.Invoke(() =>
@@ -244,6 +246,19 @@ namespace DualSenseY
                             else if (dualsense.Battery.Level <= 35)
                             {
                                 dualsense.SetLightbarTransition(10, 0, 0, 10, 100);
+                            }
+                            else if (dualsense.Battery.Level <= 5)
+                            {
+                                if (blink)
+                                {
+                                    dualsense.SetLightbarTransition(10, 0, 0, 10, 100);
+                                    blink = false;
+                                }
+                                else
+                                {
+                                    dualsense.SetLightbarTransition(0, 0, 0, 10, 100);
+                                    blink = true;
+                                }
                             }
                         }
 
@@ -364,7 +379,7 @@ namespace DualSenseY
                         {
                             Utils.ScreenshotToClipboard();
                             screenshotCooldown.Restart();
-                            dualsense.PlayHaptics("screenshot.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
+                            dualsense.PlayHaptics("screenshot.wav", (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true, 1);
                         }
                         break;
                     }
@@ -1009,7 +1024,15 @@ namespace DualSenseY
                         case UDP.InstructionType.HapticFeedback:
                             dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                             this.Dispatcher.Invoke(() => { audioToHapticsBtn.IsChecked = false; });
-                            dualsense.PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (float)Convert.ToSingle(instruction.parameters[4]), (bool)Convert.ToBoolean(instruction.parameters[5]));
+
+                            int channel = instruction.parameters[5] != null ? Convert.ToInt32(Convert.ToInt32(instruction.parameters[5])) : 1;
+
+                            if (channel > 10 || channel < 0)
+                            {
+                                channel = 1;
+                            }
+
+                            dualsense.PlayHaptics((string)instruction.parameters[1], (float)Convert.ToSingle(instruction.parameters[2]), (float)Convert.ToSingle(instruction.parameters[3]), (bool)Convert.ToBoolean(instruction.parameters[4]), channel);
                             break;
 
                         case UDP.InstructionType.RGBTransitionUpdate:
@@ -1232,7 +1255,8 @@ namespace DualSenseY
                 {
                     controlPanel.Visibility = Visibility.Visible;
                     ledTab.IsEnabled = true;
-                    triggersTab.IsEnabled = true;
+                    if(dualsense.DeviceType != DeviceType.DualShock4)
+                        triggersTab.IsEnabled = true;
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
                 }
@@ -1255,7 +1279,8 @@ namespace DualSenseY
 
                             controlPanel.Visibility = Visibility.Visible;
                             ledTab.IsEnabled = true;
-                            triggersTab.IsEnabled = true;
+                            if (dualsense.DeviceType != DeviceType.DualShock4)
+                                triggersTab.IsEnabled = true;
                             loadConfigBtn.Visibility = Visibility.Visible;
                             saveConfigBtn.Visibility = Visibility.Visible;
                         }
@@ -1428,7 +1453,7 @@ namespace DualSenseY
 
                     if (emuStatusForConfig == 2 && dualsense != null && audioToHapticsBtn.IsChecked == false)
                     {
-                        dualsense.PlayHaptics("blip.wav", 1, 0, 0, true);
+                        dualsense.PlayHaptics("blip.wav", 0, 0, true, 1);
                     }
                     ReadCurrentValues();
                 });
@@ -1474,7 +1499,7 @@ namespace DualSenseY
                     saveConfigBtn.Visibility = Visibility.Visible;
                     batteryStatusText.Visibility = Visibility.Visible;
                     connectedTo.Visibility = Visibility.Visible;
-                    connectedTo.Text = "Connected to " + currentControllerID;
+                    connectedTo.Text = "Connected to " + currentControllerID;                  
 
                     ds4EmuButton.IsEnabled = true;
                     x360EmuButton.IsEnabled = true;
@@ -1501,7 +1526,15 @@ namespace DualSenseY
                     {
                         if (hidHide.IsInstalled)
                         {
-                            hidhideVersionText.Text = "HidHide version: " + hidHide.LocalDriverVersion;
+                            try
+                            {
+                                hidhideVersionText.Text = "HidHide version: " + hidHide.LocalDriverVersion.ToString();
+                            }
+                            catch
+                            {
+                                hidhideVersionText.Text = "HidHide version: Failed to retrieve";
+                            }
+
                             HidHideDownloadBtn.Visibility = Visibility.Hidden;
                         }
                         else
@@ -1591,6 +1624,7 @@ namespace DualSenseY
                 {
                     connectedToController = false;
                     edgeIcon.Visibility = Visibility.Hidden;
+                    ds4Icon.Visibility = Visibility.Hidden;
                     txtStatus.Text = "Status: Disconnected";
                     btnConnect.Content = "Connect Controller";
                     controlPanel.Visibility = Visibility.Hidden;
@@ -2046,7 +2080,8 @@ namespace DualSenseY
                 {
                     dualsense.SetVibrationType(Vibrations.VibrationType.Haptic_Feedback);
                     AudioTestCooldown.Restart();
-                    dualsense.PlayHaptics("audiotest.wav", (float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true);
+                    dualsense.PlayHaptics("audiotest.wav", (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true, 1);
+                    dualsense.PlaySpeaker("audiotest.wav", (float)speakerSlider.Value, true);
                 }
                 catch (Exception ex) { MessageBox.Show("Unhandled exception occurred, contact developer: \n" + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
             }
@@ -2507,6 +2542,7 @@ namespace DualSenseY
             if (dualsense != null && dualsense.Working)
             {
                 dualsense.SetSpeakerVolumeInSoftware((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
+                dualsense.SetSystemAudioToHapticsVolume((float)speakerSlider.Value, (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value);
             }
         }
 
