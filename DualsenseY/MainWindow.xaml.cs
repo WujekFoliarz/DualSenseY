@@ -18,6 +18,8 @@ namespace DualSenseY
         private UDP udp;
         private Version version = new Version();
         public Dualsense dualsense;
+        public Dictionary<Dualsense, string> dualsenseList = new Dictionary<Dualsense, string>();
+        public Dictionary<ControllerEmulation, string> controllerEmuList = new Dictionary<ControllerEmulation, string>();
         private string controllerInstanceID = string.Empty;
         public int currentControllerNumber = 0;
         private int[] leftTriggerForces = new int[7];
@@ -54,7 +56,7 @@ namespace DualSenseY
         {
             this.Dispatcher.UnhandledException += Dispatcher_UnhandledException;
 
-            if(Process.GetProcessesByName("DSX").Count() == 0)
+            if (Process.GetProcessesByName("DSX").Count() == 0)
             {
                 UDP.StartFakeDSXProcess();
             }
@@ -229,13 +231,13 @@ namespace DualSenseY
                 {
                     if (dualsense != null && dualsense.Working)
                     {
-                        if(lightbarBattery.IsChecked == true)
+                        if (lightbarBattery.IsChecked == true)
                         {
-                            if(dualsense.Battery.Level >= 75)
+                            if (dualsense.Battery.Level >= 75)
                             {
                                 dualsense.SetLightbarTransition(0, 255, 0, 10, 100);
                             }
-                            else if(dualsense.Battery.Level <= 75 && dualsense.Battery.Level >= 50)
+                            else if (dualsense.Battery.Level <= 75 && dualsense.Battery.Level >= 50)
                             {
                                 dualsense.SetLightbarTransition(255, 255, 0, 10, 100);
                             }
@@ -379,7 +381,7 @@ namespace DualSenseY
                         {
                             Utils.ScreenshotToClipboard();
                             screenshotCooldown.Restart();
-                            dualsense.PlayHaptics("screenshot.wav", (float)leftActuatorSlider.Value, (float)rightActuatorSlider.Value, true, 1);
+                            dualsense.PlaySpeaker("screenshot.wav", (float)1, true);
                         }
                         break;
                     }
@@ -1255,7 +1257,7 @@ namespace DualSenseY
                 {
                     controlPanel.Visibility = Visibility.Visible;
                     ledTab.IsEnabled = true;
-                    if(dualsense.DeviceType != DeviceType.DualShock4)
+                    if (dualsense.DeviceType != DeviceType.DualShock4)
                         triggersTab.IsEnabled = true;
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
@@ -1352,6 +1354,13 @@ namespace DualSenseY
                 dualsense.Dispose();
                 UpdateConnectionStatus();
                 connected = false;
+                foreach (KeyValuePair<Dualsense, string> item in dualsenseList)
+                {
+                    if(item.Value == currentControllerID)
+                    {
+                        dualsenseList.Remove(item.Key);
+                    }
+                }
             }
             else
             {
@@ -1398,13 +1407,15 @@ namespace DualSenseY
                 currentControllerPath = dualsense.DeviceID;
                 controllerEmulation = new ControllerEmulation();
                 controllerEmulation.dualsense = dualsense;
+                controllerEmuList.Add(controllerEmulation, cmbControllerSelect.SelectedValue.ToString());
+                dualsenseList.Add(dualsense, cmbControllerSelect.SelectedValue.ToString());
 
                 connected = true;
                 ReadCurrentValues();
                 UpdateConnectionStatus();
                 audioToHapticsBtn.IsChecked = false;
 
-                if(Properties.Settings.Default.port1 == currentControllerID)
+                if (Properties.Settings.Default.port1 == currentControllerID)
                 {
                     ApplySettingsFromProfile(settings.ReadProfileFromFile(DualSenseY.Properties.Settings.Default.config1));
                 }
@@ -1437,7 +1448,7 @@ namespace DualSenseY
 
         private void Connection_ControllerDisconnected(object? sender, ConnectionStatus.Controller e)
         {
-            if (isHiding)
+            if (isHiding && dualsense != null)
             {
                 dualsense.Dispose();
                 this.Dispatcher.Invoke(() =>
@@ -1453,7 +1464,7 @@ namespace DualSenseY
 
                     if (emuStatusForConfig == 2 && dualsense != null && audioToHapticsBtn.IsChecked == false)
                     {
-                        dualsense.PlayHaptics("blip.wav", 0, 0, true, 1);
+                        dualsense.PlaySpeaker("blip.wav", 0f, true);
                     }
                     ReadCurrentValues();
                 });
@@ -1468,10 +1479,6 @@ namespace DualSenseY
                 controllerEmulation.Dispose();
                 MessageBox.Show($"Controller {currentControllerID} has been disconnected!", "Controller update", MessageBoxButton.OK, MessageBoxImage.Information);
             }
-        }
-
-        private void cmbControllerSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
         }
 
         private void UpdateConnectionStatus()
@@ -1494,12 +1501,12 @@ namespace DualSenseY
                     txtStatus.Text = "Status: Connected";
                     btnConnect.Content = "Disconnect Controller";
                     controlPanel.Visibility = Visibility.Visible;
-                    cmbControllerSelect.Visibility = Visibility.Hidden;
                     loadConfigBtn.Visibility = Visibility.Visible;
                     saveConfigBtn.Visibility = Visibility.Visible;
                     batteryStatusText.Visibility = Visibility.Visible;
                     connectedTo.Visibility = Visibility.Visible;
-                    connectedTo.Text = "Connected to " + currentControllerID;                  
+                    connectedTo.Text = "Connected to " + currentControllerID;
+                    cmbControllerSelect.Visibility = Visibility.Hidden;
 
                     ds4EmuButton.IsEnabled = true;
                     x360EmuButton.IsEnabled = true;
@@ -1557,7 +1564,7 @@ namespace DualSenseY
                         textUnderControllerEmuButtons.Text = "Required software was not found, please install.";
                     }
 
-                    if(dualsense.DeviceType == DeviceType.DualSense || dualsense.DeviceType == DeviceType.DualSense_Edge)
+                    if (dualsense.DeviceType == DeviceType.DualSense || dualsense.DeviceType == DeviceType.DualSense_Edge)
                     {
                         ds4Icon.Visibility = Visibility.Hidden;
                         if (dualsense.ConnectionType == ConnectionType.BT)
@@ -1623,12 +1630,12 @@ namespace DualSenseY
                 else if (dualsense == null || !dualsense.Working)
                 {
                     connectedToController = false;
+                    cmbControllerSelect.Visibility = Visibility.Visible;
                     edgeIcon.Visibility = Visibility.Hidden;
                     ds4Icon.Visibility = Visibility.Hidden;
                     txtStatus.Text = "Status: Disconnected";
                     btnConnect.Content = "Connect Controller";
                     controlPanel.Visibility = Visibility.Hidden;
-                    cmbControllerSelect.Visibility = Visibility.Visible;
                     loadConfigBtn.Visibility = Visibility.Hidden;
                     saveConfigBtn.Visibility = Visibility.Hidden;
                     connectionTypeBTicon.Visibility = Visibility.Hidden;
@@ -2485,7 +2492,7 @@ namespace DualSenseY
 
         private void soundLEDcheckbox_Unchecked(object sender, RoutedEventArgs e)
         {
-            if(lightbarBattery.IsChecked == false)
+            if (lightbarBattery.IsChecked == false)
             {
                 audioToLED = false;
                 sliderRed.IsEnabled = true;
@@ -2498,7 +2505,7 @@ namespace DualSenseY
 
             LEDbox.IsEnabled = true;
 
-            if(lightbarBattery.IsChecked == false && ledBattery.IsChecked == false)
+            if (lightbarBattery.IsChecked == false && ledBattery.IsChecked == false)
             {
                 discoBox.IsEnabled = true;
                 discoSpeedSlider.Visibility = Visibility.Visible;
@@ -3173,7 +3180,7 @@ namespace DualSenseY
                 discoSpeedSlider.Visibility = Visibility.Hidden;
                 discoSpeedText.Visibility = Visibility.Hidden;
 
-                if(lightbarBattery.IsChecked == false && ledBattery.IsChecked == false)
+                if (lightbarBattery.IsChecked == false && ledBattery.IsChecked == false)
                 {
                     soundLEDcheckbox.IsEnabled = true;
                 }
@@ -3195,14 +3202,14 @@ namespace DualSenseY
 
         private void cmbControllerSelect_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if(e.RightButton == System.Windows.Input.MouseButtonState.Pressed)
+            if (e.RightButton == System.Windows.Input.MouseButtonState.Pressed)
             {
                 EnumerateControllers();
             }
         }
 
         private void port1_Click(object sender, RoutedEventArgs e)
-        {          
+        {
             port1.Content = currentControllerID;
             ports[0] = currentControllerID;
             Properties.Settings.Default.port1 = currentControllerID;
@@ -3212,7 +3219,7 @@ namespace DualSenseY
         private void configport1_Click(object sender, RoutedEventArgs e)
         {
             string config = GetConfig();
-            if(config != string.Empty)
+            if (config != string.Empty)
             {
                 configport1.Content = Path.GetFileNameWithoutExtension(config);
                 Properties.Settings.Default.config1 = config;
@@ -3259,7 +3266,7 @@ namespace DualSenseY
         }
 
         private void port4_Click(object sender, RoutedEventArgs e)
-        {           
+        {
             port4.Content = currentControllerID;
             ports[3] = currentControllerID;
             Properties.Settings.Default.port4 = currentControllerID;
@@ -3335,7 +3342,7 @@ namespace DualSenseY
 
         private void lightbarBattery_Checked(object sender, RoutedEventArgs e)
         {
-            
+
             sliderRed.IsEnabled = false;
             sliderGreen.IsEnabled = false;
             sliderBlue.IsEnabled = false;
@@ -3351,7 +3358,7 @@ namespace DualSenseY
             sliderGreen.IsEnabled = true;
             sliderBlue.IsEnabled = true;
 
-            if(ledBattery.IsChecked == false)
+            if (ledBattery.IsChecked == false)
             {
                 discoBox.IsEnabled = true;
                 soundLEDcheckbox.IsEnabled = true;
@@ -3374,6 +3381,39 @@ namespace DualSenseY
             }
             LEDbox.IsEnabled = true;
             ReadCurrentValues();
+        }
+
+        private void cmbControllerSelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Finish this later
+
+            /*
+            if(cmbControllerSelect.SelectedValue != currentControllerID)
+            {
+                bool ControllerFound = false;
+                currentControllerID = string.Empty;
+                currentControllerPath = string.Empty;
+
+                foreach(KeyValuePair<Dualsense, string> item in dualsenseList)
+                {
+                    if (item.Value == cmbControllerSelect.SelectedValue) {
+                        dualsense = item.Key;
+                        ControllerFound = true;
+
+                        break;
+                        //MessageBox.Show("found! - " + item.Value + " " + cmbControllerSelect.SelectedValue);
+                    }
+                }
+
+                if (!ControllerFound)
+                {
+                    ConnectToController();
+                    //MessageBox.Show("shieeet");
+                }
+
+                UpdateConnectionStatus();
+            }
+            */
         }
     }
 }

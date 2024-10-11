@@ -230,7 +230,7 @@ namespace DualSenseY
                     rawDS4[7] = (byte)dualsense.ButtonState.L2;
                     rawDS4[8] = (byte)dualsense.ButtonState.R2;
 
-                    int timestamp = 192;
+                    short timestamp = (short)(dualsense.ButtonState.accelerometer.SensorTimestamp / 16);
                     rawDS4[9] = (byte)(timestamp & 0xFF);
                     rawDS4[10] = (byte)((timestamp >> 8) & 0xFF);
 
@@ -268,7 +268,7 @@ namespace DualSenseY
                     dualshock4.SubmitRawReport(rawDS4);
                 }
 
-                Thread.Sleep(1);
+                Thread.Sleep(0);
             }
         }
 
