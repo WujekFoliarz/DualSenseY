@@ -268,7 +268,7 @@ namespace DualSenseY
                     dualshock4.SubmitRawReport(rawDS4);
                 }
 
-                Thread.Sleep(0);
+                Thread.Sleep(1);
             }
         }
 
