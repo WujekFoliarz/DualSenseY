@@ -272,16 +272,6 @@ namespace DualSenseY
             }
         }
 
-        public byte[] EncodeCoordinates(int x, int y)
-        {
-            x &= 0xFFF;
-            y &= 0xFFF;
-
-            ushort combined = (ushort)((y << 12) | x);
-
-            return new byte[] { (byte)(combined & 0xFF), (byte)((combined >> 8) & 0xFF) };
-        }
-
         private enum DualShock4Buttons
         {
             Tringle = 1 << 7,

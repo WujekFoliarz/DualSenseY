@@ -95,6 +95,7 @@ namespace DualSenseY
             launchMinimizedBox.IsChecked = DualSenseY.Properties.Settings.Default.launchMinimized;
             //launchWithWindowsBox.IsChecked = DualSenseY.Properties.Settings.Default.launchWithWindows;
             connectOnStartupBox.IsChecked = DualSenseY.Properties.Settings.Default.connectOnStartup;
+            saveScreenshotBox.IsChecked = Properties.Settings.Default.saveScreenshotsToDocuments;
 
             if (DualSenseY.Properties.Settings.Default.launchMinimized)
             {
@@ -379,7 +380,7 @@ namespace DualSenseY
                     {
                         if (screenshotCooldown.ElapsedMilliseconds > 500)
                         {
-                            Utils.ScreenshotToClipboard();
+                            Utils.ScreenshotToClipboard(Properties.Settings.Default.saveScreenshotsToDocuments);
                             screenshotCooldown.Restart();
                             dualsense.PlaySpeaker("screenshot.wav", (float)1, true);
                         }
@@ -3414,6 +3415,18 @@ namespace DualSenseY
                 UpdateConnectionStatus();
             }
             */
+        }
+
+        private void saveScreenshotBox_Checked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.saveScreenshotsToDocuments = true;
+            Properties.Settings.Default.Save();
+        }
+
+        private void saveScreenshotBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            Properties.Settings.Default.saveScreenshotsToDocuments = false;
+            Properties.Settings.Default.Save();
         }
     }
 }

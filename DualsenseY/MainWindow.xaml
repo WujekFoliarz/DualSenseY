@@ -34,8 +34,8 @@
             <Image x:Name="connectionTypeBTicon" Margin="-330,-36,0,0" Width="20" Height="20" Source="Resources/bt.png"></Image>
             <Image x:Name="connectionTypeUSBicon" Margin="-330,-36,0,0" Width="20" Height="20" Source="Resources/usb.png"></Image>
             <TextBlock x:Name="batteryStatusText" Margin="-100,-34,0,0" Width="200" Height="15" Text="Battery Status: UNKNOWN | ?%"/>
-            <Image x:Name="edgeIcon" Width="40" Margin="150,-32,0,0" Height="20" Source="Resources/edge_icon.png"/>
-            <Image x:Name="ds4Icon" Width="40" Margin="150,-32,0,0" Height="18" Source="Resources/ds4_icon.png"/>
+            <Image x:Name="edgeIcon" Width="40" Margin="180,-32,0,0" Height="20" Source="Resources/edge_icon.png"/>
+            <Image x:Name="ds4Icon" Width="40" Margin="180,-32,0,0" Height="18" Source="Resources/ds4_icon.png"/>
             <TextBlock x:Name="connectedTo" Text="Connected to ???" Margin="0,-10,0,0"/>
             <Button Content="Save Config" Width="70" Height="25" x:Name="saveConfigBtn" Click="saveConfigBtn_Click" Margin="30,-105,0,0" Grid.Column="1"/>
             <Button Content="Load Config" Width="70" Height="25" x:Name="loadConfigBtn" Click="loadConfigBtn_Click" Margin="180,-105,0,0" Grid.Column="1"/>
@@ -406,6 +406,8 @@
                         <CheckBox x:Name="connectOnStartupBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="connectOnStartupBox_Checked" Unchecked="connectOnStartupBox_Unchecked"/>
                         <TextBlock Text="Launch minimized:"/>
                         <CheckBox x:Name="launchMinimizedBox" Width="17" HorizontalAlignment="Left" Margin="118,-14,0,0" Checked="launchMinimizedBox_Checked" Unchecked="launchMinimizedBox_Unchecked"/>
+                        <TextBlock Text="Save screenshots to documents: "/>
+                        <CheckBox x:Name="saveScreenshotBox" Margin="-40,-14,0,0" Width="17" Checked="saveScreenshotBox_Checked" Unchecked="saveScreenshotBox_Unchecked"/>
 
                         <TextBlock Text="Per port config assignment - right click to erase" Margin="5"/>
 

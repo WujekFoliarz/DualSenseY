@@ -8,6 +8,7 @@ namespace DualSenseY
     public class Settings
     {
         public readonly static string Path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\DualSenseY\\Configs";
+        public readonly static string ScPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\DualSenseY\\Screenshots\\";
 
         public void SaveProfileToFile(string fileName, Profile profile)
         {

@@ -9,7 +9,8 @@ namespace DualSenseY
     // stupid resources wouldnt work
     public static class Constants
     {
-        public static string Changelog = "5.9\nStability fixes\n\n" +
+        public static string Changelog = "6.0\nAdded save screenshot to file option\n\n" +
+            "5.9\nStability fixes\n\n" +
             "5.8\nFixed gyroscope for games that need correct sensor timestamp (ex. Detroit: Become Human)\nFixed screenshot/ds4 sound not playing\n\n" +
             "5.7\nUpdated HidHide API\nFixed crashing on some configs with DualShock4\nAdded lightbar blinking below 5% battery\nUpdated Haptic Feedback UDP instruction (tutorial soon)\n\n" +
             "5.6\nFixed DPAD on DualShock4 controllers\n\n" +
