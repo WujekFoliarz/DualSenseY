@@ -365,6 +365,7 @@ namespace DualSenseY
             if (this.WindowState == WindowState.Minimized && minimizeToTrayBox.IsChecked == true)
             {
                 this.ShowInTaskbar = false;
+                this.Hide();
                 MyNotifyIcon.Visible = true;
             }
         }
