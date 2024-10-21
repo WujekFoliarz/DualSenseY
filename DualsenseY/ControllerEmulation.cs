@@ -218,6 +218,8 @@ namespace DualSenseY
                     lState = (byte)(dualsense.ButtonState.L3 ? lState | (byte)DualShock4Buttons.L3 : lState);
                     lState = (byte)(dualsense.ButtonState.options ? lState | (byte)DualShock4Buttons.Options : lState);
                     lState = (byte)(dualsense.ButtonState.share ? lState | (byte)DualShock4Buttons.Share : lState);
+                    lState = (byte)(dualsense.ButtonState.R2Btn ? lState | (byte)DualShock4Buttons.R2 : lState);
+                    lState = (byte)(dualsense.ButtonState.L2Btn ? lState | (byte)DualShock4Buttons.L2 : lState);
                     lState = (byte)(dualsense.ButtonState.R1 ? lState | (byte)DualShock4Buttons.R1 : lState);
                     lState = (byte)(dualsense.ButtonState.L1 ? lState | (byte)DualShock4Buttons.L1 : lState);
                     rawDS4[5] = lState;
@@ -283,6 +285,8 @@ namespace DualSenseY
             L3 = 1 << 6,
             Options = 1 << 5,
             Share = 1 << 4,
+            R2 = 1 << 3,
+            L2 = 1 << 2,
             R1 = 1 << 1,
             L1 = 1 << 0,
 
