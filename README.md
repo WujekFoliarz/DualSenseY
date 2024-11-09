@@ -1,7 +1,7 @@
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/WujekFoliarz/DualSenseY/total)
 
 ##
-### THIS VERSION IS UNSUPPORTED ANYMORE
+### THIS VERSION IS NO LONGER SUPPORTED.
 ### NEW VERSION → https://github.com/WujekFoliarz/DualSenseY-v2 
 
 ## Notes
